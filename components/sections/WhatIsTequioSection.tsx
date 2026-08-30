@@ -1,18 +1,18 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import StarField from "@/components/ui/StarField";
 
-const KEYWORDS: Record<string, string> = {
-  "principio ancestral mesoamericano": "Tradición comunitaria donde cada persona aporta tiempo, fuerza y talento por el bien común.",
-  "estudiantes con hambre de aprender": "Jóvenes talentos que aportan energía, curiosidad y perspectiva fresca.",
-  "profesionales activos": "Mentores de la industria que comparten su camino y abren puertas.",
-  "herramienta de transformación social y empatía": "Uso del código enfocado en resolver problemas reales de las personas.",
-  "albergues": "Apoyo técnico y voluntariado físico para centros de apoyo social.",
-  "refugios de animales": "Construcción de plataformas digitales para adopción y rescate.",
-  "causas comunitarias": "Proyectos con impacto directo en comunidades vulnerables y adultos mayores.",
-};
+const HIGHLIGHTED_KEYWORDS = [
+  "principio ancestral mesoamericano",
+  "estudiantes con hambre de aprender",
+  "profesionales activos",
+  "herramienta de transformación social y empatía",
+  "albergues",
+  "refugios de animales",
+  "causas comunitarias",
+];
 
 const PARAGRAPHS = [
   "Tequio nace del principio ancestral mesoamericano donde cada persona aporta su esfuerzo, tiempo y talento en beneficio de la comunidad.",
@@ -23,20 +23,10 @@ const PARAGRAPHS = [
 export default function WhatIsTequioSection() {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [activeTooltip, setActiveTooltip] = useState<{ kw: string; x: number; y: number } | null>(null);
-
-  const handleKeywordHover = (e: React.MouseEvent, kw: string) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setActiveTooltip({
-      kw,
-      x: rect.left + rect.width / 2,
-      y: rect.top - 12,
-    });
-  };
 
   const renderHighlightedText = (text: string) => {
     let parts: React.ReactNode[] = [text];
-    Object.keys(KEYWORDS).forEach((kw) => {
+    HIGHLIGHTED_KEYWORDS.forEach((kw) => {
       parts = parts.flatMap((node) => {
         if (typeof node !== "string") return [node];
         const sub = node.split(kw);
@@ -46,17 +36,9 @@ export default function WhatIsTequioSection() {
                 s,
                 <span
                   key={`${kw}-${idx}`}
-                  className="cursor-pointer relative font-semibold px-1 text-blanco-lunar inline-block group"
-                  onMouseEnter={(e) => handleKeywordHover(e, kw)}
-                  onMouseLeave={() => setActiveTooltip(null)}
+                  className="relative font-semibold px-0.5 text-blanco-lunar inline-block border-b-2 border-terracota"
                 >
                   {kw}
-                  <motion.span
-                    className="absolute bottom-0 left-0 h-[2px] bg-terracota rounded-full"
-                    initial={{ width: "0%" }}
-                    animate={inView ? { width: "100%" } : { width: "0%" }}
-                    transition={{ duration: 0.4, delay: 0.6 }}
-                  />
                 </span>,
               ]
             : [s]
@@ -75,7 +57,7 @@ export default function WhatIsTequioSection() {
         background: "linear-gradient(to bottom, #0B1020 0%, #151D32 50%, #0B1020 100%)",
       }}
     >
-      {/* Textura de papel amate / piedra volcánica con máscara radial (visible en bordes 20%) */}
+      {/* Textura de papel amate */}
       <div
         className="absolute inset-0 opacity-18 pointer-events-none"
         style={{
@@ -129,7 +111,7 @@ export default function WhatIsTequioSection() {
               Qué es Tequio
             </motion.h2>
 
-            {/* Paragraphs with Stagger (translateY 12px -> 0, 600ms, 120ms stagger) */}
+            {/* Paragraphs */}
             {PARAGRAPHS.map((para, i) => (
               <motion.p
                 key={i}
@@ -142,57 +124,47 @@ export default function WhatIsTequioSection() {
               </motion.p>
             ))}
 
-            {/* Cita Destacada (Bloque Central): Fade-In + Scale 0.98 -> 1 en 700ms */}
+            {/* Cita Destacada */}
             <motion.blockquote
               initial={{ opacity: 0, scale: 0.98, x: -10 }}
               animate={inView ? { opacity: 1, scale: 1, x: 0 } : {}}
               transition={{ delay: 0.7, duration: 0.7 }}
               className="my-10 pl-6 border-l-[4px] border-terracota bg-white/[0.04] py-6 pr-6 rounded-r-2xl shadow-xl"
             >
-              <p className="font-cinzel text-blanco-lunar text-xl md:text-2xl leading-relaxed italic font-bold">
+              <p className="font-cinzel text-amber-300 text-xl md:text-2xl leading-relaxed italic font-bold">
                 &quot;El conocimiento que no se comparte se apaga. Quien hoy recibe guía, mañana lidera y acompaña a otros.&quot;
               </p>
             </motion.blockquote>
 
           </div>
 
-          {/* Tochtli PNG Presence */}
+          {/* Right Visual Image */}
           <motion.div
-            className="shrink-0 relative"
-            initial={{ opacity: 0, scale: 0.94 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={inView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="w-full lg:w-[420px] h-[480px] relative rounded-3xl overflow-hidden border-2 border-terracota/30 shadow-2xl flex-shrink-0"
           >
             <Image
-              src="/png/tochtli.png"
-              alt="Tochtli — Guía de Tequio"
-              width={260}
-              height={320}
-              className="object-contain"
-              priority
+              src="/jpg/moment1.jpg"
+              alt="Comunidad Tequio en faena"
+              fill
+              className="object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-transparent to-transparent opacity-80" />
+            
+            <div className="absolute bottom-6 left-6 right-6">
+              <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold block mb-1">
+                ✦ Faena Colectiva ✦
+              </span>
+              <p className="font-cinzel text-blanco-lunar text-xl font-bold">
+                Aprender en tribu, construir en comunidad.
+              </p>
+            </div>
           </motion.div>
 
         </div>
       </div>
-
-      {/* Tooltip for Keywords */}
-      {activeTooltip && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="fixed z-50 px-5 py-3 rounded-xl text-sm font-inter text-blanco-lunar pointer-events-none max-w-xs text-center border-2 border-terracota bg-azul-noche/95 shadow-2xl"
-          style={{
-            left: activeTooltip.x,
-            top: activeTooltip.y,
-            transform: "translate(-50%, -100%)",
-          }}
-        >
-          <div className="font-bold text-ambar mb-1 capitalize">{activeTooltip.kw}</div>
-          <div className="text-arena/90 text-xs">{KEYWORDS[activeTooltip.kw]}</div>
-        </motion.div>
-      )}
     </section>
   );
 }
