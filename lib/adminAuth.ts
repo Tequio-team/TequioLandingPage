@@ -2,29 +2,21 @@
 
 const ADMIN_SESSION_KEY = "tequio_admin_authenticated";
 
-// Hash a string using SHA-256 Web Crypto API
-export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password.trim());
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  return hashHex;
-}
-
-// Verify if the input password matches the SHA-256 hash defined strictly in process.env
+// Verify if the input password matches NEXT_ADMIN_PASSWORD_HASH via server API
 export async function verifyAdminPassword(passwordInput: string): Promise<boolean> {
-  const inputHash = await hashPassword(passwordInput);
+  try {
+    const res = await fetch("/api/admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: passwordInput }),
+    });
 
-  // Read hash strictly from environment variable
-  const targetHash = process.env.NEXT_ADMIN_PASSWORD_HASH || process.env.NEXT_ADMIN_PASSWORD_HASH;
-
-  if (!targetHash) {
-    console.warn("⚠️ No se ha definido NEXT_PUBLIC_ADMIN_PASSWORD_HASH en .env.local o Vercel.");
+    const data = await res.json();
+    return data.success === true;
+  } catch (err) {
+    console.error("Error verificando contraseña admin:", err);
     return false;
   }
-
-  return inputHash === targetHash;
 }
 
 // Check if currently authenticated in browser session
