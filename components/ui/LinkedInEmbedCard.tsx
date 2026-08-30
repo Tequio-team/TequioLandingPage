@@ -78,8 +78,8 @@ export default function LinkedInEmbedCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 45, filter: "blur(4px)" }}
-      whileInView={{ opacity: 0.95, y: 0, filter: "blur(0px)" }}
+      initial={false}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{
         duration: 0.7,

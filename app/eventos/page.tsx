@@ -443,7 +443,7 @@ export default function EventosPage() {
               <motion.div
                 id="active-talk"
                 key="active-talk"
-                initial={{ opacity: 0, y: 20 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
@@ -650,8 +650,8 @@ export default function EventosPage() {
             {filteredEvents.map((evt, idx) => (
               <motion.div
                 key={evt.id}
-                initial={{ opacity: 0, y: 30, filter: "blur(3px)" }}
-                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                initial={false}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-30px" }}
                 transition={{
                   duration: 0.5,
