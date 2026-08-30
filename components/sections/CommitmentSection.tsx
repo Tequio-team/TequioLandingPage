@@ -86,7 +86,7 @@ export default function CommitmentSection() {
         `,
       }}
     >
-      <BrasaParticles count={45} className="z-0 opacity-80" />
+      <BrasaParticles count={45} className="z-0 opacity-40 md:opacity-80" />
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
@@ -99,7 +99,7 @@ export default function CommitmentSection() {
               ✦ Nuestro Compromiso ✦
             </span>
 
-            <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-5xl leading-tight font-bold">
+            <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-5xl leading-tight font-bold">
               &quot;Poner nuestra piedra en la obra colectiva.&quot;
             </h2>
 
@@ -132,14 +132,18 @@ export default function CommitmentSection() {
                 <button
                   onClick={prevSlide}
                   aria-label="Post anterior"
-                  className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all"
+                  aria-controls="carousel"
+                  tabIndex={0}
+                  className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                 >
                   ←
                 </button>
                 <button
                   onClick={nextSlide}
                   aria-label="Post siguiente"
-                  className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all"
+                  aria-controls="carousel"
+                  tabIndex={0}
+                  className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                 >
                   →
                 </button>
@@ -154,6 +158,9 @@ export default function CommitmentSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.3 }}
+                role="region"
+                aria-live="polite"
+                aria-label="LinkedIn post carousel"
                 className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl min-h-[440px] flex flex-col justify-between"
               >
                 {/* IFRAME EN VIVO DE LINKEDIN */}
@@ -192,7 +199,7 @@ export default function CommitmentSection() {
                 </div>
 
                 {/* OVERLAY EXCLUSIVO: TLACU CON OPACIDAD + TÍTULO Y BOTÓN LINKEDIN */}
-                <div className="p-5 bg-gradient-to-t from-azul-noche via-azul-noche/95 to-azul-noche/70 z-30 flex items-center justify-between gap-4 border-t border-white/10 relative overflow-hidden">
+                <div className="p-5 bg-gradient-to-t from-azul-noche via-azul-noche/95 to-azul-noche/50 md:to-azul-noche/70 z-30 flex items-center justify-between gap-4 border-t border-white/10 relative overflow-hidden">
                   
                   <div className="absolute right-28 -bottom-4 w-28 h-28 opacity-25 pointer-events-none z-0">
                     <Image
