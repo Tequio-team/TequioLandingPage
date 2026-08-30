@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 200" width="150" height="200">
+  <defs>
+    <linearGradient id="tlacuTerra" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <radialGradient id="brasaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fcd34d" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#f59e0b" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g class="tlacu-body">
+    <!-- Tail -->
+    <g class="tlacu-tail">
+      <path d="M105 120 Q120 100 130 80 Q135 65 128 55 Q125 50 120 55" fill="none" stroke="url(#tlacuTerra)" stroke-width="6" stroke-linecap="round"/>
+      <!-- Brasa at tail tip -->
+      <circle class="tlacu-brasa" cx="120" cy="53" r="8" fill="url(#brasaGlow)"/>
+      <circle cx="120" cy="53" r="4" fill="#fcd34d" opacity="0.9"/>
+    </g>
+    <!-- Ears -->
+    <ellipse cx="60" cy="45" rx="10" ry="14" fill="url(#tlacuTerra)" opacity="0.85" transform="rotate(-15 60 45)"/>
+    <ellipse cx="90" cy="45" rx="10" ry="14" fill="url(#tlacuTerra)" opacity="0.85" transform="rotate(15 90 45)"/>
+    <ellipse cx="60" cy="45" rx="6" ry="9" fill="#1a2332" opacity="0.3" transform="rotate(-15 60 45)"/>
+    <ellipse cx="90" cy="45" rx="6" ry="9" fill="#1a2332" opacity="0.3" transform="rotate(15 90 45)"/>
+    <!-- Head -->
+    <ellipse cx="75" cy="65" rx="26" ry="22" fill="url(#tlacuTerra)"/>
+    <!-- Snout -->
+    <ellipse cx="75" cy="75" rx="14" ry="10" fill="#ea580c" opacity="0.7"/>
+    <!-- Eyes -->
+    <circle cx="64" cy="62" r="4.5" fill="#1a2332"/>
+    <circle cx="86" cy="62" r="4.5" fill="#1a2332"/>
+    <circle cx="65" cy="61" r="2" fill="#f7f5f0"/>
+    <circle cx="87" cy="61" r="2" fill="#f7f5f0"/>
+    <!-- Nose -->
+    <ellipse cx="75" cy="73" rx="4" ry="3" fill="#1a2332" opacity="0.7"/>
+    <!-- Smile -->
+    <path d="M66 79 Q75 85 84 79" fill="none" stroke="#1a2332" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Body / hoodie -->
+    <path d="M50 85 Q48 90 45 130 Q44 150 75 155 Q106 150 105 130 Q102 90 100 85 Q92 82 75 82 Q58 82 50 85" fill="#4b5563"/>
+    <!-- Hoodie pocket -->
+    <rect x="58" y="115" width="34" height="18" rx="8" fill="#374151" opacity="0.6"/>
+    <!-- Hoodie strings -->
+    <line x1="68" y1="85" x2="65" y2="100" stroke="#d4c4a8" stroke-width="1.5"/>
+    <line x1="82" y1="85" x2="85" y2="100" stroke="#d4c4a8" stroke-width="1.5"/>
+    <!-- Left arm with tool -->
+    <path d="M45 100 Q35 95 28 100 Q25 105 30 110 Q38 115 45 112" fill="url(#tlacuTerra)" opacity="0.85"/>
+    <!-- Wrench -->
+    <rect x="22" y="95" width="3" height="18" rx="1" fill="#6b7280" transform="rotate(-20 23 104)"/>
+    <circle cx="23" cy="93" r="4" fill="none" stroke="#6b7280" stroke-width="2" transform="rotate(-20 23 93)"/>
+    <!-- Right arm extended (inviting) -->
+    <g class="tlacu-hand">
+      <path d="M105 100 Q115 95 125 100 Q128 105 122 110 Q115 113 105 110" fill="url(#tlacuTerra)" opacity="0.85"/>
+      <circle cx="126" cy="102" r="3" fill="url(#tlacuTerra)" opacity="0.85"/>
+    </g>
+    <!-- Morral (bag) strap -->
+    <line x1="58" y1="85" x2="95" y2="130" stroke="#c2410c" stroke-width="2.5" opacity="0.5"/>
+    <!-- Feet -->
+    <ellipse cx="62" cy="158" rx="12" ry="6" fill="url(#tlacuTerra)" opacity="0.8"/>
+    <ellipse cx="88" cy="158" rx="12" ry="6" fill="url(#tlacuTerra)" opacity="0.8"/>
+  </g>
+</svg>

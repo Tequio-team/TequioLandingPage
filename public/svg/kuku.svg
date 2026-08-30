@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 180" width="160" height="180">
+  <defs>
+    <linearGradient id="kukuJade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="kukuWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="50%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <g class="kuku-body" transform="translate(10,10)">
+    <!-- Head feathers / plumillas -->
+    <g class="kuku-feathers">
+      <path d="M70 35 Q65 15 60 5 Q58 2 62 8 Q66 18 68 30" fill="url(#kukuJade)" opacity="0.8"/>
+      <path d="M75 33 Q77 12 78 2 Q80 -2 79 5 Q78 15 76 28" fill="#14b8a6" opacity="0.7"/>
+      <path d="M80 35 Q85 18 90 8 Q92 5 88 12 Q84 22 82 32" fill="url(#kukuJade)" opacity="0.6"/>
+    </g>
+    <!-- Head -->
+    <ellipse cx="75" cy="48" rx="18" ry="16" fill="url(#kukuJade)"/>
+    <!-- Eyes -->
+    <circle cx="68" cy="45" r="4" fill="#1a2332"/>
+    <circle cx="82" cy="45" r="4" fill="#1a2332"/>
+    <circle cx="69" cy="44" r="1.8" fill="#f7f5f0"/>
+    <circle cx="83" cy="44" r="1.8" fill="#f7f5f0"/>
+    <!-- Beak -->
+    <path d="M75 52 L85 56 Q88 57 85 58 L75 56 L65 58 Q62 57 65 56 L75 52" fill="#f59e0b" opacity="0.9"/>
+    <!-- Long beak -->
+    <path d="M85 56 Q100 54 110 50" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Body -->
+    <ellipse cx="75" cy="85" rx="22" ry="30" fill="url(#kukuJade)" transform="rotate(-5 75 85)"/>
+    <!-- Rompevientos (windbreaker) -->
+    <path d="M55 70 Q53 75 52 100 Q52 105 75 108 Q98 105 98 100 Q97 75 95 70 Q88 66 75 65 Q62 66 55 70" fill="#0ea5e9" opacity="0.4"/>
+    <!-- Windbreaker zipper -->
+    <line x1="75" y1="68" x2="75" y2="108" stroke="#f7f5f0" stroke-width="1" opacity="0.5"/>
+    <!-- Left wing (extended) -->
+    <g class="kuku-wing-left">
+      <path d="M53 75 Q30 60 10 50 Q5 48 8 55 Q15 70 35 82 Q45 88 53 88" fill="url(#kukuWing)" opacity="0.85"/>
+      <!-- Wing feather details -->
+      <path d="M30 62 L18 55" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+      <path d="M35 68 L22 62" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+      <path d="M40 74 L28 70" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+    </g>
+    <!-- Right wing (extended) -->
+    <g class="kuku-wing-right">
+      <path d="M97 75 Q120 60 140 50 Q145 48 142 55 Q135 70 115 82 Q105 88 97 88" fill="url(#kukuWing)" opacity="0.85"/>
+      <path d="M120 62 L132 55" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+      <path d="M115 68 L128 62" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+      <path d="M110 74 L122 70" stroke="#0f172a" stroke-width="0.8" opacity="0.3"/>
+    </g>
+    <!-- Lanyards / gafetes -->
+    <line x1="68" y1="65" x2="62" y2="95" stroke="#f87171" stroke-width="1.5"/>
+    <rect x="58" y="95" width="10" height="14" rx="2" fill="#f7f5f0" opacity="0.7"/>
+    <line x1="82" y1="65" x2="88" y2="95" stroke="#f87171" stroke-width="1.5"/>
+    <rect x="84" y="95" width="10" height="14" rx="2" fill="#f7f5f0" opacity="0.7"/>
+    <!-- Tail feathers -->
+    <path d="M72 115 Q68 135 60 150 Q58 155 65 148 Q70 140 73 120" fill="url(#kukuJade)" opacity="0.7"/>
+    <path d="M75 115 Q75 138 75 155 Q76 160 77 148 Q77 135 76 118" fill="#14b8a6" opacity="0.6"/>
+    <path d="M78 115 Q82 135 90 150 Q92 155 85 148 Q80 140 77 120" fill="url(#kukuJade)" opacity="0.7"/>
+    <!-- Coral accent on tail -->
+    <path d="M66 142 Q75 148 84 142" fill="none" stroke="#f87171" stroke-width="2" opacity="0.6"/>
+  </g>
+</svg>

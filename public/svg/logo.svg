@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="logoGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer glow -->
+  <circle cx="60" cy="60" r="58" fill="url(#logoGlow)"/>
+  <!-- Main circle -->
+  <circle cx="60" cy="60" r="50" fill="none" stroke="url(#amberGrad)" stroke-width="3"/>
+  <!-- Inner circle -->
+  <circle cx="60" cy="60" r="42" fill="none" stroke="url(#amberGrad)" stroke-width="1.5" opacity="0.6"/>
+  <!-- Mitla greca pattern - top -->
+  <path d="M35 30 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <path d="M50 30 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <path d="M65 30 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <!-- Mitla greca pattern - bottom -->
+  <path d="M35 75 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <path d="M50 75 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <path d="M65 75 h10 v5 h-5 v5 h5 v5 h-10 v-5 h5 v-5 h-5 z" fill="url(#amberGrad)" opacity="0.9"/>
+  <!-- Mitla greca pattern - left -->
+  <path d="M22 42 h5 v10 h5 v-5 h-5 v-5 h5 v-5 h-5 v5 h-5 z" fill="url(#amberGrad)" opacity="0.7"/>
+  <path d="M22 58 h5 v10 h5 v-5 h-5 v-5 h5 v-5 h-5 v5 h-5 z" fill="url(#amberGrad)" opacity="0.7"/>
+  <!-- Mitla greca pattern - right -->
+  <path d="M88 42 h5 v10 h5 v-5 h-5 v-5 h5 v-5 h-5 v5 h-5 z" fill="url(#amberGrad)" opacity="0.7"/>
+  <path d="M88 58 h5 v10 h5 v-5 h-5 v-5 h5 v-5 h-5 v5 h-5 z" fill="url(#amberGrad)" opacity="0.7"/>
+  <!-- Center diamond motif -->
+  <path d="M60 48 l8 12 l-8 12 l-8 -12 z" fill="none" stroke="url(#amberGrad)" stroke-width="2"/>
+  <path d="M60 52 l5 8 l-5 8 l-5 -8 z" fill="url(#amberGrad)" opacity="0.3"/>
+  <!-- T letter stylized -->
+  <text x="60" y="64" text-anchor="middle" font-family="serif" font-size="16" font-weight="bold" fill="url(#amberGrad)" opacity="0.8">T</text>
+</svg>

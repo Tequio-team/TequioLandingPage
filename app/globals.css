@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ===================================================
+   TEQUIO — Tailwind v4 Theme Configuration
+   =================================================== */
+@theme {
+  --color-azul-noche:   #0B1026;
+  --color-blanco-lunar: #F9F7F2;
+  --color-ambar:        #F5A623;
+  --color-ambar-light:  #FFD56B;
+  --color-terracota:    #C15B3A;
+  --color-jade:         #00A87F;
+  --color-turquesa:     #2EC4B6;
+  --color-arena:        #D9CBB8;
+  --color-gris-pizarra: #4A5568;
+  --color-negro-suave:  #121212;
+  --color-oro-estelar:  #FFD56B;
+
+  --font-cinzel: var(--font-cinzel), 'Cinzel Decorative', serif;
+  --font-inter:  var(--font-inter), 'Inter', sans-serif;
+}
+
+/* ===================================================
+   Guaranteed Color Utility Fallbacks
+   =================================================== */
+.bg-azul-noche   { background-color: #0B1026; }
+.bg-blanco-lunar { background-color: #F9F7F2; }
+.bg-ambar        { background-color: #F5A623; }
+.bg-ambar-light  { background-color: #FFD56B; }
+.bg-terracota    { background-color: #C15B3A; }
+.bg-jade         { background-color: #00A87F; }
+.bg-turquesa     { background-color: #2EC4B6; }
+.bg-arena        { background-color: #D9CBB8; }
+.bg-gris-pizarra { background-color: #4A5568; }
+.bg-negro-suave  { background-color: #121212; }
+
+.text-azul-noche   { color: #0B1026; }
+.text-blanco-lunar { color: #F9F7F2; }
+.text-ambar        { color: #F5A623; }
+.text-ambar-light  { color: #FFD56B; }
+.text-terracota    { color: #C15B3A; }
+.text-jade         { color: #00A87F; }
+.text-turquesa     { color: #2EC4B6; }
+.text-arena        { color: #D9CBB8; }
+.text-gris-pizarra { color: #4A5568; }
+.text-negro-suave  { color: #121212; }
+
+.border-azul-noche   { border-color: #0B1026; }
+.border-blanco-lunar { border-color: #F9F7F2; }
+.border-ambar        { border-color: #F5A623; }
+.border-terracota    { border-color: #C15B3A; }
+.border-jade         { border-color: #00A87F; }
+.border-arena        { border-color: #D9CBB8; }
+
+/* ===================================================
+   Base Reset
+   =================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+section[id] {
+  scroll-margin-top: 4.5rem;
+}
+
+body {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  background-color: #0B1026;
+  color: #F9F7F2;
+  overflow-x: hidden;
+}
+
+/* ===================================================
+   Custom Cursor Ambient Accent (Non-blocking)
+   =================================================== */
+/* Native cursors restored for seamless clickability */
+
+/* ===================================================
+   Scrollbar
+   =================================================== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B1026;
+}
+::-webkit-scrollbar-thumb {
+  background: #F5A623;
+  border-radius: 3px;
+}
+
+/* ===================================================
+   Keyframe Animations
+   =================================================== */
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(160px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(160px) rotate(-360deg); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.7); }
+  50%       { opacity: 1;    transform: scale(1.3); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(100vh); opacity: 0; }
+  5%   { opacity: 0.7; }
+  95%  { opacity: 0.4; }
+  100% { transform: translateY(-10vh); opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(245,166,35,0.4)); }
+  50%       { filter: drop-shadow(0 0 30px rgba(245,166,35,0.9)); }
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+@keyframes diagonalMove {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 500; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes walk {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+/* ===================================================
+   Utility animation classes
+   =================================================== */
+.animate-orbit-slow  { animation: orbit 20s linear infinite; }
+.animate-orbit-med   { animation: orbit 15s linear infinite; }
+.animate-orbit-fast  { animation: orbit 10s linear infinite; }
+.animate-pulse-glow  { animation: pulseGlow 3s ease-in-out infinite; }
+.animate-badge-pulse { animation: badgePulse 2s ease-in-out infinite; }
+.animate-walk        { animation: walk 0.8s ease-in-out infinite; }
+.animate-diagonal    { animation: diagonalMove 3s linear infinite; background-size: 200% 200%; }
+
+/* ===================================================
+   Font utility classes
+   =================================================== */
+.font-cinzel { font-family: var(--font-cinzel), 'Cinzel Decorative', serif !important; }
+.font-inter  { font-family: var(--font-inter), 'Inter', sans-serif !important; }
+
+/* ===================================================
+   Glassmorphism utility
+   =================================================== */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ===================================================
+   Selection highlight
+   =================================================== */
+::selection {
+  background: rgba(245, 166, 35, 0.3);
+  color: #F9F7F2;
+}
+
+/* ===================================================
+   Focus visible
+   =================================================== */
+:focus-visible {
+  outline: 2px solid #F5A623;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ===================================================
+   Image rendering
+   =================================================== */
+img, svg {
+  image-rendering: crisp-edges;
+  shape-rendering: geometricPrecision;
+}
