@@ -94,7 +94,7 @@ export default function LinkedInEmbedCard({
       className="break-inside-avoid mb-6 rounded-2xl overflow-hidden bg-white/[0.03] border border-amber-500/25 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.22)] transition-all duration-300 backdrop-blur-xl"
     >
       {/* SELLO CEREMONIAL FLOTANTE */}
-      <div className="absolute top-3 right-3 z-20 pointer-events-none">
+      <div className="absolute right-2 bottom-2 sm:right-28 sm:bottom-4 w-28 h-28 opacity-25 pointer-events-none z-0">
         <span className="font-inter text-[9px] uppercase font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-azul-noche shadow-[0_0_12px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1">
           <span>✦</span>
           <span>{sealStamp || "✦ SELLO TEQUIO ✦"}</span>
@@ -134,7 +134,7 @@ export default function LinkedInEmbedCard({
             }`}
           />
         ) : (
-          <div className="relative h-full w-full flex flex-col items-center justify-center p-5 text-center bg-white/5 space-y-2">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 relative h-full w-full flex flex-col items-center justify-center p-5 text-center bg-white/5 space-y-2">
             <Image
               src={imgSrc}
               alt={title}
