@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/#guardianes", sectionId: "guardianes", label: "Guardianes", guardianBadge: "🐰" },
   { href: "/eventos", sectionId: "eventos", label: "Faena Viva", guardianBadge: "🦝" },
   { href: "/manifiesto", sectionId: "manifiesto", label: "Manifiesto", guardianBadge: "🪶" },
+  { href: "/admin", sectionId: "admin", label: "Admin Board", guardianBadge: "⚙️" },
 ];
 
 export default function Navbar() {
