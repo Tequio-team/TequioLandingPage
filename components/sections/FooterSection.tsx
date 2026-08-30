@@ -102,7 +102,7 @@ export default function FooterSection() {
                   alt={g.name}
                   width={48}
                   height={58}
-                  className="object-contain"
+                  className={`object-contain ${g.id === "kuku" ? "scale-125" : ""}`}
                 />
 
                 {/* Tooltip con nombre del guardián al hacer hover */}

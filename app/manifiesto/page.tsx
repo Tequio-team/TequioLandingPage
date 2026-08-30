@@ -169,7 +169,7 @@ export default function ManifiestoPage() {
                   <span className="font-inter text-[11px] text-[#C15B3A] font-semibold block">Tlacuache-Jaguar · Constructor</span>
                 </div>
                 <div className="p-4 rounded-xl bg-white/[0.03] text-center">
-                  <Image src="/png/kuku.png" alt="Kuku, el veloz Colibrí-Quetzal mensajero" width={100} height={120} className="mx-auto object-contain mb-2" />
+                  <Image src="/png/kuku.png" alt="Kuku, el veloz Colibrí-Quetzal mensajero" width={100} height={120} className="mx-auto object-contain scale-125 mb-2" />
                   <h4 className="font-cinzel text-blanco-lunar font-bold">Kuku</h4>
                   <span className="font-inter text-[11px] text-[#10b981] font-semibold block">Colibrí-Quetzal · Explorador</span>
                 </div>

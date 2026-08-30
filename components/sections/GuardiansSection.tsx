@@ -216,7 +216,7 @@ function GuardianCard({
           alt={guardian.name}
           width={130}
           height={155}
-          className="object-contain"
+          className={`object-contain ${guardian.id === "kuku" ? "scale-125" : ""}`}
           priority
         />
         <div
