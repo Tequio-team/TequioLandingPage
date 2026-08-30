@@ -4,38 +4,26 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import BrasaParticles from "@/components/ui/BrasaParticles";
-import LinkedInEmbedCard from "@/components/ui/LinkedInEmbedCard";
+import { formatLinkedInEmbedUrl } from "@/components/ui/LinkedInEmbedCard";
 
 const DEFAULT_POSTS: Array<{
   id: string;
   title: string;
   date: string;
-  guardianTag: string;
-  sealStamp: string;
   linkedinPostUrl: string;
-  description: string;
-  impactMetrics: string[];
   authorName?: string;
 }> = [
   {
     id: "post-1",
     title: "Impulso a la Comunidad — Faena Tequio en LinkedIn",
     date: "28 de Agosto, 2026",
-    guardianTag: "🦝 Tlacu · Forja Comunitaria",
-    sealStamp: "✦ FAENA OFICIAL CUMPLIDA ✦",
     linkedinPostUrl: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
-    description: "Publicación oficial sobre el impacto y los logros alcanzados en la faena comunitaria.",
-    impactMetrics: ["📊 +1,200 Impresiones en LinkedIn", "🚀 42 Desarrolladores sumados"],
   },
   {
     id: "post-2",
     title: "Caravana y Encuentro Tech — Registro de Miembro",
     date: "20 de Agosto, 2026",
-    guardianTag: "🪶 Kuku · Caravana del Vuelo",
-    sealStamp: "✦ PUBLICACIÓN DE LA TRIBU ✦",
     linkedinPostUrl: "https://lnkd.in/p/g-Dc7yaS",
-    description: "Testimonio publicado por integrante de la comunidad Tequio sobre la experiencia en caravana.",
-    impactMetrics: ["🌟 Testimonio de la Tribu", "👥 Asistencia en Grupo"],
   },
 ];
 
@@ -44,6 +32,7 @@ export default function CommitmentSection() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [currentSlide, setCurrentSlide] = useState(0);
   const [posts, setPosts] = useState(DEFAULT_POSTS);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   // Fetch live posts from Supabase completed_works_gallery
   useEffect(() => {
@@ -61,12 +50,8 @@ export default function CommitmentSection() {
               id: g.id,
               title: g.title,
               date: g.event_date || "Agosto 2026",
-              guardianTag: g.guardian_tag || "🦝 Tribu Tequio",
-              sealStamp: g.seal_stamp || "✦ SELLO DE MAYORDOMÍA ✦",
               linkedinPostUrl: g.linkedin_post_url,
-              description: g.description,
               authorName: g.author_name,
-              impactMetrics: Array.isArray(g.impact_metrics) ? g.impact_metrics : [],
             }))
           );
         }
@@ -79,14 +64,18 @@ export default function CommitmentSection() {
   }, []);
 
   const nextSlide = () => {
+    setIframeLoaded(false);
     setCurrentSlide((prev) => (prev + 1) % posts.length);
   };
 
   const prevSlide = () => {
+    setIframeLoaded(false);
     setCurrentSlide((prev) => (prev - 1 + posts.length) % posts.length);
   };
 
   const currentPost = posts[currentSlide] || posts[0];
+  const embedUrl = formatLinkedInEmbedUrl(currentPost?.linkedinPostUrl);
+  const isShortLink = currentPost?.linkedinPostUrl?.includes("lnkd.in");
 
   return (
     <section
@@ -104,7 +93,7 @@ export default function CommitmentSection() {
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
-        {/* LAYOUT EN 2 COLUMNAS: IZQUIERDA (ESLOGAN) / DERECHA (POST LINKEDIN + OVERLAY CON TLACU) */}
+        {/* LAYOUT EN 2 COLUMNAS: IZQUIERDA (ESLOGAN) / DERECHA (POST LINKEDIN + OVERLAY CON TLACU & TÍTULO) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* COLUMNA IZQUIERDA (50% / ESLOGAN & MANIFIESTO) */}
@@ -137,7 +126,7 @@ export default function CommitmentSection() {
             </div>
           </motion.div>
 
-          {/* COLUMNA DERECHA (50% / POST DE LINKEDIN + OVERLAY CON TLACU Y VER POST) */}
+          {/* COLUMNA DERECHA (50% / POST EN VIVO DE LINKEDIN + OVERLAY CON TLACU, TÍTULO Y BOTÓN LINKEDIN) */}
           <motion.div
             className="lg:col-span-6 relative"
             initial={{ opacity: 0, x: 30 }}
@@ -169,7 +158,7 @@ export default function CommitmentSection() {
               </div>
             </div>
 
-            {/* VISTA ESPECIAL CON OVERLAY: LINKEDIN EMBED + TLACU CON OPACIDAD Y BOTÓN DE ACCIÓN */}
+            {/* MARCO ESPECIAL ULTRA-CLEAN CON IFRAME + OVERLAY CON TLACU Y VER POST */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentPost.id}
@@ -177,52 +166,74 @@ export default function CommitmentSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.4 }}
-                className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/90 shadow-2xl"
+                className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl min-h-[440px] flex flex-col justify-between"
               >
-                {/* TARJETA DE LINKEDIN */}
-                <LinkedInEmbedCard
-                  id={currentPost.id}
-                  title={currentPost.title}
-                  date={currentPost.date}
-                  guardianTag={currentPost.guardianTag}
-                  sealStamp={currentPost.sealStamp}
-                  linkedinPostUrl={currentPost.linkedinPostUrl}
-                  description={currentPost.description}
-                  impactMetrics={currentPost.impactMetrics}
-                  authorName={currentPost.authorName}
-                  sizeVariant="tall"
-                />
-
-                {/* OVERLAY MÍSTICO INFERIOR CON TLACU FLOTANTE EN OPACIDAD */}
-                <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-azul-noche via-azul-noche/90 to-transparent z-30 flex items-end justify-between gap-4 border-t border-white/10">
-                  
-                  {/* TLACU EN OPACIDAD SUTIL A LA IZQUIERDA DEL OVERLAY */}
-                  <div className="flex items-center gap-3 relative">
-                    <div className="relative w-14 h-16 opacity-30 flex-shrink-0">
-                      <Image
-                        src="/png/tlacu.png"
-                        alt="Tlacu el Tlacuache-Jaguar"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <span className="font-inter text-[10px] uppercase font-bold text-terracota block">
-                        ✦ Obra Registrada ✦
+                {/* IFRAME EN VIVO DE LINKEDIN */}
+                <div className="relative w-full h-[400px] bg-black/60 overflow-hidden flex items-center justify-center">
+                  {!iframeLoaded && !isShortLink && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex items-center justify-center z-10">
+                      <span className="font-inter text-xs text-amber-400 font-bold animate-bounce">
+                        ⚡ Cargando post en vivo...
                       </span>
-                      <h4 className="font-cinzel text-blanco-lunar text-sm font-bold line-clamp-1">
-                        {currentPost.title}
-                      </h4>
                     </div>
+                  )}
+
+                  {embedUrl && !isShortLink ? (
+                    <iframe
+                      src={embedUrl}
+                      height="400"
+                      width="100%"
+                      frameBorder="0"
+                      allowFullScreen={false}
+                      title={currentPost.title}
+                      onLoad={() => setIframeLoaded(true)}
+                      className={`w-full h-[400px] transition-opacity duration-500 ${
+                        iframeLoaded ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                  ) : (
+                    <div className="p-8 text-center space-y-3">
+                      <span className="font-inter text-xs text-amber-400 font-bold uppercase tracking-widest block">
+                        🔗 Publicación Oficial en LinkedIn
+                      </span>
+                      <p className="font-cinzel text-blanco-lunar text-lg font-bold">
+                        {currentPost.title}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* OVERLAY EXCLUSIVO: TLACU CON OPACIDAD + TÍTULO Y BOTÓN VER LINKEDIN */}
+                <div className="p-5 bg-gradient-to-t from-azul-noche via-azul-noche/95 to-azul-noche/70 z-30 flex items-center justify-between gap-4 border-t border-white/10 relative overflow-hidden">
+                  
+                  {/* ILUSTRACIÓN TLACU FLOTANTE EN OPACIDAD EN EL FONDO DEL OVERLAY */}
+                  <div className="absolute right-28 -bottom-4 w-28 h-28 opacity-25 pointer-events-none z-0">
+                    <Image
+                      src="/png/tlacu.png"
+                      alt="Tlacu Guardián"
+                      fill
+                      className="object-contain"
+                    />
                   </div>
 
-                  {/* BOTÓN DIRECTO VER EN LINKEDIN */}
+                  {/* TÍTULO Y AUTOR */}
+                  <div className="space-y-0.5 relative z-10 max-w-[65%]">
+                    <h4 className="font-cinzel text-blanco-lunar text-sm font-bold line-clamp-1">
+                      {currentPost.title}
+                    </h4>
+                    {currentPost.authorName && (
+                      <span className="font-inter text-[11px] text-arena/70 block italic">
+                        Por: {currentPost.authorName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* BOTÓN VER EN LINKEDIN */}
                   <a
                     href={currentPost.linkedinPostUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl shadow-lg hover:bg-amber-400 transition-all hover:scale-105 whitespace-nowrap flex items-center gap-1.5"
+                    className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl shadow-lg hover:bg-amber-400 transition-all hover:scale-105 whitespace-nowrap flex items-center gap-1.5 relative z-10"
                   >
                     <span>Ver en LinkedIn</span>
                     <span>↗</span>
@@ -237,7 +248,10 @@ export default function CommitmentSection() {
               {posts.map((post, idx) => (
                 <button
                   key={post.id}
-                  onClick={() => setCurrentSlide(idx)}
+                  onClick={() => {
+                    setIframeLoaded(false);
+                    setCurrentSlide(idx);
+                  }}
                   aria-label={`Ir al post ${idx + 1}`}
                   className={`cursor-pointer h-2.5 rounded-full transition-all duration-300 ${
                     currentSlide === idx
