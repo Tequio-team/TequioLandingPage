@@ -1,5 +1,5 @@
 -- ==============================================================================
--- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (CON MEETING LINK Y CALENDARIO) ✦
+-- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (CON EMBEDS DE LINKEDIN Y SELLO) ✦
 -- Copia y ejecuta este script en el SQL Editor de tu consola de Supabase.
 -- ==============================================================================
 
@@ -45,21 +45,21 @@ CREATE TABLE public.events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   slug TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
-  type_badge TEXT NOT NULL, -- ej. '🎙️ TEQUIO TALKS #01'
+  type_badge TEXT NOT NULL,
   guardian TEXT NOT NULL CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
-  guardian_tag TEXT NOT NULL, -- ej. '🐰 TOCHTLI (Mentoría e Inspiración)'
+  guardian_tag TEXT NOT NULL,
   type_category TEXT NOT NULL CHECK (type_category IN ('tequio_talks', 'hackathon', 'caravana', 'taller', 'jornada', 'meetup')),
   
-  date_display TEXT NOT NULL, -- ej. 'Jueves 17 de Septiembre, 2026'
+  date_display TEXT NOT NULL,
   start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   end_at TIMESTAMPTZ,
   time_display TEXT NOT NULL,
   location TEXT NOT NULL,
-  meeting_link TEXT DEFAULT 'https://meet.google.com/abc-defg-hij', -- LIGA DE GOOGLE MEET / ZOOM
+  meeting_link TEXT DEFAULT 'https://meet.google.com/abc-defg-hij',
   
-  speaker TEXT, -- Ponente invitado
-  speaker_social TEXT, -- LinkedIn / X del ponente
-  image_url TEXT DEFAULT '/jpg/moment2.jpg', -- Poster o banner promocional
+  speaker TEXT,
+  speaker_social TEXT,
+  image_url TEXT DEFAULT '/jpg/moment2.jpg',
   dynamic_desc TEXT,
   access_info TEXT,
   description TEXT NOT NULL,
@@ -131,15 +131,17 @@ CREATE TABLE public.route_interests (
 CREATE INDEX idx_route_interests_route ON public.route_interests(route_id);
 
 -- ==============================================================================
--- TABLA 6: COMPLETED_WORKS_GALLERY (Memoria Colectiva)
+-- TABLA 6: COMPLETED_WORKS_GALLERY (Memoria Colectiva con Embeds de LinkedIn y Sello)
 -- ==============================================================================
 CREATE TABLE public.completed_works_gallery (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   event_id UUID REFERENCES public.events(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   event_date TEXT NOT NULL,
-  guardian_tag TEXT NOT NULL,
-  image_url TEXT NOT NULL,
+  guardian_tag TEXT NOT NULL, -- ej. '🦝 TLACU · FORJA CUMPLIDA'
+  seal_stamp TEXT DEFAULT '✦ SELLO DE MAYORDOMÍA ✦', -- TEXTO DEL SELLO ANCESTRAL SOBRE EL IFRAME
+  image_url TEXT DEFAULT '/jpg/moment1.jpg',
+  linkedin_post_url TEXT, -- URL DEL POST DE LINKEDIN PARA IFRAME EMBED
   description TEXT NOT NULL,
   impact_metrics JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -231,9 +233,10 @@ CREATE POLICY "Permitir registro público a la comunidad" ON public.community_me
 CREATE POLICY "Permitir lectura de comunidad" ON public.community_members FOR SELECT TO public USING (true);
 
 CREATE POLICY "Lectura pública de memoria colectiva" ON public.completed_works_gallery FOR SELECT TO public USING (true);
+CREATE POLICY "Escritura de memoria colectiva" ON public.completed_works_gallery FOR ALL TO public USING (true);
 
 -- ==============================================================================
--- DATOS INICIALES (SEED DATA)
+-- DATOS INICIALES (SEED DATA CON EMBED DE LINKEDIN Y SELLO CEREMONIAL)
 -- ==============================================================================
 
 INSERT INTO public.events (
@@ -278,11 +281,24 @@ INSERT INTO public.external_routes (
   14
 );
 
-INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, image_url, description, impact_metrics) VALUES
+-- GALERÍA CON POSTS REALES DE LINKEDIN Y SELLOS ANCESTRALES
+INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, seal_stamp, linkedin_post_url, image_url, description, impact_metrics) VALUES
+(
+  'Impulso a la Comunidad — Faena Tequio en LinkedIn',
+  '28 de Agosto, 2026',
+  '🦝 Tlacu · Forja Comunitaria',
+  '✦ FAENA OFICIAL CUMPLIDA ✦',
+  'https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/',
+  '/jpg/moment1.jpg',
+  'Publicación oficial en LinkedIn sobre la iniciativa y el impacto de la faena colectiva en la comunidad.',
+  '["📊 +1,200 Impresiones en LinkedIn", "🚀 42 Desarrolladores sumados"]'::jsonb
+),
 (
   'Forja Comunitaria — Huellitas de la Esperanza',
   '15 de Agosto, 2026',
   '🦝 Tlacu · Hackathon',
+  '✦ SELLO HUELLITAS DE LA ESPERANZA ✦',
+  'https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/',
   '/jpg/moment1.jpg',
   'Construimos una plataforma de adopción para el refugio Huellitas de la Esperanza en un hackathon de 48 horas.',
   '["📊 +120 perritos catalogados", "🚀 1 plataforma en producción"]'::jsonb
@@ -291,15 +307,9 @@ INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, ima
   'Círculo de la Luna — Noche de Código y Carrera',
   '02 de Julio, 2026',
   '🐰 Tochtli · Mentoría',
+  '✦ SELLO CÍRCULO LUNAR ✦',
+  'https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/',
   '/jpg/moment2.jpg',
   'Sesiones de mentoría 1:1 donde estudiantes recibieron feedback directo de portafolios y orientación técnica.',
   '["📊 35 portafolios revisados", "👥 12 mentores activos"]'::jsonb
-),
-(
-  'Caravana del Vuelo — Encuentro Tech CDMX',
-  '20 de Mayo, 2026',
-  '🪶 Kuku · Caravana',
-  '/jpg/moment3.jpg',
-  'La tribu asistió en bloque a la conferencia nacional de tecnología, creando espacios seguros para principiantes.',
-  '["📊 40 asistentes en bloque", "🌟 15 primerizos en eventos tech"]'::jsonb
 );

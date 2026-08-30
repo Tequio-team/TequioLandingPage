@@ -20,7 +20,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"external" | "internal" | "attendees">("external");
+  const [activeTab, setActiveTab] = useState<"external" | "internal" | "gallery" | "attendees">("external");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
@@ -47,10 +47,10 @@ export default function AdminPage() {
     guardian: "tochtli",
     guardian_tag: "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)",
     type_category: "tequio_talks",
-    date_picker: "", // datetime-local
+    date_picker: "",
     time_display: "07:00 PM — 08:30 PM (CDMX)",
     location: "Google Meet / YouTube Live",
-    meeting_link: "https://meet.google.com/abc-defg-hij", // LIGA DE GOOGLE MEET / ZOOM
+    meeting_link: "https://meet.google.com/abc-defg-hij",
     speaker: "",
     speaker_social: "",
     image_url: "/jpg/moment2.jpg",
@@ -61,9 +61,22 @@ export default function AdminPage() {
     is_featured: false,
   });
 
+  // Form State: Gallery / Memoria Colectiva LinkedIn Post Embed
+  const [galleryForm, setGalleryForm] = useState({
+    title: "",
+    event_date: "28 de Agosto, 2026",
+    guardian_tag: "🦝 Tlacu · Forja Comunitaria",
+    seal_stamp: "✦ SELLO DE MAYORDOMÍA ✦",
+    linkedin_post_url: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
+    description: "",
+    metric_1: "📊 +1,200 Impresiones en LinkedIn",
+    metric_2: "🚀 42 Desarrolladores sumados",
+  });
+
   // Real-time Lists loaded from Supabase
   const [routesList, setRoutesList] = useState<any[]>([]);
   const [eventsList, setEventsList] = useState<any[]>([]);
+  const [galleryList, setGalleryList] = useState<any[]>([]);
   const [registrationsList, setRegistrationsList] = useState<any[]>([]);
   const [membersList, setMembersList] = useState<any[]>([]);
 
@@ -122,7 +135,14 @@ export default function AdminPage() {
         .order("created_at", { ascending: false });
       if (events) setEventsList(events);
 
-      // Load Event Registrations with Event Details
+      // Load Gallery
+      const { data: gallery } = await supabase
+        .from("completed_works_gallery")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (gallery) setGalleryList(gallery);
+
+      // Load Event Registrations
       const { data: reg } = await supabase
         .from("event_registrations")
         .select("*, events(title, id)")
@@ -186,18 +206,6 @@ export default function AdminPage() {
     }
   };
 
-  // Format date_picker into readable string
-  const formatPickerDate = (dtString: string) => {
-    if (!dtString) return "Fecha por confirmar";
-    const dt = new Date(dtString);
-    return dt.toLocaleDateString("es-MX", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   // Submit Internal Event
   const handleInternalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,10 +222,6 @@ export default function AdminPage() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "") + "-" + Date.now();
 
-      const formattedDate = internalForm.date_picker
-        ? formatPickerDate(internalForm.date_picker)
-        : "Próximamente";
-
       const { error } = await supabase.from("events").insert([
         {
           slug,
@@ -226,7 +230,7 @@ export default function AdminPage() {
           guardian: internalForm.guardian,
           guardian_tag: internalForm.guardian_tag,
           type_category: internalForm.type_category,
-          date_display: formattedDate,
+          date_display: internalForm.date_picker ? new Date(internalForm.date_picker).toLocaleDateString() : "Próximamente",
           start_at: internalForm.date_picker ? new Date(internalForm.date_picker).toISOString() : new Date().toISOString(),
           time_display: internalForm.time_display,
           location: internalForm.location,
@@ -247,24 +251,54 @@ export default function AdminPage() {
         setStatusMessage(`❌ Error: ${error.message}`);
       } else {
         setStatusMessage("✅ ¡Tequio Talk / Evento publicado con éxito!");
-        setInternalForm({
+        loadAdminData();
+      }
+    } catch (err: any) {
+      setStatusMessage(`❌ Error de conexión: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Submit Gallery Post (LinkedIn Embed)
+  const handleGallerySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryForm.title || !galleryForm.linkedin_post_url) return;
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    try {
+      const { supabase } = await import("@/lib/supabase");
+
+      const metrics = [galleryForm.metric_1, galleryForm.metric_2].filter(Boolean);
+
+      const { error } = await supabase.from("completed_works_gallery").insert([
+        {
+          title: galleryForm.title,
+          event_date: galleryForm.event_date || "Fecha de Faena",
+          guardian_tag: galleryForm.guardian_tag,
+          seal_stamp: galleryForm.seal_stamp || "✦ SELLO DE MAYORDOMÍA ✦",
+          linkedin_post_url: galleryForm.linkedin_post_url,
+          image_url: "/jpg/moment1.jpg",
+          description: galleryForm.description || galleryForm.title,
+          impact_metrics: metrics,
+        },
+      ]);
+
+      if (error) {
+        setStatusMessage(`❌ Error: ${error.message}`);
+      } else {
+        setStatusMessage("✅ ¡Publicación de LinkedIn registrada en Memoria Colectiva!");
+        setGalleryForm({
           title: "",
-          type_badge: "🎙️ TEQUIO TALKS #02",
-          guardian: "tochtli",
-          guardian_tag: "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)",
-          type_category: "tequio_talks",
-          date_picker: "",
-          time_display: "07:00 PM — 08:30 PM (CDMX)",
-          location: "Google Meet / YouTube Live",
-          meeting_link: "https://meet.google.com/abc-defg-hij",
-          speaker: "",
-          speaker_social: "",
-          image_url: "/jpg/moment2.jpg",
-          dynamic_desc: "Q&A Abierto con el Ponente",
-          access_info: "Acceso libre · Registro previo",
+          event_date: "28 de Agosto, 2026",
+          guardian_tag: "🦝 Tlacu · Forja Comunitaria",
+          seal_stamp: "✦ SELLO DE MAYORDOMÍA ✦",
+          linkedin_post_url: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
           description: "",
-          capacity_limit: 60,
-          is_featured: false,
+          metric_1: "📊 +1,200 Impresiones en LinkedIn",
+          metric_2: "🚀 42 Desarrolladores sumados",
         });
         loadAdminData();
       }
@@ -275,12 +309,10 @@ export default function AdminPage() {
     }
   };
 
-  // Filter registrations by selected event
   const filteredRegistrations = registrationsList.filter((reg) => {
     return selectedEventFilter === "all" || reg.event_id === selectedEventFilter;
   });
 
-  // Copy emails for sending reminders
   const handleCopyEmails = () => {
     const emails = filteredRegistrations.map((r) => r.email).filter(Boolean).join(", ");
     if (emails) {
@@ -295,7 +327,6 @@ export default function AdminPage() {
       <BrasaCursor />
       <Navbar />
 
-      {/* RENDER LOCK SCREEN IF NOT AUTHENTICATED */}
       {!authenticated ? (
         <section className="relative pt-36 pb-24 px-6 flex items-center justify-center min-h-[80vh]">
           <StarField count={30} isMitlaShape={true} />
@@ -305,7 +336,6 @@ export default function AdminPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="p-8 md:p-12 rounded-3xl border-2 border-amber-500/50 bg-white/[0.04] backdrop-blur-2xl max-w-md w-full text-center space-y-6 shadow-2xl relative z-10"
-            style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.2)" }}
           >
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-3xl">
@@ -320,9 +350,6 @@ export default function AdminPage() {
               <h1 className="font-cinzel text-blanco-lunar text-2xl font-bold">
                 Centro de Mando Tequio
               </h1>
-              <p className="font-inter text-arena text-xs opacity-80">
-                Ingresa la clave de administración para acceder al panel de control.
-              </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
@@ -339,7 +366,7 @@ export default function AdminPage() {
 
               {authError && (
                 <p className="font-inter text-xs text-red-400 font-bold animate-shake">
-                  ❌ Clave incorrecta. Verifica tu contraseña.
+                  ❌ Clave incorrecta.
                 </p>
               )}
 
@@ -351,17 +378,13 @@ export default function AdminPage() {
                 {isVerifying ? (
                   <div className="w-5 h-5 border-2 border-azul-noche border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <span>Desbloquear Centro de Mando</span>
-                    <span>🔑</span>
-                  </>
+                  <span>Desbloquear 🔑</span>
                 )}
               </button>
             </form>
           </motion.div>
         </section>
       ) : (
-        /* DASHBOARD COMPLETO CUANDO ESTÁ AUTENTICADO */
         <>
           {/* Header Admin Banner */}
           <section className="relative pt-36 pb-12 px-6 text-center">
@@ -385,21 +408,18 @@ export default function AdminPage() {
               <h1 className="font-cinzel text-blanco-lunar text-4xl md:text-5xl font-bold tracking-wide">
                 Administrador de Faenas & Caravanas
               </h1>
-              <p className="font-inter text-arena text-base max-w-2xl mx-auto opacity-85">
-                Publica rutas a eventos externos, programa Tequio Talks con liga de Meet/Zoom y consulta las listas filtradas por evento para enviar recordatorios.
-              </p>
 
-              {/* Selector de Pestañas */}
+              {/* Selector de Pestañas (4 Pestañas) */}
               <div className="pt-6 flex justify-center gap-3 flex-wrap">
                 <button
                   onClick={() => setActiveTab("external")}
                   className={`cursor-pointer font-inter text-xs font-bold px-5 py-2.5 rounded-full transition-all duration-300 ${
                     activeTab === "external"
                       ? "bg-amber-500 text-azul-noche shadow-[0_0_15px_#F5A623] scale-105"
-                      : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
+                      : "bg-white/5 text-arena/80 hover:bg-white/10 border border-white/10"
                   }`}
                 >
-                  🪶 Rutas & Eventos Externos ({routesList.length})
+                  🪶 Rutas Externas ({routesList.length})
                 </button>
 
                 <button
@@ -407,10 +427,21 @@ export default function AdminPage() {
                   className={`cursor-pointer font-inter text-xs font-bold px-5 py-2.5 rounded-full transition-all duration-300 ${
                     activeTab === "internal"
                       ? "bg-amber-500 text-azul-noche shadow-[0_0_15px_#F5A623] scale-105"
-                      : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
+                      : "bg-white/5 text-arena/80 hover:bg-white/10 border border-white/10"
                   }`}
                 >
-                  🎙️ Tequio Talks & Eventos ({eventsList.length})
+                  🎙️ Tequio Talks ({eventsList.length})
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("gallery")}
+                  className={`cursor-pointer font-inter text-xs font-bold px-5 py-2.5 rounded-full transition-all duration-300 ${
+                    activeTab === "gallery"
+                      ? "bg-amber-500 text-azul-noche shadow-[0_0_15px_#F5A623] scale-105"
+                      : "bg-white/5 text-arena/80 hover:bg-white/10 border border-white/10"
+                  }`}
+                >
+                  🖼️ Memoria LinkedIn ({galleryList.length})
                 </button>
 
                 <button
@@ -418,7 +449,7 @@ export default function AdminPage() {
                   className={`cursor-pointer font-inter text-xs font-bold px-5 py-2.5 rounded-full transition-all duration-300 ${
                     activeTab === "attendees"
                       ? "bg-amber-500 text-azul-noche shadow-[0_0_15px_#F5A623] scale-105"
-                      : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
+                      : "bg-white/5 text-arena/80 hover:bg-white/10 border border-white/10"
                   }`}
                 >
                   📋 Asistentes & Miembros ({registrationsList.length})
@@ -427,7 +458,6 @@ export default function AdminPage() {
             </div>
           </section>
 
-          {/* STATUS NOTIFICATION */}
           {statusMessage && (
             <div className="px-6 mb-6">
               <div className="container mx-auto max-w-4xl p-4 rounded-2xl bg-white/10 border border-ambar/40 text-center font-inter text-sm font-bold text-blanco-lunar">
@@ -436,333 +466,154 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* CONTENIDO PRINCIPAL SEGÚN PESTAÑA */}
           <section className="pb-24 px-6">
             <div className="container mx-auto max-w-5xl relative z-10">
 
               <AnimatePresence mode="wait">
-                {/* PESTAÑA 1: EVENTOS EXTERNOS / CARAVANAS */}
+                {/* PESTAÑA 1: RUTAS EXTERNAS */}
                 {activeTab === "external" && (
-                  <motion.div
-                    key="tab-external"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    className="space-y-12"
-                  >
-                    {/* Formulario Nueva Ruta Externa */}
+                  <motion.div key="tab-external" className="space-y-12">
                     <div className="p-8 md:p-10 rounded-3xl bg-white/[0.03] border border-amber-500/30 backdrop-blur-xl shadow-2xl space-y-6">
-                      <div className="space-y-1">
-                        <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold">
-                          🪶 Publicar Evento de Comunidad Externa
-                        </span>
-                        <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                          Nueva Ruta / Caravana del Vuelo
-                        </h3>
-                        <p className="font-inter text-arena text-xs opacity-80">
-                          Agrega el evento externo al que asistiremos en grupo. Los usuarios podrán dar clic a su enlace de registro oficial y dejar su correo para coordinarnos.
-                        </p>
-                      </div>
+                      <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
+                        Nueva Ruta / Caravana a Evento Externo
+                      </h3>
 
                       <form onSubmit={handleExternalSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="md:col-span-2">
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Título del Evento Externo *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={externalForm.title}
-                            onChange={(e) => setExternalForm({ ...externalForm, title: e.target.value })}
-                            placeholder="Ej. DevFest CDMX 2026 / Hackathon HackMX"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
+                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Título del Evento Externo *</label>
+                          <input type="text" required value={externalForm.title} onChange={(e) => setExternalForm({ ...externalForm, title: e.target.value })} placeholder="Ej. DevFest CDMX 2026" className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                         </div>
-
                         <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Organizador / Comunidad *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={externalForm.organizer_name}
-                            onChange={(e) => setExternalForm({ ...externalForm, organizer_name: e.target.value })}
-                            placeholder="Ej. Google Developer Group CDMX"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
+                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Organizador *</label>
+                          <input type="text" required value={externalForm.organizer_name} onChange={(e) => setExternalForm({ ...externalForm, organizer_name: e.target.value })} placeholder="Ej. GDG CDMX" className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                         </div>
-
                         <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Enlace Oficial de Registro Externo *
-                          </label>
-                          <input
-                            type="url"
-                            required
-                            value={externalForm.external_link}
-                            onChange={(e) => setExternalForm({ ...externalForm, external_link: e.target.value })}
-                            placeholder="https://eventos.com/registro-oficial"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
+                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Enlace Oficial de Registro *</label>
+                          <input type="url" required value={externalForm.external_link} onChange={(e) => setExternalForm({ ...externalForm, external_link: e.target.value })} placeholder="https://devfest.com" className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                         </div>
-
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Fecha Programada
-                          </label>
-                          <input
-                            type="text"
-                            value={externalForm.date_display}
-                            onChange={(e) => setExternalForm({ ...externalForm, date_display: e.target.value })}
-                            placeholder="Ej. Sábado 24 de Octubre, 2026"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Lugar / Sede
-                          </label>
-                          <input
-                            type="text"
-                            value={externalForm.location}
-                            onChange={(e) => setExternalForm({ ...externalForm, location: e.target.value })}
-                            placeholder="Ej. World Trade Center CDMX"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            URL de la Imagen / Poster (/jpg/moment3.jpg o Enlace HTTP)
-                          </label>
-                          <input
-                            type="text"
-                            value={externalForm.image_url}
-                            onChange={(e) => setExternalForm({ ...externalForm, image_url: e.target.value })}
-                            placeholder="/jpg/moment3.jpg"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Descripción de la Caravana / Plan de Viaje en Grupo
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={externalForm.description}
-                            onChange={(e) => setExternalForm({ ...externalForm, description: e.target.value })}
-                            placeholder="Explicación de cómo asistiremos juntos, punto de reunión o grupo de comunicación..."
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
                         <div className="md:col-span-2 text-right">
-                          <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="cursor-pointer font-inter font-bold text-sm bg-amber-500 text-azul-noche px-8 py-3.5 rounded-xl shadow-xl hover:bg-amber-400 transition-all hover:scale-105"
-                          >
-                            {isSubmitting ? "Publicando en Supabase..." : "🚀 Publicar Ruta Externa"}
-                          </button>
+                          <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-8 py-3.5 rounded-xl">Publicar Ruta Externa →</button>
                         </div>
                       </form>
-                    </div>
-
-                    {/* Lista de Rutas Publicadas */}
-                    <div className="space-y-4">
-                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                        🪶 Rutas Externas Publicadas ({routesList.length})
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {routesList.map((route) => (
-                          <div
-                            key={route.id}
-                            className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3 relative overflow-hidden"
-                          >
-                            <span className="font-inter text-[10px] uppercase font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                              {route.organizer_name}
-                            </span>
-
-                            <h4 className="font-cinzel text-blanco-lunar text-lg font-bold">
-                              {route.title}
-                            </h4>
-
-                            <p className="font-inter text-arena text-xs opacity-85 line-clamp-2">
-                              {route.description}
-                            </p>
-
-                            <div className="space-y-1 font-inter text-xs text-arena/70 pt-2 border-t border-white/10">
-                              <p>📅 <strong>Fecha:</strong> {route.date_display}</p>
-                              <p>📍 <strong>Lugar:</strong> {route.location}</p>
-                              <p>👥 <strong>Semanas sumadas:</strong> {route.interested_count} personas</p>
-                            </div>
-
-                            <div className="pt-2">
-                              <a
-                                href={route.external_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-inter text-xs font-bold text-amber-400 hover:underline"
-                              >
-                                Ir a Registro Oficial ↗
-                              </a>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </motion.div>
                 )}
 
-                {/* PESTAÑA 2: TEQUIO TALKS & EVENTOS INTERNOS CON CALENDARIO & LINK DE MEET */}
+                {/* PESTAÑA 2: TEQUIO TALKS */}
                 {activeTab === "internal" && (
-                  <motion.div
-                    key="tab-internal"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    className="space-y-12"
-                  >
-                    {/* Formulario Nuevo Tequio Talk */}
+                  <motion.div key="tab-internal" className="space-y-12">
+                    <div className="p-8 md:p-10 rounded-3xl bg-white/[0.03] border border-amber-500/30 backdrop-blur-xl shadow-2xl space-y-6">
+                      <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">Nuevo Tequio Talk con Liga de Transmisión</h3>
+                      <form onSubmit={handleInternalSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="md:col-span-2">
+                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Título del Talk *</label>
+                          <input type="text" required value={internalForm.title} onChange={(e) => setInternalForm({ ...internalForm, title: e.target.value })} placeholder='Ej. "Arquitectura Frontend"' className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block font-inter text-xs text-amber-400 font-bold mb-1">📅 Seleccionar Fecha y Hora *</label>
+                          <input type="datetime-local" required value={internalForm.date_picker} onChange={(e) => setInternalForm({ ...internalForm, date_picker: e.target.value })} className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl cursor-pointer" />
+                        </div>
+                        <div>
+                          <label className="block font-inter text-xs text-amber-400 font-bold mb-1">🔗 Enlace de Transmisión (Meet / Zoom) *</label>
+                          <input type="url" required value={internalForm.meeting_link} onChange={(e) => setInternalForm({ ...internalForm, meeting_link: e.target.value })} placeholder="https://meet.google.com/abc-defg-hij" className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl" />
+                        </div>
+                        <div className="md:col-span-2 text-right">
+                          <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-8 py-3.5 rounded-xl">Publicar Tequio Talk →</button>
+                        </div>
+                      </form>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* PESTAÑA 3: NUEVA MEMORIA LINKEDIN CON SELLO CEREMONIAL */}
+                {activeTab === "gallery" && (
+                  <motion.div key="tab-gallery" className="space-y-12">
                     <div className="p-8 md:p-10 rounded-3xl bg-white/[0.03] border border-amber-500/30 backdrop-blur-xl shadow-2xl space-y-6">
                       <div className="space-y-1">
                         <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold">
-                          🎙️ Publicar Evento Interno / Tequio Talk
+                          🖼️ Memoria Colectiva (Post de LinkedIn con Sello)
                         </span>
                         <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                          Nuevo Tequio Talk o Workshop
+                          Registrar Post de LinkedIn en la Galería Viva
                         </h3>
                       </div>
 
-                      <form onSubmit={handleInternalSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <form onSubmit={handleGallerySubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="md:col-span-2">
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Título del Talk / Sesión *
+                            Título de la Obra Colectiva *
                           </label>
                           <input
                             type="text"
                             required
-                            value={internalForm.title}
-                            onChange={(e) => setInternalForm({ ...internalForm, title: e.target.value })}
-                            placeholder='Ej. "Arquitectura Microservicios en la Práctica"'
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                            value={galleryForm.title}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
+                            placeholder="Ej. Impulso a la Comunidad — Faena Tequio en LinkedIn"
+                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl"
                           />
                         </div>
 
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Guardián Anfitrión
-                          </label>
-                          <select
-                            value={internalForm.guardian}
-                            onChange={(e) => {
-                              const g = e.target.value;
-                              setInternalForm({
-                                ...internalForm,
-                                guardian: g,
-                                guardian_tag: g === "tochtli" ? "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)" : g === "tlacu" ? "✦ FAENA ACTIVA · 🦝 TLACU (Construcción)" : "✦ FAENA ACTIVA · 🪶 KUKU (Caravanas)",
-                              });
-                            }}
-                            className="w-full font-inter bg-azul-noche border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          >
-                            <option value="tochtli">🐰 Tochtli (Mentoría & Inspiración)</option>
-                            <option value="tlacu">🦝 Tlacu (Construcción & Hackathons)</option>
-                            <option value="kuku">🪶 Kuku (Caravanas & Conexión)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Insignia / Badge
-                          </label>
-                          <input
-                            type="text"
-                            value={internalForm.type_badge}
-                            onChange={(e) => setInternalForm({ ...internalForm, type_badge: e.target.value })}
-                            placeholder="Ej. 🎙️ TEQUIO TALKS #02"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
-                        {/* SELECTOR DE FECHA CON CALENDARIO NATIVO */}
-                        <div>
+                        <div className="md:col-span-2">
                           <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                            📅 Seleccionar Fecha y Hora (Calendario) *
-                          </label>
-                          <input
-                            type="datetime-local"
-                            required
-                            value={internalForm.date_picker}
-                            onChange={(e) => setInternalForm({ ...internalForm, date_picker: e.target.value })}
-                            className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
-                          />
-                        </div>
-
-                        {/* SECCIÓN DEDICADA PARA EL LINK DE GOOGLE MEET / ZOOM */}
-                        <div>
-                          <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                            🔗 Enlace de Transmisión (Google Meet / Zoom / YouTube) *
+                            🔗 URL del Post de LinkedIn * (ej. https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/)
                           </label>
                           <input
                             type="url"
                             required
-                            value={internalForm.meeting_link}
-                            onChange={(e) => setInternalForm({ ...internalForm, meeting_link: e.target.value })}
-                            placeholder="https://meet.google.com/abc-defg-hij"
-                            className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                            value={galleryForm.linkedin_post_url}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, linkedin_post_url: e.target.value })}
+                            placeholder="https://www.linkedin.com/feed/update/urn:li:activity:..."
+                            className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl font-mono text-xs"
                           />
                         </div>
 
                         <div>
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Nombre del Ponente Invitado
+                            🏷️ Sello Ceremonial sobre el IFrame *
                           </label>
                           <input
                             type="text"
-                            value={internalForm.speaker}
-                            onChange={(e) => setInternalForm({ ...internalForm, speaker: e.target.value })}
-                            placeholder="Ej. Ing. Sofía Morales (Staff Engineer)"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                            required
+                            value={galleryForm.seal_stamp}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, seal_stamp: e.target.value })}
+                            placeholder="✦ SELLO DE MAYORDOMÍA CUMPLIDA ✦"
+                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl font-bold text-amber-300"
                           />
                         </div>
 
                         <div>
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            LinkedIn / Red Social del Ponente
+                            Guardián / Tag de Faena
                           </label>
                           <input
-                            type="url"
-                            value={internalForm.speaker_social}
-                            onChange={(e) => setInternalForm({ ...internalForm, speaker_social: e.target.value })}
-                            placeholder="https://linkedin.com/in/nombre-ponente"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                            type="text"
+                            value={galleryForm.guardian_tag}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, guardian_tag: e.target.value })}
+                            placeholder="🦝 Tlacu · Forja Comunitaria"
+                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl"
                           />
                         </div>
 
-                        <div className="md:col-span-2 flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                          <input
-                            type="checkbox"
-                            id="is_featured"
-                            checked={internalForm.is_featured}
-                            onChange={(e) => setInternalForm({ ...internalForm, is_featured: e.target.checked })}
-                            className="w-5 h-5 accent-amber-500 cursor-pointer"
-                          />
-                          <label htmlFor="is_featured" className="font-inter text-xs text-arena cursor-pointer font-bold">
-                            🔥 Marcar como Faena Activa Destacada (Aparecerá en la tarjeta principal con reloj regresivo)
+                        <div className="md:col-span-2">
+                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
+                            Descripción de la Obra o Logro
                           </label>
+                          <textarea
+                            rows={3}
+                            value={galleryForm.description}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, description: e.target.value })}
+                            placeholder="Publicación oficial sobre el impacto y los logros alcanzados..."
+                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl"
+                          />
                         </div>
 
                         <div className="md:col-span-2 text-right">
                           <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="cursor-pointer font-inter font-bold text-sm bg-amber-500 text-azul-noche px-8 py-3.5 rounded-xl shadow-xl hover:bg-amber-400 transition-all hover:scale-105"
+                            className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-8 py-3.5 rounded-xl shadow-xl hover:bg-amber-400 transition-all"
                           >
-                            {isSubmitting ? "Publicando..." : "🎙️ Publicar Tequio Talk"}
+                            🖼️ Publicar Post en Memoria Colectiva →
                           </button>
                         </div>
                       </form>
@@ -770,108 +621,17 @@ export default function AdminPage() {
                   </motion.div>
                 )}
 
-                {/* PESTAÑA 3: ASISTENTES & INTEGRANTES CON FILTRO POR EVENTO Y COPIAR CORREOS */}
+                {/* PESTAÑA 4: ASISTENTES */}
                 {activeTab === "attendees" && (
-                  <motion.div
-                    key="tab-attendees"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    className="space-y-10"
-                  >
-                    <div className="space-y-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
-                        <div>
-                          <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                            📋 Reservaciones a Faenas en Tiempo Real ({filteredRegistrations.length})
-                          </h3>
-                          <p className="font-inter text-arena text-xs opacity-75">
-                            Filtra los inscritos por evento para enviarles recordatorios o la liga del evento.
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-3 flex-wrap">
-                          {/* SELECTOR DE FILTRO POR EVENTO */}
-                          <select
-                            value={selectedEventFilter}
-                            onChange={(e) => setSelectedEventFilter(e.target.value)}
-                            className="font-inter text-xs bg-azul-noche border border-amber-400 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none"
-                          >
-                            <option value="all">✦ Todos los eventos ({registrationsList.length})</option>
-                            {eventsList.map((evt) => (
-                              <option key={evt.id} value={evt.id}>
-                                {evt.title}
-                              </option>
-                            ))}
-                          </select>
-
-                          {/* BOTÓN COPIAR LISTA DE CORREOS */}
-                          <button
-                            onClick={handleCopyEmails}
-                            className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl shadow-lg hover:bg-amber-400 transition-all flex items-center gap-2"
-                          >
-                            <span>{copiedSuccess ? "✓ ¡Correos Copiados!" : "📋 Copiar Lista de Correos"}</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
-                        <table className="w-full text-left font-inter text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-white/5 text-amber-400 uppercase tracking-wider font-semibold border-b border-white/10">
-                              <th className="p-4">Nombre</th>
-                              <th className="p-4">Correo</th>
-                              <th className="p-4">Evento Reservado</th>
-                              <th className="p-4">Pregunta para Ponente</th>
-                              <th className="p-4">Fecha Registro</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5 text-arena/90">
-                            {filteredRegistrations.map((row) => (
-                              <tr key={row.id} className="hover:bg-white/5">
-                                <td className="p-4 font-bold text-blanco-lunar">{row.full_name}</td>
-                                <td className="p-4 text-amber-300 font-mono">{row.email}</td>
-                                <td className="p-4">{row.events?.title || "Tequio Talk"}</td>
-                                <td className="p-4 italic opacity-80">{row.speaker_question || "Sin pregunta"}</td>
-                                <td className="p-4 opacity-60">{new Date(row.created_at).toLocaleDateString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 pt-6 border-t border-white/10">
-                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                        🏛️ Códice de la Tribu / Integrantes ({membersList.length})
-                      </h3>
-
-                      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
-                        <table className="w-full text-left font-inter text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-white/5 text-terracota uppercase tracking-wider font-semibold border-b border-white/10">
-                              <th className="p-4">Nombre Completo</th>
-                              <th className="p-4">Correo Electrónico</th>
-                              <th className="p-4">Interés / Rol</th>
-                              <th className="p-4">Fecha de Alta</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5 text-arena/90">
-                            {membersList.map((row) => (
-                              <tr key={row.id} className="hover:bg-white/5">
-                                <td className="p-4 font-bold text-blanco-lunar">{row.full_name}</td>
-                                <td className="p-4 text-amber-300 font-mono">{row.email}</td>
-                                <td className="p-4">{row.role_interest}</td>
-                                <td className="p-4 opacity-60">{new Date(row.created_at).toLocaleDateString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                  <motion.div key="tab-attendees" className="space-y-10">
+                    <div className="flex justify-between items-center bg-white/5 p-6 rounded-3xl border border-white/10">
+                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">📋 Inscritos ({filteredRegistrations.length})</h3>
+                      <button onClick={handleCopyEmails} className="font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl">
+                        {copiedSuccess ? "✓ Copiados!" : "📋 Copiar Lista de Correos"}
+                      </button>
                     </div>
                   </motion.div>
                 )}
-
               </AnimatePresence>
 
             </div>

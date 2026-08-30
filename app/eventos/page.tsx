@@ -15,6 +15,20 @@ import {
   isRegisteredForEvent,
 } from "@/lib/session";
 
+// Helper function to format LinkedIn Embed Iframe URLs
+function formatLinkedInEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  if (url.includes("/embed/feed/update/")) return url;
+  
+  const match = url.match(/urn:li:(activity|share):([0-9]+)/);
+  if (match) {
+    const type = match[1];
+    const id = match[2];
+    return `https://www.linkedin.com/embed/feed/update/urn:li:${type}:${id}`;
+  }
+  return null;
+}
+
 // Fallback active event template in case Supabase table is empty
 const DEFAULT_ACTIVE_TALK = {
   id: "00000000-0000-0000-0000-000000000001",
@@ -158,7 +172,7 @@ export default function EventosPage() {
           setExternalRoutes(routesData);
         }
 
-        // C) Fetch completed works gallery
+        // C) Fetch completed works gallery WITH LINKEDIN EMBEDS & SEALS
         const { data: galleryData } = await supabase
           .from("completed_works_gallery")
           .select("*")
@@ -171,7 +185,9 @@ export default function EventosPage() {
               title: g.title,
               date: g.event_date,
               guardianTag: g.guardian_tag,
-              imgSrc: g.image_url,
+              sealStamp: g.seal_stamp || "✦ SELLO DE MAYORDOMÍA ✦",
+              linkedinPostUrl: g.linkedin_post_url,
+              imgSrc: g.image_url || "/jpg/moment1.jpg",
               description: g.description,
               impactMetrics: Array.isArray(g.impact_metrics) ? g.impact_metrics : [],
             }))
@@ -526,7 +542,6 @@ export default function EventosPage() {
               📅 Agenda de Faenas Tequio
             </h2>
 
-            {/* Chips Táctiles */}
             <div className="flex flex-wrap gap-2">
               {[
                 { id: "all", label: "✦ Todos" },
@@ -596,38 +611,109 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* MEMORIA COLECTIVA */}
+      {/* MEMORIA COLECTIVA CON POSTS EMBEBIDOS DE LINKEDIN Y SELLO ANCESTRAL EN FORMA DE CERA */}
       <section className="py-20 px-6 border-t border-white/10 bg-black/20">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-12">
           <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="font-inter text-terracota text-xs uppercase tracking-[0.2em] font-bold block">
-              🖼️ MEMORIA COLECTIVA (Obras Erigidas)
+            <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
+              🖼️ MEMORIA COLECTIVA VIVA (LinkedIn Embeds)
             </span>
             <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
-              Obras Colectivas de la Tribu
+              Obras Colectivas & Publicaciones de la Tribu
             </h2>
+            <p className="font-inter text-arena text-sm opacity-85">
+              &quot;Cada faena cumplida se inmortaliza en la red colectiva. Consulta las publicaciones y testimonios en vivo con el sello oficial de mayordomía.&quot;
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {galleryWorks.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl overflow-hidden bg-white/[0.035] border border-white/10 flex flex-col justify-between shadow-xl"
-              >
-                <div className="relative h-48 w-full">
-                  <Image src={item.imgSrc} alt={item.title} fill className="object-cover" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {galleryWorks.map((item) => {
+              const embedUrl = formatLinkedInEmbedUrl(item.linkedinPostUrl);
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-3xl overflow-hidden bg-white/[0.035] border-2 border-amber-500/40 flex flex-col justify-between shadow-2xl relative group hover:border-amber-400 transition-all duration-300"
+                >
+                  {/* SELLO CEREMONIAL FLOTANTE (ESTILO CERA DORADA DE MAYORDOMÍA SOBRE EL IFRAME) */}
+                  <div className="absolute top-4 right-4 z-20 pointer-events-none">
+                    <span className="font-inter text-[10px] uppercase font-bold px-3.5 py-1.5 rounded-full bg-amber-500 text-azul-noche shadow-[0_0_20px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1.5">
+                      <span>✦</span>
+                      <span>{item.sealStamp || "✦ SELLO DE MAYORDOMÍA ✦"}</span>
+                    </span>
+                  </div>
+
+                  {/* CONTENEDOR DE EMBED DE LINKEDIN O IMAGEN DE RESPALDO */}
+                  <div className="relative w-full bg-black/60 pt-2 min-h-[420px] flex items-center justify-center overflow-hidden border-b border-white/10">
+                    {embedUrl ? (
+                      <iframe
+                        src={embedUrl}
+                        height="450"
+                        width="100%"
+                        frameBorder="0"
+                        allowFullScreen={false}
+                        title={item.title}
+                        className="w-full h-[450px] rounded-t-2xl opacity-95 hover:opacity-100 transition-opacity"
+                      />
+                    ) : (
+                      <div className="relative h-64 w-full">
+                        <Image src={item.imgSrc} alt={item.title} fill className="object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* METADATOS Y MÉTRICAS DE IMPACTO */}
+                  <div className="p-6 space-y-4 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-inter text-xs text-amber-400 font-bold">
+                          {item.guardianTag}
+                        </span>
+                        <span className="font-inter text-xs text-arena/60">
+                          📅 {item.date}
+                        </span>
+                      </div>
+
+                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
+                        {item.title}
+                      </h3>
+
+                      <p className="font-inter text-arena text-xs opacity-85 leading-relaxed">
+                        {item.description}
+                      </p>
+
+                      {item.impactMetrics && item.impactMetrics.length > 0 && (
+                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1 mt-3">
+                          {item.impactMetrics.map((m: string, idx: number) => (
+                            <p key={idx} className="font-inter text-xs text-amber-300 font-semibold">
+                              {m}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-white/10 flex justify-between items-center text-xs font-inter">
+                      <span className="text-amber-400 font-bold">LinkedIn Feed Verified ✓</span>
+                      {item.linkedinPostUrl && (
+                        <a
+                          href={item.linkedinPostUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blanco-lunar underline hover:text-amber-300 font-bold"
+                        >
+                          Ver en LinkedIn ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="p-6 space-y-3">
-                  <h3 className="font-cinzel text-blanco-lunar text-lg font-bold">{item.title}</h3>
-                  <p className="font-inter text-arena text-xs opacity-85">{item.description}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO CON ENLACE DIRECTO A TRANSMISIÓN */}
+      {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO */}
       <AnimatePresence>
         {registrationModalOpen && (
           <div
@@ -711,7 +797,6 @@ export default function EventosPage() {
                   </form>
                 </>
               ) : (
-                /* CONFIRMACIÓN CON ENTREGA INMEDIATA DE LA LIGA DE GOOGLE MEET / ZOOM */
                 <div className="text-center space-y-5 py-4">
                   <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">
                     ✦ Lugar Confirmado ✦
@@ -773,9 +858,6 @@ export default function EventosPage() {
                     <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
                       {selectedRoute.title}
                     </h3>
-                    <p className="font-inter text-arena text-xs opacity-80">
-                      Deja tu correo para coordinarnos en el grupo de comunicación antes del evento.
-                    </p>
                   </div>
 
                   <form onSubmit={handleRouteSubmit} className="space-y-4">
@@ -807,13 +889,12 @@ export default function EventosPage() {
 
                     <div>
                       <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Comentarios / ¿Cómo te trasladas? (Opcional)
+                        Comentarios (Opcional)
                       </label>
                       <textarea
                         rows={2}
                         value={routeForm.notas}
                         onChange={(e) => setRouteForm({ ...routeForm, notas: e.target.value })}
-                        placeholder="Ej. Salgo desde Metro Universidad / Busco ride..."
                         className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
                       />
                     </div>
@@ -846,7 +927,7 @@ export default function EventosPage() {
                     ¡Estás en la lista de la Caravana!
                   </h3>
                   <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
-                    Hemos guardado tu correo <strong>{routeForm.email}</strong>. Te enviaremos las coordenadas del grupo antes del evento.
+                    Hemos guardado tu correo <strong>{routeForm.email}</strong>.
                   </p>
                   
                   <div className="pt-2">
@@ -856,7 +937,7 @@ export default function EventosPage() {
                       rel="noopener noreferrer"
                       className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3 rounded-xl block text-center"
                     >
-                      Ir ahora al Registro Oficial en la web del evento ↗
+                      Ir ahora al Registro Oficial ↗
                     </a>
                   </div>
                 </div>
