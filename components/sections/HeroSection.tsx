@@ -36,7 +36,7 @@ export default function HeroSection() {
       </svg>
 
       {/* Manto de Polvo de Estrellas Dorado */}
-      <StarField count={36} isMitlaShape={true} className="z-10" />
+      <StarField count={36} isMitlaShape={true} className="z-10 opacity-40 md:opacity-80" />
 
       {/* Main Content Container */}
       <motion.div

@@ -91,7 +91,7 @@ export default function CommitmentSection() {
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
         {/* LAYOUT EN 2 COLUMNAS: IZQUIERDA (ESLOGAN) / DERECHA (POST LINKEDIN + OVERLAY CON TLACU & TÍTULO) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="grid grid-cols-2 gap-6 items-center">
           
           {/* COLUMNA IZQUIERDA (50% / ESLOGAN & MANIFIESTO) */}
           <div className="lg:col-span-6 space-y-6 text-left">
