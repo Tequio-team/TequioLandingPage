@@ -439,16 +439,14 @@ export default function EventosPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="relative p-6 md:p-10 rounded-3xl border-2 border-amber-500/50 bg-white/[0.04] backdrop-blur-xl shadow-2xl overflow-hidden space-y-6"
-                style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.2)" }}
+                className="relative p-6 md:p-12 rounded-3xl border-2 border-amber-500/40 bg-white/[0.03] backdrop-blur-xl shadow-2xl space-y-8"
+                style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.15)" }}
               >
-                {/* CABECERA PRINCIPAL UNIFICADA */}
+                {/* 1. NÚMERO DE LA TEQUIO TALK DE INICIO */}
                 <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-inter text-xs md:text-sm uppercase font-extrabold tracking-widest text-amber-400 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/40">
-                      🎙️ TEQUIO TALKS #01
-                    </span>
-                  </div>
+                  <span className="font-inter text-sm md:text-base uppercase font-extrabold tracking-widest text-amber-400">
+                    🎙️ TEQUIO TALKS #01
+                  </span>
 
                   {alreadyRegistered ? (
                     <span className="font-inter text-xs font-bold text-emerald-400 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
@@ -461,111 +459,80 @@ export default function EventosPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* 2. TÍTULO DE LA PONENCIA */}
+                <div className="space-y-2">
+                  <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-5xl font-bold leading-tight">
+                    {activeTalk.title}
+                  </h2>
+                </div>
+
+                {/* 3. PONENTE PRINCIPAL (MISMA IMPORTANCIA TIPOGRÁFICA QUE EL TÍTULO DE LA PONENCIA) */}
+                <div className="pt-2 pb-4 border-y border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="font-inter text-xs uppercase font-extrabold text-amber-400 tracking-wider block">
+                      👤 Ponente Principal:
+                    </span>
+                    <h3 className="font-cinzel text-blanco-lunar text-2xl md:text-4xl font-bold text-amber-300">
+                      {activeTalk.speaker}
+                    </h3>
+                    <p className="font-inter text-sm text-arena/90 font-medium">
+                      Senior Tech Lead & Mentor Invitado por la Comunidad Tequio
+                    </p>
+                  </div>
+
+                  {activeTalk.speaker_social && (
+                    <a
+                      href={activeTalk.speaker_social}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap self-start md:self-center"
+                    >
+                      <span>Perfil LinkedIn del Ponente</span>
+                      <span>↗</span>
+                    </a>
+                  )}
+                </div>
+
+                {/* 4. FECHA, HORA Y SEDE EN TEXTO LIMPIO SIN CUADROS SOBRESATURADOS */}
+                <div className="flex flex-wrap gap-6 font-inter text-sm md:text-base text-arena/90">
+                  <p>📅 <strong>Fecha:</strong> {activeTalk.date}</p>
+                  <p>⏰ <strong>Horario:</strong> {activeTalk.time}</p>
+                  <p>📍 <strong>Transmisión:</strong> {activeTalk.location}</p>
+                </div>
+
+                {/* 5. LIGERO SIN TANTOS CUADROS: COUNTER DE TIEMPO + BOTÓN DE RESERVA ABAJO */}
+                <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                   
-                  {/* COLUMNA IZQUIERDA: PONENTE, TÍTULO & INSTRUCCIONES */}
-                  <div className="lg:col-span-7 space-y-5">
-                    
-                    {/* TARJETA DEL PONENTE / SPEAKER (DESTACADO PRINCIPAL) */}
-                    <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
-                      <div className="space-y-1">
-                        <span className="font-inter text-[10px] uppercase font-bold text-amber-400 tracking-wider block">
-                          👤 Ponente Invitado & Speaker
-                        </span>
-                        <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                          {activeTalk.speaker}
-                        </h3>
-                        <p className="font-inter text-xs text-arena/80">
-                          Senior Tech Lead & Mentor Invitado
-                        </p>
-                      </div>
-
-                      {activeTalk.speaker_social && (
-                        <a
-                          href={activeTalk.speaker_social}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl shadow-md hover:bg-amber-400 transition-all hover:scale-105 flex items-center justify-center gap-1.5 whitespace-nowrap self-start sm:self-center"
-                        >
-                          <span>Perfil LinkedIn</span>
-                          <span>↗</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* TÍTULO DE LA CHARLA */}
-                    <div>
-                      <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl font-bold leading-tight">
-                        {activeTalk.title}
-                      </h2>
-                    </div>
-
-                    {/* INSTRUCCIONES DE ACCESO */}
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                      <span className="font-inter text-xs uppercase font-bold text-amber-400 block">
-                        📜 Instrucciones para la Sesión:
-                      </span>
-                      <ul className="font-inter text-xs text-arena/90 space-y-1 list-disc list-inside leading-relaxed">
-                        <li>Ingresa a la transmisión en vivo por {activeTalk.location}.</li>
-                        <li>Participa en la ronda abierta de preguntas en directo.</li>
-                        <li>Al concluir, se enviarán los materiales a tu correo inscripto.</li>
-                      </ul>
-                    </div>
-
-                    {/* FICHA TÉCNICA FECHA Y HORA */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-inter text-xs text-arena/90 bg-white/5 p-4 rounded-2xl border border-white/10">
-                      <div>
-                        <span className="text-amber-400 font-bold block mb-0.5">📅 Fecha:</span>
-                        <span>{activeTalk.date}</span>
-                      </div>
-                      <div>
-                        <span className="text-amber-400 font-bold block mb-0.5">⏰ Horario:</span>
-                        <span>{activeTalk.time}</span>
-                      </div>
-                      <div>
-                        <span className="text-amber-400 font-bold block mb-0.5">📍 Sede:</span>
-                        <span>{activeTalk.location}</span>
-                      </div>
+                  {/* COUNTER DE TIEMPO LIGERO Y FLUIDO */}
+                  <div className="flex items-center gap-3 font-inter text-xs md:text-sm text-arena/90">
+                    <span className="text-amber-400 font-bold">⏳ Live en:</span>
+                    <div className="flex items-center gap-2 font-cinzel text-lg md:text-xl font-bold text-blanco-lunar">
+                      <span>{String(timeLeft.days).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">d</span></span>:
+                      <span>{String(timeLeft.hours).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">h</span></span>:
+                      <span>{String(timeLeft.minutes).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">m</span></span>:
+                      <span>{String(timeLeft.seconds).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">s</span></span>
                     </div>
                   </div>
 
-                  {/* COLUMNA DERECHA: RELOJ REGRESIVO Y REGISTRO */}
-                  <div className="lg:col-span-5 flex flex-col items-center text-center space-y-5 bg-white/[0.02] p-5 rounded-2xl border border-white/10">
-                    
-                    {/* RELOJ REGRESIVO */}
-                    <div className="bg-azul-noche/80 px-4 py-3.5 rounded-2xl border border-amber-500/30 w-full">
-                      <span className="font-inter text-[10px] uppercase tracking-widest text-amber-400 font-bold block mb-1">
-                        ⏳ Tiempo Restante para el Live
-                      </span>
-                      <div className="flex justify-center gap-3 font-cinzel text-xl font-bold text-blanco-lunar">
-                        <div>{String(timeLeft.days).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">d</span></div>:
-                        <div>{String(timeLeft.hours).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">h</span></div>:
-                        <div>{String(timeLeft.minutes).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">m</span></div>:
-                        <div>{String(timeLeft.seconds).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">s</span></div>
-                      </div>
-                    </div>
+                  {/* BOTÓN QUIERO RESERVAR MI LUGAR EN LA CHARLA */}
+                  <div className="flex flex-col gap-1.5 min-w-[280px]">
+                    <button
+                      onClick={() => {
+                        setFormSubmitted(alreadyRegistered);
+                        setRegistrationModalOpen(true);
+                      }}
+                      className="cursor-pointer font-inter font-bold text-base text-blanco-lunar py-4 px-8 rounded-2xl shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+                      style={{
+                        background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
+                      }}
+                    >
+                      <span>{alreadyRegistered ? "✓ Ver liga de acceso a la charla" : "🚀 Quiero reservar mi lugar en la charla"}</span>
+                      <span className="text-xl">→</span>
+                    </button>
 
-                    {/* BOTÓN RESERVAR LUGAR */}
-                    <div className="w-full space-y-2">
-                      <button
-                        onClick={() => {
-                          setFormSubmitted(alreadyRegistered);
-                          setRegistrationModalOpen(true);
-                        }}
-                        className="w-full cursor-pointer font-inter font-bold text-base text-blanco-lunar py-4 rounded-2xl shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2"
-                        style={{
-                          background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
-                        }}
-                      >
-                        <span>{alreadyRegistered ? "✓ Ver liga de acceso" : "🚀 Reservar mi Lugar"}</span>
-                        <span className="text-xl">→</span>
-                      </button>
-
-                      <span className="font-inter text-xs text-arena/80 block">
-                        👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
-                      </span>
-                    </div>
-
+                    <span className="font-inter text-xs text-arena/70 text-center">
+                      👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
+                    </span>
                   </div>
 
                 </div>
