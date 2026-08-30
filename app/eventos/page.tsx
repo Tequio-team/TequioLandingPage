@@ -439,69 +439,105 @@ export default function EventosPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="relative p-8 md:p-12 rounded-3xl border-2 border-ambar/50 bg-white/[0.04] backdrop-blur-xl shadow-2xl overflow-visible space-y-8"
+                className="relative p-6 md:p-10 rounded-3xl border-2 border-amber-500/50 bg-white/[0.04] backdrop-blur-xl shadow-2xl overflow-hidden space-y-6"
                 style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.2)" }}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-inter text-xs uppercase tracking-widest font-bold text-ambar px-4 py-1 rounded-full bg-ambar/10 border border-ambar/30">
-                    {activeTalk.tagHeader}
-                  </span>
+                {/* HEADER CON BADGES & GUARDIÁN EN CHICO PARA MOBILE */}
+                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    {/* GUARDIÁN EN CHICO Y OPTIMIZADO (EVITA SOBRESATURACIÓN EN MOBILE) */}
+                    <div className="relative w-10 h-12 md:w-14 md:h-16 flex-shrink-0">
+                      <Image
+                        src={activeTalk.guardianSrc}
+                        alt="Guardián Tequio"
+                        fill
+                        className="object-contain drop-shadow-md"
+                        priority
+                      />
+                    </div>
 
-                  {alreadyRegistered && (
+                    <div>
+                      <span className="font-inter text-[10px] md:text-xs uppercase tracking-widest font-bold text-amber-400 block">
+                        {activeTalk.tagHeader}
+                      </span>
+                      <span className="font-inter text-xs text-arena/80 font-semibold">
+                        {activeTalk.typeBadge}
+                      </span>
+                    </div>
+                  </div>
+
+                  {alreadyRegistered ? (
                     <span className="font-inter text-xs font-bold text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
                       ✓ Ya estás inscripto
+                    </span>
+                  ) : (
+                    <span className="font-inter text-[10px] md:text-xs font-bold text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                      🔥 Faena Destacada
                     </span>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  <div className="lg:col-span-7 space-y-6">
-                    <div>
-                      <span className="font-inter text-xs uppercase tracking-wider text-ambar font-bold block mb-2">
-                        {activeTalk.typeBadge}
-                      </span>
-                      <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold leading-tight">
-                        {activeTalk.title}
-                      </h2>
+                  
+                  {/* COLUMNA IZQUIERDA: PONENCIA, DESCRIPCIÓN & SHOWCASE DESTACADO DEL PONENTE */}
+                  <div className="lg:col-span-7 space-y-5">
+                    
+                    {/* TÍTULO DE LA PONENCIA */}
+                    <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
+                      {activeTalk.title}
+                    </h2>
+
+                    {/* BLOQUE DESTACADO DEL PONENTE INVITADO (MÁXIMA IMPORTANCIA) */}
+                    <div className="p-4 md:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                      <div className="space-y-1">
+                        <span className="font-inter text-[10px] uppercase font-bold text-amber-400 tracking-wider block">
+                          🎙️ Ponente Invitado / Speaker
+                        </span>
+                        <h4 className="font-cinzel text-blanco-lunar text-lg font-bold">
+                          {activeTalk.speaker}
+                        </h4>
+                        <p className="font-inter text-xs text-arena/80">
+                          Mentor & Especialista Invitado por la Tribu Tequio
+                        </p>
+                      </div>
+
+                      {activeTalk.speaker_social && (
+                        <a
+                          href={activeTalk.speaker_social}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-2 rounded-xl hover:bg-amber-500 hover:text-azul-noche transition-all flex items-center justify-center gap-1.5 whitespace-nowrap self-start sm:self-center"
+                        >
+                          <span>Perfil LinkedIn</span>
+                          <span>↗</span>
+                        </a>
+                      )}
                     </div>
 
-                    <div className="space-y-2 font-inter text-sm md:text-base text-arena/90 bg-white/5 p-5 rounded-2xl border border-white/10">
-                      <p>📅 <strong>Cuándo:</strong> {activeTalk.date}</p>
-                      <p>⏰ <strong>Horario:</strong> {activeTalk.time}</p>
-                      <p>📍 <strong>Transmisión:</strong> {activeTalk.location}</p>
+                    {/* DETALLES DE FECHA Y HORARIO */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-inter text-xs text-arena/90 bg-white/5 p-4 rounded-2xl border border-white/10">
+                      <div>
+                        <span className="text-amber-400 font-bold block mb-0.5">📅 Cuándo:</span>
+                        <span>{activeTalk.date}</span>
+                      </div>
+                      <div>
+                        <span className="text-amber-400 font-bold block mb-0.5">⏰ Horario:</span>
+                        <span>{activeTalk.time}</span>
+                      </div>
+                      <div>
+                        <span className="text-amber-400 font-bold block mb-0.5">📍 Transmisión:</span>
+                        <span>{activeTalk.location}</span>
+                      </div>
                     </div>
 
-                    <div className="space-y-2 font-inter text-xs text-arena/90">
-                      <p className="flex items-center justify-between gap-2">
-                        <span><strong>Ponente invitado:</strong> {activeTalk.speaker}</span>
-                        {activeTalk.speaker_social && (
-                          <a
-                            href={activeTalk.speaker_social}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-amber-400 underline hover:text-amber-300 font-bold"
-                          >
-                            LinkedIn / Perfil ↗
-                          </a>
-                        )}
-                      </p>
-                    </div>
                   </div>
 
-                  <div className="lg:col-span-5 flex flex-col items-center text-center space-y-6 relative pt-4 lg:pt-0">
-                    <div className="relative -mt-12 lg:-mt-16 flex flex-col items-center">
-                      <Image
-                        src={activeTalk.guardianSrc}
-                        alt="Tochtli Sabio"
-                        width={180}
-                        height={220}
-                        className="object-contain animate-breathe relative z-10 drop-shadow-2xl"
-                        priority
-                      />
-                    </div>
-
-                    <div className="bg-white/5 px-5 py-3 rounded-2xl border border-white/10 w-full">
-                      <span className="font-inter text-[10px] uppercase tracking-widest text-arena/70 font-semibold block mb-1">
+                  {/* COLUMNA DERECHA: RELOJ REGRESIVO Y BOTÓN RESERVA */}
+                  <div className="lg:col-span-5 flex flex-col items-center text-center space-y-5 bg-white/[0.02] p-5 rounded-2xl border border-white/10">
+                    
+                    {/* RELOJ REGRESIVO */}
+                    <div className="bg-azul-noche/80 px-4 py-3 rounded-2xl border border-amber-500/30 w-full">
+                      <span className="font-inter text-[10px] uppercase tracking-widest text-amber-400 font-bold block mb-1">
                         ⏳ Tiempo Restante para el Live
                       </span>
                       <div className="flex justify-center gap-3 font-cinzel text-xl font-bold text-blanco-lunar">
@@ -512,6 +548,7 @@ export default function EventosPage() {
                       </div>
                     </div>
 
+                    {/* BOTÓN RESERVAR LUGAR */}
                     <div className="w-full space-y-2">
                       <button
                         onClick={() => {
@@ -523,7 +560,7 @@ export default function EventosPage() {
                           background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
                         }}
                       >
-                        <span>{alreadyRegistered ? "✓ Ya estás inscripto (Ver enlace de transmisión)" : "Reservar mi Lugar en el Talk"}</span>
+                        <span>{alreadyRegistered ? "✓ Ver liga de acceso a la transmisión" : "🚀 Reservar mi Lugar en el Talk"}</span>
                         <span className="text-xl">→</span>
                       </button>
 
@@ -531,7 +568,9 @@ export default function EventosPage() {
                         👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
                       </span>
                     </div>
+
                   </div>
+
                 </div>
               </motion.div>
             )}
