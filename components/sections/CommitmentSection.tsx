@@ -158,7 +158,7 @@ export default function CommitmentSection() {
               >
                 {/* IFRAME EN VIVO DE LINKEDIN */}
                 <div className="relative w-full h-[400px] bg-black/60 overflow-hidden flex items-center justify-center">
-                  {!iframeLoaded && !isShortLink && (
+                  {!iframeLoaded && (
                     <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex items-center justify-center z-10">
                       <span className="font-inter text-xs text-amber-400 font-bold">
                         ⚡ Cargando post en vivo...
@@ -166,7 +166,7 @@ export default function CommitmentSection() {
                     </div>
                   )}
 
-                  {embedUrl && !isShortLink ? (
+                  {embedUrl ? (
                     <iframe
                       src={embedUrl}
                       height="400"

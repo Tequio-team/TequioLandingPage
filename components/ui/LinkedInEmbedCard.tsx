@@ -23,16 +23,31 @@ interface LinkedInEmbedCardProps {
 export function formatLinkedInEmbedUrl(url?: string): string | null {
   if (!url) return null;
   
-  if (url.includes("/embed/feed/update/")) return url;
+  const cleanUrl = url.trim();
 
-  const match = url.match(/urn:li:(activity|share):([0-9]+)/);
-  if (match) {
-    const type = match[1];
-    const id = match[2];
-    return `https://www.linkedin.com/embed/feed/update/urn:li:${type}:${id}`;
+  // Already formatted embed URL
+  if (cleanUrl.includes("/embed/feed/update/")) return cleanUrl;
+
+  // Extract activity, share, or ugcPost URN with digits or codes
+  const urnMatch = cleanUrl.match(/urn:li:(activity|share|ugcPost):([a-zA-Z0-9_-]+)/i);
+  if (urnMatch) {
+    return `https://www.linkedin.com/embed/feed/update/urn:li:${urnMatch[1].toLowerCase()}:${urnMatch[2]}`;
   }
 
-  return url;
+  // Extract 18-20 digit activity ID from URLs (e.g. 7493522800209661952)
+  const digitMatch = cleanUrl.match(/([0-9]{18,20})/);
+  if (digitMatch) {
+    return `https://www.linkedin.com/embed/feed/update/urn:li:activity:${digitMatch[1]}`;
+  }
+
+  // Extract shortcode from short links (e.g. https://lnkd.in/p/g4_eGX8s or lnkd.in/g4_eGX8s)
+  const shortMatch = cleanUrl.match(/lnkd\.in\/(?:p\/)?([a-zA-Z0-9_-]+)/i);
+  if (shortMatch) {
+    const code = shortMatch[1];
+    return `https://www.linkedin.com/embed/feed/update/urn:li:share:${code}`;
+  }
+
+  return cleanUrl;
 }
 
 export default function LinkedInEmbedCard({
@@ -50,7 +65,6 @@ export default function LinkedInEmbedCard({
 }: LinkedInEmbedCardProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const embedUrl = formatLinkedInEmbedUrl(linkedinPostUrl);
-  const isShortLink = linkedinPostUrl.includes("lnkd.in");
 
   // Dynamic IFrame height mapping according to sizeVariant requested by user
   const heightMap: Record<CardSizeVariant, { iframeH: string; pxVal: number }> = {
@@ -91,7 +105,7 @@ export default function LinkedInEmbedCard({
       <div
         className={`relative w-full bg-black/60 flex items-center justify-center overflow-hidden border-b border-white/10 ${currentSize.iframeH}`}
       >
-        {!iframeLoaded && !isShortLink && (
+        {!iframeLoaded && (
           <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex flex-col justify-between p-6 z-10">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
@@ -106,7 +120,7 @@ export default function LinkedInEmbedCard({
           </div>
         )}
 
-        {embedUrl && !isShortLink ? (
+        {embedUrl ? (
           <iframe
             src={embedUrl}
             height={currentSize.pxVal}
