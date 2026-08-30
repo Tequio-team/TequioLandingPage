@@ -30,21 +30,10 @@ export default function FooterSection() {
       <StarField count={24} isMitlaShape={true} className="opacity-50" />
 
       <div className="container mx-auto px-5 max-w-6xl relative z-10">
-        
+
         {/* Top Footer Content */}
         <div className="flex flex-col items-center text-center pb-10 md:pb-14 border-b border-white/10">
-          
-          {/* Logo & Marca */}
-          <div className="flex items-center gap-2.5 mb-5">
-            <Image
-              src="/png/logo.png"
-              alt="Tequio Logo"
-              width={44}
-              height={44}
-              className="object-contain"
-            />
-            <span className="font-cinzel text-blanco-lunar text-xl tracking-widest font-bold">TEQUIO</span>
-          </div>
+
 
           {/* Mensaje de Cierre */}
           <h3 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl md:text-3xl mb-4 tracking-wide font-bold max-w-lg">
@@ -70,7 +59,7 @@ export default function FooterSection() {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-5">
-          
+
           <p className="font-inter text-arena/60 text-xs tracking-wider text-center sm:text-left">
             © 2026 Comunidad Tequio · Construido en colectivo.
           </p>
