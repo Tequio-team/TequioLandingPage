@@ -442,82 +442,70 @@ export default function EventosPage() {
                 className="relative p-6 md:p-10 rounded-3xl border-2 border-amber-500/50 bg-white/[0.04] backdrop-blur-xl shadow-2xl overflow-hidden space-y-6"
                 style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.2)" }}
               >
-                {/* HEADER CON BADGES & GUARDIÁN EN CHICO PARA MOBILE */}
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    {/* GUARDIÁN EN CHICO Y OPTIMIZADO (EVITA SOBRESATURACIÓN EN MOBILE) */}
-                    <div className="relative w-10 h-12 md:w-14 md:h-16 flex-shrink-0">
-                      <Image
-                        src={activeTalk.guardianSrc}
-                        alt="Guardián Tequio"
-                        fill
-                        className="object-contain drop-shadow-md"
-                        priority
-                      />
-                    </div>
-
-                    <div>
-                      <span className="font-inter text-[10px] md:text-xs uppercase tracking-widest font-bold text-amber-400 block">
-                        {activeTalk.tagHeader}
+                {/* 1. MÁXIMA PRIORIDAD: SHOWCASE DE CABECERA CON EL PONENTE & SU PERFIL */}
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-500/40 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-inter text-[10px] md:text-xs uppercase font-extrabold tracking-widest text-amber-400 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30">
+                        🎙️ Ponente Invitado & Speaker Principal
                       </span>
-                      <span className="font-inter text-xs text-arena/80 font-semibold">
-                        {activeTalk.typeBadge}
-                      </span>
-                    </div>
-                  </div>
-
-                  {alreadyRegistered ? (
-                    <span className="font-inter text-xs font-bold text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                      ✓ Ya estás inscripto
-                    </span>
-                  ) : (
-                    <span className="font-inter text-[10px] md:text-xs font-bold text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-                      🔥 Faena Destacada
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  
-                  {/* COLUMNA IZQUIERDA: PONENCIA, DESCRIPCIÓN & SHOWCASE DESTACADO DEL PONENTE */}
-                  <div className="lg:col-span-7 space-y-5">
-                    
-                    {/* TÍTULO DE LA PONENCIA */}
-                    <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
-                      {activeTalk.title}
-                    </h2>
-
-                    {/* BLOQUE DESTACADO DEL PONENTE INVITADO (MÁXIMA IMPORTANCIA) */}
-                    <div className="p-4 md:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-                      <div className="space-y-1">
-                        <span className="font-inter text-[10px] uppercase font-bold text-amber-400 tracking-wider block">
-                          🎙️ Ponente Invitado / Speaker
+                      {alreadyRegistered && (
+                        <span className="font-inter text-[10px] font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                          ✓ Inscripto
                         </span>
-                        <h4 className="font-cinzel text-blanco-lunar text-lg font-bold">
-                          {activeTalk.speaker}
-                        </h4>
-                        <p className="font-inter text-xs text-arena/80">
-                          Mentor & Especialista Invitado por la Tribu Tequio
-                        </p>
-                      </div>
-
-                      {activeTalk.speaker_social && (
-                        <a
-                          href={activeTalk.speaker_social}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="cursor-pointer font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-2 rounded-xl hover:bg-amber-500 hover:text-azul-noche transition-all flex items-center justify-center gap-1.5 whitespace-nowrap self-start sm:self-center"
-                        >
-                          <span>Perfil LinkedIn</span>
-                          <span>↗</span>
-                        </a>
                       )}
                     </div>
 
-                    {/* DETALLES DE FECHA Y HORARIO */}
+                    <h3 className="font-cinzel text-blanco-lunar text-xl md:text-2xl font-bold">
+                      {activeTalk.speaker}
+                    </h3>
+                    <p className="font-inter text-xs text-arena/90 font-medium">
+                      Senior Mentor & Especialista Invitado por la Comunidad Tequio
+                    </p>
+                  </div>
+
+                  {activeTalk.speaker_social && (
+                    <a
+                      href={activeTalk.speaker_social}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap self-start md:self-center"
+                    >
+                      <span>Ver Perfil LinkedIn</span>
+                      <span>↗</span>
+                    </a>
+                  )}
+                </div>
+
+                {/* 2. TÍTULO DE LA PONENCIA E INSTRUCCIONES DE ACCESO */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  <div className="lg:col-span-7 space-y-5">
+                    <div>
+                      <span className="font-inter text-xs uppercase tracking-wider text-amber-400 font-bold block mb-1">
+                        {activeTalk.typeBadge} · {activeTalk.tagHeader}
+                      </span>
+                      <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
+                        {activeTalk.title}
+                      </h2>
+                    </div>
+
+                    {/* INSTRUCCIONES Y DETALLES DE LA SESIÓN */}
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                      <span className="font-inter text-xs uppercase font-bold text-amber-400 block">
+                        📜 Instrucciones de Asistencia & Dinámica:
+                      </span>
+                      <ul className="font-inter text-xs text-arena/90 space-y-1.5 list-disc list-inside leading-relaxed">
+                        <li>Ingresa puntualmente a la transmisión de {activeTalk.location}.</li>
+                        <li>Tendrás espacio abierto de Q&A para realizar preguntas directas al ponente.</li>
+                        <li>Al finalizar, recibirás la grabación y los recursos presentados en tu correo.</li>
+                      </ul>
+                    </div>
+
+                    {/* DÓNDE Y CUÁNDO */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-inter text-xs text-arena/90 bg-white/5 p-4 rounded-2xl border border-white/10">
                       <div>
-                        <span className="text-amber-400 font-bold block mb-0.5">📅 Cuándo:</span>
+                        <span className="text-amber-400 font-bold block mb-0.5">📅 Fecha:</span>
                         <span>{activeTalk.date}</span>
                       </div>
                       <div>
@@ -529,10 +517,9 @@ export default function EventosPage() {
                         <span>{activeTalk.location}</span>
                       </div>
                     </div>
-
                   </div>
 
-                  {/* COLUMNA DERECHA: RELOJ REGRESIVO Y BOTÓN RESERVA */}
+                  {/* COLUMNA DERECHA: RELOJ REGRESIVO Y BOTÓN DE RESERVA */}
                   <div className="lg:col-span-5 flex flex-col items-center text-center space-y-5 bg-white/[0.02] p-5 rounded-2xl border border-white/10">
                     
                     {/* RELOJ REGRESIVO */}
@@ -567,6 +554,19 @@ export default function EventosPage() {
                       <span className="font-inter text-xs text-arena/80 block">
                         👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
                       </span>
+                    </div>
+
+                    {/* DISCRETO GUARDIÁN EN LA ESQUINA INFERIOR */}
+                    <div className="pt-2 flex items-center justify-center gap-2 text-arena/60 font-inter text-[10px]">
+                      <div className="relative w-5 h-6">
+                        <Image
+                          src={activeTalk.guardianSrc}
+                          alt="Guardián Tequio"
+                          fill
+                          className="object-contain opacity-70"
+                        />
+                      </div>
+                      <span>Faena custodiada por Tequio</span>
                     </div>
 
                   </div>
