@@ -9,6 +9,7 @@ import StarField from "@/components/ui/StarField";
 import BrasaParticles from "@/components/ui/BrasaParticles";
 import LinkedInEmbedCard from "@/components/ui/LinkedInEmbedCard";
 import Modal from "@/components/ui/Modal";
+import { getEventType } from "@/lib/eventTypes";
 
 const LUMA_CALENDAR_EMBED_URL = "https://luma.com/embed/calendar/cal-U0kFC53t9Lv1LCY/events";
 const LUMA_CALENDAR_DIRECT_URL = "https://luma.com/cal-U0kFC53t9Lv1LCY";
@@ -73,7 +74,7 @@ function isValidLinkedInUrl(url: string): boolean {
 export default function EventosPage() {
   const [eventsList, setEventsList] = useState<any[]>([DEFAULT_ACTIVE_EVENT]);
   const [memoriaList, setMemoriaList] = useState<any[]>(DEFAULT_MEMORIA_LIST);
-  const [activeEvent, setActiveEvent] = useState<any>(DEFAULT_ACTIVE_EVENT);
+  const [activeEvents, setActiveEvents] = useState<any[]>([DEFAULT_ACTIVE_EVENT]);
 
   // Modal State for Memoria Viva
   const [isMemoriaModalOpen, setIsMemoriaModalOpen] = useState(false);
@@ -104,25 +105,21 @@ export default function EventosPage() {
 
         if (eventsData && eventsData.length > 0) {
           setEventsList(eventsData);
-          // Support old schema status "abierto" as equivalent to "activa"
-          const active =
-            eventsData.find((e) => e.status === "activa") ||
-            eventsData.find((e) => e.status === "abierto") ||
-            eventsData[0];
+          
+          const actives = eventsData.filter((e) => e.status === "activa" || e.status === "abierto");
+          const displayActives = actives.length > 0 ? actives : [eventsData[0]];
 
-          // If Supabase event is missing speaker data (old schema), merge with default
-          const mergedActive = {
+          const mergedActives = displayActives.map(ev => ({
             ...DEFAULT_ACTIVE_EVENT,
-            ...active,
-            // Only keep speaker fields from DB if they exist, else use default
-            speaker_name: active.speaker_name || DEFAULT_ACTIVE_EVENT.speaker_name,
-            speaker_linkedin: active.speaker_linkedin || DEFAULT_ACTIVE_EVENT.speaker_linkedin,
-          };
-          setActiveEvent(mergedActive);
+            ...ev,
+            speaker_name: ev.speaker_name || "",
+            speaker_linkedin: ev.speaker_linkedin || "",
+          }));
+          setActiveEvents(mergedActives);
 
           setMemoriaForm((prev) => ({
             ...prev,
-            event_title: prev.event_title || mergedActive.title,
+            event_title: prev.event_title || mergedActives[0].title,
           }));
         }
 
@@ -248,114 +245,174 @@ export default function EventosPage() {
             </p>
           </div>
 
-          {/* TARJETA DEL EVENTO ACTIVO (CON INVITADO Y ENLACE DIRECTO A SU LUMA) */}
-          {activeEvent && (
-            <motion.div
-              id="active-talk"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="relative rounded-3xl p-6 sm:p-8 md:p-12 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl mb-10 md:mb-14"
-              style={{
-                background: "linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
-              }}
-            >
-              {/* Header Badges */}
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
-                  <span>✦ FAENA ACTIVA EN PUERTA</span>
-                </span>
+          {/* TARJETAS DE EVENTOS ACTIVOS */}
+          {activeEvents.length > 0 && (
+            <div className={`grid gap-6 sm:gap-8 ${
+              activeEvents.length === 1 
+                ? "grid-cols-1 max-w-4xl mx-auto" 
+                : activeEvents.length === 2
+                ? "grid-cols-1 lg:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2"
+            }`}>
+              {activeEvents.map((ev, index) => {
+                const et = getEventType(ev.event_type);
+                return (
+                  <motion.div
+                    key={ev.id || index}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: index * 0.15 }}
+                    className="relative rounded-3xl p-6 sm:p-8 md:p-10 overflow-hidden border-2 shadow-2xl backdrop-blur-xl flex flex-col h-full"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)`,
+                      borderColor: `${et.color}50`,
+                      boxShadow: `0 20px 60px ${et.glow}`,
+                    }}
+                  >
+                    {/* Glowing background accent based on event type */}
+                    <div 
+                      className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-20"
+                      style={{ background: et.color }}
+                    />
+                    
+                    <div className="relative z-10 flex-grow flex flex-col">
+                      {/* Header Badges */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <span 
+                          className="font-inter text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                          style={{
+                            background: `${et.color}15`,
+                            color: et.color,
+                            border: `1px solid ${et.color}40`,
+                          }}
+                        >
+                          <span className="text-sm">{et.icon}</span>
+                          <span className="uppercase tracking-widest">{et.label}</span>
+                        </span>
 
-                <span className="font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
-                  <span className="animate-pulse">🔥</span>
-                  <span>Próximo Encuentro</span>
-                </span>
-              </div>
+                        <span 
+                          className="font-inter font-bold text-[10px] sm:text-xs text-white px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md"
+                          style={{
+                            background: `linear-gradient(135deg, ${et.color}, ${et.color}dd)`,
+                            border: `1px solid ${et.color}60`,
+                          }}
+                        >
+                          <span className="animate-pulse">🔥</span>
+                          <span>Activa</span>
+                        </span>
+                      </div>
 
-              {/* Title */}
-              <h2 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-                {activeEvent.title}
-              </h2>
+                      {/* Title */}
+                      <h2 className={`font-cinzel text-blanco-lunar font-bold mb-5 leading-tight ${
+                        activeEvents.length === 1 
+                          ? "text-2xl sm:text-3xl md:text-4xl lg:text-5xl" 
+                          : "text-xl sm:text-2xl md:text-3xl"
+                      }`}>
+                        {ev.title}
+                      </h2>
 
-              {/* Grid: Fecha y Modalidad */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 md:mb-6 bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-3.5">
-                  <span className="text-2xl">📅</span>
-                  <div>
-                    <span className="text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
-                      Fecha y Horario
-                    </span>
-                    <p className="font-inter text-blanco-lunar text-sm sm:text-base font-bold">
-                      {activeEvent.event_date}
-                    </p>
-                    <span className="font-inter text-xs text-arena/75 block">
-                      {activeEvent.time_display}
-                    </span>
-                  </div>
-                </div>
+                      {/* Grid: Fecha y Modalidad */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5 bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl sm:text-2xl opacity-80">📅</span>
+                          <div>
+                            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
+                              Fecha y Horario
+                            </span>
+                            <p className="font-inter text-blanco-lunar text-sm font-bold">
+                              {ev.event_date}
+                            </p>
+                            <span className="font-inter text-xs text-arena/75 block">
+                              {ev.time_display}
+                            </span>
+                          </div>
+                        </div>
 
-                <div className="flex items-center gap-3.5">
-                  <span className="text-2xl">
-                    {activeEvent.is_online ? "🖥️" : "📍"}
-                  </span>
-                  <div>
-                    <span className="text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
-                      Modalidad & Lugar
-                    </span>
-                    <p className="font-inter text-blanco-lunar text-sm sm:text-base font-bold flex items-center gap-1.5">
-                      <span>{activeEvent.is_online ? "En línea (Google Meet / Live)" : "Presencial (En persona)"}</span>
-                    </p>
-                    <span className="font-inter text-xs text-arena/75 block">
-                      {activeEvent.location}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl sm:text-2xl opacity-80">
+                            {ev.is_online ? "🖥️" : "📍"}
+                          </span>
+                          <div>
+                            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
+                              Modalidad & Lugar
+                            </span>
+                            <p className="font-inter text-blanco-lunar text-sm font-bold flex items-center gap-1.5">
+                              <span>{ev.is_online ? "En línea: Meet/Live" : "Presencial"}</span>
+                            </p>
+                            <span className="font-inter text-xs text-arena/75 block">
+                              {ev.location}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-              {/* SECCIÓN DEL INVITADO / SPEAKER CON ENLACE DE LINKEDIN */}
-              {activeEvent.speaker_name && (
-                <div className="mb-8 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-amber-500/20 via-terracota/20 to-transparent border border-amber-400/40 p-4 sm:p-5 rounded-2xl shadow-lg">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-full bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-xl flex-shrink-0">
-                      🎙️
+                      {/* SECCIÓN DEL INVITADO / SPEAKER CON ENLACE DE LINKEDIN */}
+                      {ev.speaker_name && (
+                        <div 
+                          className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl shadow-lg mt-auto"
+                          style={{
+                            background: `linear-gradient(to right, ${et.color}15, transparent)`,
+                            border: `1px solid ${et.color}30`,
+                          }}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <div 
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 shadow-inner"
+                              style={{
+                                background: `${et.color}25`,
+                                border: `1px solid ${et.color}50`,
+                              }}
+                            >
+                              🎙️
+                            </div>
+                            <div>
+                              <span 
+                                className="text-[10px] uppercase font-bold block tracking-wider"
+                                style={{ color: et.color }}
+                              >
+                                Ponente / Invitado Especial
+                              </span>
+                              <h4 className="font-inter text-blanco-lunar text-sm sm:text-base font-bold">
+                                {ev.speaker_name}
+                              </h4>
+                            </div>
+                          </div>
+
+                          {ev.speaker_linkedin && (
+                            <a
+                              href={ev.speaker_linkedin}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cursor-pointer font-inter font-bold text-xs bg-[#0077B5]/90 hover:bg-[#0077B5] text-white px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5 ml-auto"
+                            >
+                              <span className="font-black text-sm">in</span>
+                              <span>LinkedIn ↗</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Botón directo para abrir el evento en Luma */}
+                      <div className={`pt-2 ${!ev.speaker_name ? "mt-auto" : ""}`}>
+                        <a
+                          href={ev.luma_url || LUMA_CALENDAR_DIRECT_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-pointer inline-flex items-center justify-center gap-2 font-inter font-bold text-white px-6 py-3.5 rounded-2xl hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 w-full sm:w-auto"
+                          style={{
+                            background: `linear-gradient(135deg, ${et.color} 0%, ${et.color}dd 100%)`,
+                            boxShadow: `0 10px 25px ${et.glow}`,
+                          }}
+                        >
+                          <span>Ver evento en Luma</span>
+                          <span className="text-lg">↗</span>
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[11px] uppercase font-bold text-amber-400 block tracking-wider">
-                        Ponente / Invitado Especial
-                      </span>
-                      <h4 className="font-inter text-blanco-lunar text-base font-bold">
-                        {activeEvent.speaker_name}
-                      </h4>
-                    </div>
-                  </div>
-
-                  {activeEvent.speaker_linkedin && (
-                    <a
-                      href={activeEvent.speaker_linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cursor-pointer font-inter font-bold text-xs bg-[#0077B5] hover:bg-[#005885] text-white px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2"
-                    >
-                      <span className="font-black text-sm">in</span>
-                      <span>Ver perfil en LinkedIn ↗</span>
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Botón directo para abrir el evento en Luma */}
-              <div className="pt-2">
-                <a
-                  href={activeEvent.luma_url || LUMA_CALENDAR_DIRECT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cursor-pointer inline-flex items-center justify-center gap-2.5 font-inter font-bold bg-gradient-to-r from-terracota via-orange-600 to-amber-500 text-blanco-lunar px-8 py-4 rounded-2xl shadow-[0_10px_28px_rgba(193,91,58,0.45)] hover:shadow-[0_14px_35px_rgba(245,166,35,0.6)] hover:scale-105 active:scale-95 text-base md:text-lg border border-amber-400/40 transition-all duration-300"
-                >
-                  <span>Ver evento en Luma</span>
-                  <span className="text-xl">↗</span>
-                </a>
-              </div>
-            </motion.div>
+                  </motion.div>
+                );
+              })}
+            </div>
           )}
 
         </div>
