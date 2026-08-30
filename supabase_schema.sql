@@ -24,36 +24,73 @@ DROP TABLE IF EXISTS public.events CASCADE;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ==============================================================================
--- TABLA 1: EVENTS (Agenda de Faenas Tequio: Activas y Pasadas)
+-- TABLA 1: EVENTS
+-- Guarda todas las faenas pasadas y activas de Tequio.
+-- Puede haber múltiples eventos con status = 'activa' simultáneamente.
+-- event_type define la naturaleza del evento (Talk, Hackathon, etc.)
 -- ==============================================================================
 CREATE TABLE public.events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  -- Contenido principal
   title TEXT NOT NULL,
   event_date TEXT NOT NULL,
   time_display TEXT NOT NULL DEFAULT '07:00 PM — 08:30 PM (CDMX)',
-  is_online BOOLEAN NOT NULL DEFAULT true, -- true = 🖥️ En línea / Google Meet | false = 📍 En persona / Presencial
+
+  -- Modalidad
+  is_online BOOLEAN NOT NULL DEFAULT true,
   location TEXT NOT NULL DEFAULT 'Google Meet',
-  luma_url TEXT NOT NULL, -- Enlace de Luma (ej: https://luma.com/event/evt-C1nAPcQ4ME9mTeL o https://lu.ma/...)
-  speaker_name TEXT, -- Nombre completo del ponente / invitado
-  speaker_linkedin TEXT, -- Enlace al LinkedIn del ponente
-  guardian TEXT NOT NULL DEFAULT 'tochtli' CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
-  status TEXT NOT NULL DEFAULT 'activa' CHECK (status IN ('activa', 'pasada')), -- 'activa' = Faena en puerta | 'pasada' = Faena ya realizada
+
+  -- Tipo de evento (determina colores y guardián en la UI)
+  -- tequio_talks    → Círculo de la Luna     → 🐰 Tochtli (ámbar)
+  -- forja           → Forja Comunitaria       → 🦝 Tlacu (terracota)
+  -- aprender        → Jornada de la Faena     → 🐰🦝 Tochtli+Tlacu (teal)
+  -- caravana        → Caravana del Vuelo      → 🪶 Kuku (esmeralda)
+  event_type TEXT NOT NULL DEFAULT 'tequio_talks'
+    CHECK (event_type IN ('tequio_talks', 'forja', 'aprender', 'caravana')),
+
+  -- Luma
+  luma_url TEXT NOT NULL,
+
+  -- Ponente / Invitado
+  speaker_name TEXT,
+  speaker_linkedin TEXT,
+
+  -- Guardián visual (puede diferir del event_type para personalización extra)
+  guardian TEXT NOT NULL DEFAULT 'tochtli'
+    CHECK (guardian IN ('tochtli', 'tlacu', 'kuku', 'tochtli_tlacu')),
+
+  -- Estado: activa = en puerta (puede haber varias) | pasada = historial
+  status TEXT NOT NULL DEFAULT 'activa'
+    CHECK (status IN ('activa', 'pasada')),
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ==============================================================================
 -- TABLA 2: COMPLETED_WORKS_GALLERY (Memoria Viva de la Tribu)
+-- Vinculada opcionalmente a un evento para el futuro "Museo de Faenas"
 -- ==============================================================================
 CREATE TABLE public.completed_works_gallery (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   author_name TEXT NOT NULL,
-  linkedin_post_url TEXT NOT NULL, -- Enlace 100% verificado de LinkedIn
-  quote TEXT NOT NULL, -- Frase / lección obtenida del evento (máximo 50 palabras)
-  event_title TEXT NOT NULL, -- Título de la faena a la que asistió
-  guardian TEXT NOT NULL DEFAULT 'tlacu' CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
+  linkedin_post_url TEXT NOT NULL,
+  quote TEXT NOT NULL,
+  event_title TEXT NOT NULL,
+  -- FK opcional al evento (NULL si el evento aún no está en la BD)
+  event_id UUID REFERENCES public.events(id) ON DELETE SET NULL,
+  guardian TEXT NOT NULL DEFAULT 'tlacu'
+    CHECK (guardian IN ('tochtli', 'tlacu', 'kuku', 'tochtli_tlacu')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ==============================================================================
+-- ÍNDICES para consultas frecuentes
+-- ==============================================================================
+CREATE INDEX idx_events_status     ON public.events(status);
+CREATE INDEX idx_events_event_type ON public.events(event_type);
+CREATE INDEX idx_gallery_event_id  ON public.completed_works_gallery(event_id);
 
 -- ==============================================================================
 -- POLÍTICAS DE SEGURIDAD (RLS)
@@ -61,82 +98,63 @@ CREATE TABLE public.completed_works_gallery (
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.completed_works_gallery ENABLE ROW LEVEL SECURITY;
 
--- Políticas para Events
-CREATE POLICY "Lectura pública de eventos" 
+-- Events
+CREATE POLICY "Lectura pública de eventos"
   ON public.events FOR SELECT TO public USING (true);
-
-CREATE POLICY "Gestión total de eventos" 
+CREATE POLICY "Gestión total de eventos"
   ON public.events FOR ALL TO public USING (true);
 
--- Políticas para Memoria Viva (Completed Works Gallery)
-CREATE POLICY "Lectura pública de memoria viva" 
+-- Memoria Viva
+CREATE POLICY "Lectura pública de memoria viva"
   ON public.completed_works_gallery FOR SELECT TO public USING (true);
-
-CREATE POLICY "Permitir publicar en memoria viva" 
+CREATE POLICY "Permitir publicar en memoria viva"
   ON public.completed_works_gallery FOR INSERT TO public WITH CHECK (true);
-
-CREATE POLICY "Gestión total de memoria viva" 
+CREATE POLICY "Gestión total de memoria viva"
   ON public.completed_works_gallery FOR ALL TO public USING (true);
 
 -- ==============================================================================
--- DATOS INICIALES (SEED DATA: FAENAS ACTIVAS / PASADAS & MEMORIA VIVA)
+-- SEED DATA — Faenas de ejemplo
 -- ==============================================================================
-
 INSERT INTO public.events (
-  title,
-  event_date,
-  time_display,
-  is_online,
-  location,
-  luma_url,
-  speaker_name,
-  speaker_linkedin,
-  guardian,
-  status
-) VALUES 
+  title, event_date, time_display, is_online, location,
+  event_type, luma_url, speaker_name, speaker_linkedin, guardian, status
+) VALUES
 (
   'De Estudiante a Tech Lead: El Camino Sin Secretos',
   'Jueves 17 de Septiembre, 2026',
   '07:00 PM — 08:30 PM (CDMX)',
-  true,
-  'Google Meet',
+  true, 'Google Meet',
+  'tequio_talks',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
   'David Reyes',
   'https://www.linkedin.com/in/david-reyes-tech',
-  'tochtli',
-  'activa'
+  'tochtli', 'activa'
 ),
 (
   'Hackathon por la Comunidad: Código Abierto con Causa',
   'Sábado 20 de Septiembre, 2026',
   '10:00 AM — 06:00 PM (CDMX)',
-  false,
-  'Centro Comunitario La Esperanza, CDMX',
+  false, 'Centro Comunitario La Esperanza, CDMX',
+  'forja',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
   'Sofía Morales & Mentores Tequio',
   'https://www.linkedin.com/in/sofia-morales-dev',
-  'tlacu',
-  'pasada'
+  'tlacu', 'pasada'
 ),
 (
   'Caravana al DevFest CDMX 2026',
   'Sábado 24 de Octubre, 2026',
   '09:00 AM — 06:00 PM (CDMX)',
-  false,
-  'Telmex Hub / WTC CDMX',
+  false, 'Telmex Hub / WTC CDMX',
+  'caravana',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
   'Líderes de Comunidad GDG & Tequio',
   'https://www.linkedin.com/company/tequio',
-  'kuku',
-  'pasada'
+  'kuku', 'pasada'
 );
 
 INSERT INTO public.completed_works_gallery (
-  author_name,
-  linkedin_post_url,
-  quote,
-  event_title,
-  guardian
+  author_name, linkedin_post_url, quote, event_title, guardian
 ) VALUES
 (
   'Sofía Morales',

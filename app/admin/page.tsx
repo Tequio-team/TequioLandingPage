@@ -13,6 +13,7 @@ import {
   isAdminAuthenticated,
   setAdminSession,
 } from "@/lib/adminAuth";
+import { EVENT_TYPES_LIST, getEventType } from "@/lib/eventTypes";
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean>(false);
@@ -34,6 +35,7 @@ export default function AdminPage() {
     luma_url: "",
     speaker_name: "",
     speaker_linkedin: "",
+    event_type: "tequio_talks" as string,
     guardian: "tochtli",
     status: "activa" as "activa" | "pasada",
   });
@@ -115,11 +117,6 @@ export default function AdminPage() {
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      // Si se crea como activa, actualizar las anteriores a pasadas para que la nueva sea la activa principal
-      if (eventForm.status === "activa") {
-        await supabase.from("events").update({ status: "pasada" }).eq("status", "activa");
-      }
-
       const { data, error } = await supabase
         .from("events")
         .insert([
@@ -132,6 +129,7 @@ export default function AdminPage() {
             luma_url: eventForm.luma_url.trim(),
             speaker_name: eventForm.speaker_name.trim() || null,
             speaker_linkedin: eventForm.speaker_linkedin.trim() || null,
+            event_type: eventForm.event_type,
             guardian: eventForm.guardian,
             status: eventForm.status,
           },
@@ -164,6 +162,7 @@ export default function AdminPage() {
         luma_url: "",
         speaker_name: "",
         speaker_linkedin: "",
+        event_type: "tequio_talks",
         guardian: "tochtli",
         status: "activa",
       });
@@ -187,25 +186,14 @@ export default function AdminPage() {
     }
   };
 
-  // Toggle Event Status (Activa vs Pasada)
+  // Toggle Event Status (Activa vs Pasada) — multiple active events allowed
   const handleToggleEventStatus = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === "activa" ? "pasada" : "activa";
     try {
       const { supabase } = await import("@/lib/supabase");
-
-      // Si pasa a activa, poner las otras en pasada
-      if (nextStatus === "activa") {
-        await supabase.from("events").update({ status: "pasada" }).eq("status", "activa");
-      }
-
       await supabase.from("events").update({ status: nextStatus }).eq("id", id);
-
       setEventsList((prev) =>
-        prev.map((e) => {
-          if (e.id === id) return { ...e, status: nextStatus };
-          if (nextStatus === "activa" && e.status === "activa") return { ...e, status: "pasada" };
-          return e;
-        })
+        prev.map((e) => (e.id === id ? { ...e, status: nextStatus } : e))
       );
       setStatusMessage(`🔄 Estado cambiado a Faena ${nextStatus === "activa" ? "Activa 🔥" : "Pasada 📜"}.`);
     } catch (err: any) {
@@ -389,11 +377,65 @@ export default function AdminPage() {
                     </div>
 
                     <form onSubmit={handleEventSubmit} className="space-y-4">
-                      {/* Estado: Faena Activa vs Faena Pasada */}
+                      {/* ── TIPO DE FAENA (Selector Visual) ── */}
+                      <div className="space-y-2">
+                        <label className="font-inter text-xs font-bold text-blanco-lunar block uppercase tracking-wider">
+                          Tipo de Faena *
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {EVENT_TYPES_LIST.map((et) => {
+                            const isSelected = eventForm.event_type === et.value;
+                            return (
+                              <button
+                                key={et.value}
+                                type="button"
+                                onClick={() =>
+                                  setEventForm({
+                                    ...eventForm,
+                                    event_type: et.value,
+                                    // Auto-sync guardian
+                                    guardian: et.guardian === "tochtli_tlacu" ? "tochtli" : et.guardian,
+                                  })
+                                }
+                                className="cursor-pointer text-left p-3 rounded-xl border transition-all"
+                                style={{
+                                  background: isSelected ? `${et.color}18` : "rgba(255,255,255,0.04)",
+                                  borderColor: isSelected ? et.color : "rgba(255,255,255,0.12)",
+                                  boxShadow: isSelected ? `0 0 12px ${et.glow}` : "none",
+                                }}
+                              >
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-base">{et.icon}</span>
+                                  <span
+                                    className="font-inter text-[10px] font-bold uppercase tracking-wider"
+                                    style={{ color: isSelected ? et.color : "#D9CBB8" }}
+                                  >
+                                    {et.guardianEmoji}
+                                  </span>
+                                </div>
+                                <p
+                                  className="font-cinzel text-xs font-bold leading-tight"
+                                  style={{ color: isSelected ? et.color : "#F9F7F2" }}
+                                >
+                                  {et.label}
+                                </p>
+                                <p className="font-inter text-[10px] text-arena/60 mt-0.5 leading-tight">
+                                  {et.tags.slice(0, 2).join(" · ")}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* ── ESTADO: Activa vs Pasada ── */}
                       <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2">
                         <label className="font-inter text-xs font-bold text-amber-400 block uppercase tracking-wider">
-                          Tipo de Registro
+                          Estado del Evento
                         </label>
+                        <p className="font-inter text-[10px] text-arena/60">
+                          Pueden coexistir múltiples faenas activas simultáneamente.
+                        </p>
                         <div className="flex items-center gap-4">
                           <label className="flex items-center gap-2 cursor-pointer text-xs font-inter font-bold">
                             <input
@@ -414,7 +456,7 @@ export default function AdminPage() {
                               onChange={() => setEventForm({ ...eventForm, status: "pasada" })}
                               className="accent-terracota"
                             />
-                            <span>📜 Faena Pasada (Para Memoria)</span>
+                            <span>📜 Faena Pasada (Para Museo)</span>
                           </label>
                         </div>
                       </div>
@@ -564,6 +606,7 @@ export default function AdminPage() {
                           <option value="tochtli">🐰 Tochtli (Mentoría)</option>
                           <option value="tlacu">🦝 Tlacu (Forja)</option>
                           <option value="kuku">🪶 Kuku (Caravanas)</option>
+                          <option value="tochtli_tlacu">🐰🦝 Tochtli & Tlacu (Jornada)</option>
                         </select>
                       </div>
 
@@ -596,10 +639,18 @@ export default function AdminPage() {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-amber-400 font-inter">
-                                  {evt.guardian === "tochtli" ? "🐰 Tochtli" : evt.guardian === "kuku" ? "🪶 Kuku" : "🦝 Tlacu"}
-                                </span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {(() => {
+                                  const et = getEventType(evt.event_type);
+                                  return (
+                                    <span
+                                      className="text-[10px] px-2 py-0.5 rounded-full font-bold font-inter"
+                                      style={{ background: `${et.color}25`, color: et.color, border: `1px solid ${et.color}50` }}
+                                    >
+                                      {et.icon} {et.label}
+                                    </span>
+                                  );
+                                })()}
                                 <span
                                   className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                                     evt.status === "activa"
@@ -607,10 +658,10 @@ export default function AdminPage() {
                                       : "bg-white/10 text-arena/70"
                                   }`}
                                 >
-                                  {evt.status === "activa" ? "🔥 Faena Activa" : "📜 Faena Pasada"}
+                                  {evt.status === "activa" ? "🔥 Activa" : "📜 Pasada"}
                                 </span>
                               </div>
-                              <h4 className="font-cinzel font-bold text-blanco-lunar text-base">
+                              <h4 className="font-cinzel font-bold text-blanco-lunar text-sm">
                                 {evt.title}
                               </h4>
                             </div>
