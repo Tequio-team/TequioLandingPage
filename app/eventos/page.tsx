@@ -714,12 +714,13 @@ export default function EventosPage() {
             </div>
           </div>
 
-          {/* GALERÍA VIVA DE LINKEDIN EMBEDS CON SKELETON LOADERS Y SELLOS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {galleryWorks.map((item) => (
+          {/* GALERÍA VIVA MASONRY DE LINKEDIN EMBEDS CON ANIMACIÓN ESCALONADA */}
+          <div className="columns-1 md:columns-2 gap-8 space-y-8">
+            {galleryWorks.map((item, idx) => (
               <LinkedInEmbedCard
                 key={item.id}
                 id={item.id}
+                index={idx}
                 title={item.title}
                 date={item.date}
                 guardianTag={item.guardianTag}

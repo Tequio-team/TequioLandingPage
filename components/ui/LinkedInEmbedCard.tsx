@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 
 interface LinkedInEmbedCardProps {
   id: string;
+  index?: number;
   title: string;
   date: string;
   guardianTag: string;
@@ -18,10 +20,8 @@ interface LinkedInEmbedCardProps {
 export function formatLinkedInEmbedUrl(url?: string): string | null {
   if (!url) return null;
   
-  // If already an embed URL
   if (url.includes("/embed/feed/update/")) return url;
 
-  // Extract URN activity/share ID from full URLs
   const match = url.match(/urn:li:(activity|share):([0-9]+)/);
   if (match) {
     const type = match[1];
@@ -29,11 +29,11 @@ export function formatLinkedInEmbedUrl(url?: string): string | null {
     return `https://www.linkedin.com/embed/feed/update/urn:li:${type}:${id}`;
   }
 
-  // Short link (lnkd.in/p/...) or generic post URL
   return url;
 }
 
 export default function LinkedInEmbedCard({
+  index = 0,
   title,
   date,
   guardianTag,
@@ -49,8 +49,21 @@ export default function LinkedInEmbedCard({
   const isShortLink = linkedinPostUrl.includes("lnkd.in");
 
   return (
-    <div className="rounded-3xl overflow-hidden bg-white/[0.035] border-2 border-amber-500/40 flex flex-col justify-between shadow-2xl relative group hover:border-amber-400 transition-all duration-300">
-      
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{
+        duration: 0.6,
+        delay: index * 0.15,
+        ease: [0.16, 1, 0.3, 1], // Custom Cubic-Bezier easing requested by user
+      }}
+      whileHover={{
+        y: -6,
+        transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      }}
+      className="break-inside-avoid mb-8 rounded-3xl overflow-hidden bg-white/[0.035] border-2 border-amber-500/30 flex flex-col justify-between shadow-2xl relative group hover:border-amber-400 hover:shadow-[0_20px_50px_rgba(245,166,35,0.22)] transition-all duration-300 backdrop-blur-xl"
+    >
       {/* SELLO CEREMONIAL FLOTANTE (CERA ANCESTRAL DORADA) */}
       <div className="absolute top-4 right-4 z-20 pointer-events-none">
         <span className="font-inter text-[10px] uppercase font-bold px-3.5 py-1.5 rounded-full bg-amber-500 text-azul-noche shadow-[0_0_20px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1.5">
@@ -60,9 +73,9 @@ export default function LinkedInEmbedCard({
       </div>
 
       {/* CONTENEDOR CON SKELETON SHIMMER LOADER & TRANSICIÓN JS/CSS */}
-      <div className="relative w-full bg-black/60 min-h-[420px] flex items-center justify-center overflow-hidden border-b border-white/10">
+      <div className="relative w-full bg-black/60 min-h-[400px] flex items-center justify-center overflow-hidden border-b border-white/10">
         
-        {/* SKELETON SHIMMER LOADER (SE MUESTRA MIENTRAS CARGA EL IFRAME) */}
+        {/* SKELETON SHIMMER LOADER */}
         {!iframeLoaded && !isShortLink && (
           <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex flex-col justify-between p-8 z-10">
             <div className="flex items-center gap-3">
@@ -97,7 +110,6 @@ export default function LinkedInEmbedCard({
             }`}
           />
         ) : (
-          /* VISTA PREVIA SI ES ENLACE CORTO LNKD.IN */
           <div className="relative h-72 w-full flex flex-col items-center justify-center p-6 text-center bg-white/5 space-y-4">
             <Image
               src={imgSrc}
@@ -180,6 +192,6 @@ export default function LinkedInEmbedCard({
         </div>
       </div>
 
-    </div>
+    </motion.div>
   );
 }
