@@ -90,11 +90,11 @@ export default function CommitmentSection() {
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
-        {/* LAYOUT EN 2 COLUMNAS: IZQUIERDA (ESLOGAN) / DERECHA (POST LINKEDIN + OVERLAY CON TLACU & TÍTULO) */}
-        <div className="grid grid-cols-2 gap-6 items-center">
+        {/* LAYOUT EN 1 COLUMNA EN MÓVIL (ESLOGAN ARRIBA, CARROUSEL ABAJO) Y 2 COLUMNAS EN DESKTOP */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           
-          {/* COLUMNA IZQUIERDA (50% / ESLOGAN & MANIFIESTO) */}
-          <div className="lg:col-span-6 space-y-6 text-left">
+          {/* COLUMNA IZQUIERDA (ESLOGAN & MANIFIESTO) */}
+          <div className="space-y-6 text-left">
             <span className="font-inter text-terracota text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
               ✦ Nuestro Compromiso ✦
             </span>
@@ -107,10 +107,10 @@ export default function CommitmentSection() {
               Quien entra a Tequio no solo busca crecer profesionalmente; asume el compromiso de aprender en tribu, construir tecnología útil con causa y dejar una huella imborrable en la red.
             </p>
 
-            <div className="pt-4">
+            <div className="pt-2">
               <Link
                 href="/eventos"
-                className="cursor-pointer inline-flex items-center gap-3 font-inter font-bold text-base text-blanco-lunar px-8 py-4 rounded-2xl bg-terracota transition-all duration-300 shadow-2xl hover:shadow-[0_12px_35px_rgba(193,91,58,0.7)] hover:scale-105"
+                className="cursor-pointer inline-flex items-center gap-3 font-inter font-bold text-sm sm:text-base text-blanco-lunar px-8 py-4 rounded-2xl bg-terracota transition-all duration-300 shadow-2xl hover:shadow-[0_12px_35px_rgba(193,91,58,0.7)] hover:scale-105"
               >
                 <span>Ver faenas y próximas actividades</span>
                 <span className="text-xl">→</span>
@@ -118,8 +118,8 @@ export default function CommitmentSection() {
             </div>
           </div>
 
-          {/* COLUMNA DERECHA (50% / POST EN VIVO DE LINKEDIN + OVERLAY CON TLACU, TÍTULO Y BOTÓN LINKEDIN) */}
-          <div className="lg:col-span-6 relative">
+          {/* COLUMNA DERECHA (POST EN VIVO DE LINKEDIN + OVERLAY CON TLACU, TÍTULO Y BOTÓN LINKEDIN) */}
+          <div className="relative w-full">
             
             {/* Header Nav del Carrusel */}
             <div className="flex items-center justify-between font-inter text-xs text-amber-400 font-bold mb-3 px-1">
