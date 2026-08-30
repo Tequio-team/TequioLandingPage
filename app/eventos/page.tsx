@@ -845,42 +845,120 @@ export default function EventosPage() {
             </div>
           </div>
 
-          {/* GALERÍA MASONRY ESTILO PINTEREST (COLUMNAS ORGÁNICAS 2 EN MÓVIL / 3-4 EN DESKTOP) */}
+          {/* GALERÍA MASONRY ESTILO PINTEREST (2 COLUMNAS PURAS EN MÓVIL Y 2-4 EN DESKTOP) */}
           {isLoadingGallery ? (
-            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3.5 sm:gap-6 space-y-3.5 sm:space-y-6">
-              {[1, 2, 3, 4, 5, 6].map((sk) => (
-                <div
-                  key={sk}
-                  className="break-inside-avoid mb-3.5 sm:mb-6 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 sm:p-5 space-y-3 animate-pulse"
-                >
-                  <div className={`w-full bg-white/10 rounded-xl ${sk % 2 === 0 ? "h-36 sm:h-64" : "h-28 sm:h-48"}`} />
-                  <div className="h-4 bg-white/10 rounded w-3/4" />
-                  <div className="h-3 bg-white/5 rounded w-1/2" />
+            <>
+              {/* SKELETON MÓVIL (< sm) */}
+              <div className="grid grid-cols-2 sm:hidden gap-3 items-start">
+                <div className="flex flex-col gap-3">
+                  {[1, 3, 5].map((sk) => (
+                    <div key={sk} className="w-full rounded-2xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 space-y-2 animate-pulse">
+                      <div className={`w-full bg-white/10 rounded-xl ${sk === 1 ? "h-36" : "h-28"}`} />
+                      <div className="h-3 bg-white/10 rounded w-3/4" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                <div className="flex flex-col gap-3">
+                  {[2, 4, 6].map((sk) => (
+                    <div key={sk} className="w-full rounded-2xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 space-y-2 animate-pulse">
+                      <div className={`w-full bg-white/10 rounded-xl ${sk === 2 ? "h-28" : "h-40"}`} />
+                      <div className="h-3 bg-white/10 rounded w-3/4" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SKELETON DESKTOP (>= sm) */}
+              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+                {[1, 2, 3, 4, 5, 6].map((sk) => (
+                  <div key={sk} className="w-full rounded-3xl overflow-hidden bg-white/[0.03] border border-white/10 p-5 space-y-3 animate-pulse">
+                    <div className={`w-full bg-white/10 rounded-xl ${sk % 2 === 0 ? "h-56" : "h-44"}`} />
+                    <div className="h-4 bg-white/10 rounded w-3/4" />
+                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : visibleGalleryWorks.length > 0 ? (
-            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3.5 sm:gap-6 space-y-3.5 sm:space-y-6">
-              {visibleGalleryWorks.map((item, idx) => (
-                <LinkedInEmbedCard
-                  key={item.id}
-                  id={item.id}
-                  index={idx}
-                  sizeVariant={item.sizeVariant || SIZE_VARIANTS[idx % SIZE_VARIANTS.length]}
-                  title={item.title}
-                  date={item.date}
-                  guardianTag={item.guardianTag}
-                  sealStamp={item.sealStamp}
-                  linkedinPostUrl={item.linkedinPostUrl}
-                  imgSrc={item.imgSrc}
-                  description={item.description}
-                  impactMetrics={item.impactMetrics}
-                  authorName={item.authorName}
-                  tags={item.tags}
-                  onOpenDetail={(pin) => setSelectedPinModal(pin)}
-                />
-              ))}
-            </div>
+            <>
+              {/* REJILLA 2 COLUMNAS PURA PARA MÓVIL (< sm) */}
+              <div className="grid grid-cols-2 sm:hidden gap-3 items-start w-full">
+                {/* Columna Izquierda (Índices pares 0, 2, 4...) */}
+                <div className="flex flex-col gap-3 w-full">
+                  {visibleGalleryWorks
+                    .filter((_, idx) => idx % 2 === 0)
+                    .map((item, idx) => (
+                      <LinkedInEmbedCard
+                        key={item.id}
+                        id={item.id}
+                        index={idx * 2}
+                        sizeVariant={item.sizeVariant || SIZE_VARIANTS[(idx * 2) % SIZE_VARIANTS.length]}
+                        title={item.title}
+                        date={item.date}
+                        guardianTag={item.guardianTag}
+                        sealStamp={item.sealStamp}
+                        linkedinPostUrl={item.linkedinPostUrl}
+                        imgSrc={item.imgSrc}
+                        description={item.description}
+                        impactMetrics={item.impactMetrics}
+                        authorName={item.authorName}
+                        tags={item.tags}
+                        onOpenDetail={(pin) => setSelectedPinModal(pin)}
+                      />
+                    ))}
+                </div>
+
+                {/* Columna Derecha (Índices impares 1, 3, 5...) */}
+                <div className="flex flex-col gap-3 w-full">
+                  {visibleGalleryWorks
+                    .filter((_, idx) => idx % 2 === 1)
+                    .map((item, idx) => (
+                      <LinkedInEmbedCard
+                        key={item.id}
+                        id={item.id}
+                        index={idx * 2 + 1}
+                        sizeVariant={item.sizeVariant || SIZE_VARIANTS[(idx * 2 + 1) % SIZE_VARIANTS.length]}
+                        title={item.title}
+                        date={item.date}
+                        guardianTag={item.guardianTag}
+                        sealStamp={item.sealStamp}
+                        linkedinPostUrl={item.linkedinPostUrl}
+                        imgSrc={item.imgSrc}
+                        description={item.description}
+                        impactMetrics={item.impactMetrics}
+                        authorName={item.authorName}
+                        tags={item.tags}
+                        onOpenDetail={(pin) => setSelectedPinModal(pin)}
+                      />
+                    ))}
+                </div>
+              </div>
+
+              {/* REJILLA MULTI-COLUMNA PARA TABLET & DESKTOP (>= sm) */}
+              <div className="hidden sm:block">
+                <div className="columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+                  {visibleGalleryWorks.map((item, idx) => (
+                    <LinkedInEmbedCard
+                      key={item.id}
+                      id={item.id}
+                      index={idx}
+                      sizeVariant={item.sizeVariant || SIZE_VARIANTS[idx % SIZE_VARIANTS.length]}
+                      title={item.title}
+                      date={item.date}
+                      guardianTag={item.guardianTag}
+                      sealStamp={item.sealStamp}
+                      linkedinPostUrl={item.linkedinPostUrl}
+                      imgSrc={item.imgSrc}
+                      description={item.description}
+                      impactMetrics={item.impactMetrics}
+                      authorName={item.authorName}
+                      tags={item.tags}
+                      onOpenDetail={(pin) => setSelectedPinModal(pin)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
           ) : (
             <div className="text-center py-16 space-y-4 p-8 rounded-3xl bg-white/[0.02] border border-white/10 max-w-lg mx-auto">
               <span className="text-3xl block">🔍</span>

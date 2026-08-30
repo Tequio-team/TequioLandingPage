@@ -136,7 +136,7 @@ export default function LinkedInEmbedCard({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={handleCardClick}
-      className="break-inside-avoid mb-3.5 sm:mb-6 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/20 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_20px_45px_rgba(245,166,35,0.25)] transition-all duration-300 backdrop-blur-xl cursor-pointer select-none"
+      className="w-full break-inside-avoid sm:mb-6 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/20 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_20px_45px_rgba(245,166,35,0.25)] transition-all duration-300 backdrop-blur-xl cursor-pointer select-none"
     >
       {/* 1. MEDIA CONTAINER (FOTO / IFRAME CON OVERLAY FLOTANTE ESTILO PINTEREST) */}
       <div className={`relative w-full bg-black/60 overflow-hidden ${currentSize.mediaH}`}>
