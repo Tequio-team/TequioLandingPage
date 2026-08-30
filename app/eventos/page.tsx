@@ -8,26 +8,13 @@ import FooterSection from "@/components/sections/FooterSection";
 import BrasaCursor from "@/components/ui/BrasaCursor";
 import StarField from "@/components/ui/StarField";
 import BrasaParticles from "@/components/ui/BrasaParticles";
+import LinkedInEmbedCard from "@/components/ui/LinkedInEmbedCard";
 import {
   getUserProfile,
   saveUserProfile,
   saveEventRegistration,
   isRegisteredForEvent,
 } from "@/lib/session";
-
-// Helper function to format LinkedIn Embed Iframe URLs
-function formatLinkedInEmbedUrl(url?: string): string | null {
-  if (!url) return null;
-  if (url.includes("/embed/feed/update/")) return url;
-  
-  const match = url.match(/urn:li:(activity|share):([0-9]+)/);
-  if (match) {
-    const type = match[1];
-    const id = match[2];
-    return `https://www.linkedin.com/embed/feed/update/urn:li:${type}:${id}`;
-  }
-  return null;
-}
 
 // Fallback active event template in case Supabase table is empty
 const DEFAULT_ACTIVE_TALK = {
@@ -57,12 +44,15 @@ export default function EventosPage() {
   const [selectedGuardian, setSelectedGuardian] = useState<string>("all");
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
   const [routeModalOpen, setRouteModalOpen] = useState(false);
+  const [shareLinkedInModalOpen, setShareLinkedInModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [routeFormSubmitted, setRouteFormSubmitted] = useState(false);
+  const [linkedInFormSubmitted, setLinkedInFormSubmitted] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [memberValidationError, setMemberValidationError] = useState<string | null>(null);
 
   // Live Dynamic States initialized strictly from Supabase
   const [activeTalk, setActiveTalk] = useState(DEFAULT_ACTIVE_TALK);
@@ -82,6 +72,13 @@ export default function EventosPage() {
     notas: "",
   });
 
+  const [linkedInForm, setLinkedInForm] = useState({
+    email: "",
+    title: "",
+    linkedin_url: "",
+    description: "",
+  });
+
   // Real-time Countdown logic
   const [timeLeft, setTimeLeft] = useState({ days: 4, hours: 12, minutes: 35, seconds: 20 });
 
@@ -97,6 +94,10 @@ export default function EventosPage() {
       setRouteForm((prev) => ({
         ...prev,
         nombre: savedProfile.nombre || prev.nombre,
+        email: savedProfile.email || prev.email,
+      }));
+      setLinkedInForm((prev) => ({
+        ...prev,
         email: savedProfile.email || prev.email,
       }));
     }
@@ -162,7 +163,7 @@ export default function EventosPage() {
           );
         }
 
-        // B) Fetch External Routes (Comunidades Externas)
+        // B) Fetch External Routes
         const { data: routesData } = await supabase
           .from("external_routes")
           .select("*")
@@ -172,7 +173,7 @@ export default function EventosPage() {
           setExternalRoutes(routesData);
         }
 
-        // C) Fetch completed works gallery WITH LINKEDIN EMBEDS & SEALS
+        // C) Fetch completed works gallery WITH LINKEDIN EMBEDS
         const { data: galleryData } = await supabase
           .from("completed_works_gallery")
           .select("*")
@@ -189,6 +190,7 @@ export default function EventosPage() {
               linkedinPostUrl: g.linkedin_post_url,
               imgSrc: g.image_url || "/jpg/moment1.jpg",
               description: g.description,
+              authorName: g.author_name,
               impactMetrics: Array.isArray(g.impact_metrics) ? g.impact_metrics : [],
             }))
           );
@@ -284,6 +286,74 @@ export default function EventosPage() {
     } finally {
       setIsSubmitting(false);
       setRouteFormSubmitted(true);
+    }
+  };
+
+  // Handle Community Member LinkedIn Post Submission
+  const handleShareLinkedInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkedInForm.email || !linkedInForm.linkedin_url) return;
+
+    setIsSubmitting(true);
+    setMemberValidationError(null);
+
+    try {
+      const { supabase } = await import("@/lib/supabase");
+
+      // Verify member exists in community_members
+      const { data: member } = await supabase
+        .from("community_members")
+        .select("*")
+        .eq("email", linkedInForm.email.toLowerCase().trim())
+        .single();
+
+      if (!member) {
+        setMemberValidationError(
+          "❌ Este correo no se encuentra registrado en el Códice de la Tribu. Por favor inscribe tu nombre primero en la sección Unirse."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Insert member post into completed_works_gallery
+      const { error } = await supabase.from("completed_works_gallery").insert([
+        {
+          author_email: member.email,
+          author_name: member.full_name,
+          title: linkedInForm.title || `Publicación de ${member.full_name}`,
+          event_date: "Reciente 2026",
+          guardian_tag: "🪶 Tribu Tequio",
+          seal_stamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
+          linkedin_post_url: linkedInForm.linkedin_url.trim(),
+          description: linkedInForm.description || `Experiencia compartida en LinkedIn por ${member.full_name}.`,
+          impact_metrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
+        },
+      ]);
+
+      if (error) {
+        setMemberValidationError(`❌ Error: ${error.message}`);
+      } else {
+        setLinkedInFormSubmitted(true);
+        // Refresh local gallery
+        setGalleryWorks((prev) => [
+          {
+            id: Date.now().toString(),
+            title: linkedInForm.title || `Publicación de ${member.full_name}`,
+            date: "Reciente 2026",
+            guardianTag: "🪶 Tribu Tequio",
+            sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
+            linkedinPostUrl: linkedInForm.linkedin_url.trim(),
+            description: linkedInForm.description || `Experiencia compartida por ${member.full_name}.`,
+            authorName: member.full_name,
+            impactMetrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
+          },
+          ...prev,
+        ]);
+      }
+    } catch (err: any) {
+      setMemberValidationError(`❌ Error de verificación: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -611,104 +681,56 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* MEMORIA COLECTIVA CON POSTS EMBEBIDOS DE LINKEDIN Y SELLO ANCESTRAL EN FORMA DE CERA */}
+      {/* MEMORIA COLECTIVA CON BOTÓN DE COMPARTIR POST DE LINKEDIN Y SKELETON LOADER */}
       <section className="py-20 px-6 border-t border-white/10 bg-black/20">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-12">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
-              🖼️ MEMORIA COLECTIVA VIVA (LinkedIn Embeds)
-            </span>
-            <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
-              Obras Colectivas & Publicaciones de la Tribu
-            </h2>
-            <p className="font-inter text-arena text-sm opacity-85">
-              &quot;Cada faena cumplida se inmortaliza en la red colectiva. Consulta las publicaciones y testimonios en vivo con el sello oficial de mayordomía.&quot;
-            </p>
+          
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
+                🖼️ MEMORIA COLECTIVA VIVA (LinkedIn Embeds)
+              </span>
+              <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
+                Obras Colectivas & Publicaciones de la Tribu
+              </h2>
+              <p className="font-inter text-arena text-sm opacity-85">
+                &quot;Los miembros registrados en el Códice de la Tribu pueden inmortalizar su testimonio en la galería compartiendo el enlace de su post de LinkedIn.&quot;
+              </p>
+            </div>
+
+            {/* BOTÓN PARA COMPARTIR MI POST DE LINKEDIN */}
+            <div>
+              <button
+                onClick={() => {
+                  setLinkedInFormSubmitted(false);
+                  setMemberValidationError(null);
+                  setShareLinkedInModalOpen(true);
+                }}
+                className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3.5 rounded-2xl shadow-xl hover:bg-amber-400 transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>✍️ Compartir mi Post de LinkedIn</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
 
+          {/* GALERÍA VIVA DE LINKEDIN EMBEDS CON SKELETON LOADERS Y SELLOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {galleryWorks.map((item) => {
-              const embedUrl = formatLinkedInEmbedUrl(item.linkedinPostUrl);
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-3xl overflow-hidden bg-white/[0.035] border-2 border-amber-500/40 flex flex-col justify-between shadow-2xl relative group hover:border-amber-400 transition-all duration-300"
-                >
-                  {/* SELLO CEREMONIAL FLOTANTE (ESTILO CERA DORADA DE MAYORDOMÍA SOBRE EL IFRAME) */}
-                  <div className="absolute top-4 right-4 z-20 pointer-events-none">
-                    <span className="font-inter text-[10px] uppercase font-bold px-3.5 py-1.5 rounded-full bg-amber-500 text-azul-noche shadow-[0_0_20px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1.5">
-                      <span>✦</span>
-                      <span>{item.sealStamp || "✦ SELLO DE MAYORDOMÍA ✦"}</span>
-                    </span>
-                  </div>
-
-                  {/* CONTENEDOR DE EMBED DE LINKEDIN O IMAGEN DE RESPALDO */}
-                  <div className="relative w-full bg-black/60 pt-2 min-h-[420px] flex items-center justify-center overflow-hidden border-b border-white/10">
-                    {embedUrl ? (
-                      <iframe
-                        src={embedUrl}
-                        height="450"
-                        width="100%"
-                        frameBorder="0"
-                        allowFullScreen={false}
-                        title={item.title}
-                        className="w-full h-[450px] rounded-t-2xl opacity-95 hover:opacity-100 transition-opacity"
-                      />
-                    ) : (
-                      <div className="relative h-64 w-full">
-                        <Image src={item.imgSrc} alt={item.title} fill className="object-cover" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* METADATOS Y MÉTRICAS DE IMPACTO */}
-                  <div className="p-6 space-y-4 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-inter text-xs text-amber-400 font-bold">
-                          {item.guardianTag}
-                        </span>
-                        <span className="font-inter text-xs text-arena/60">
-                          📅 {item.date}
-                        </span>
-                      </div>
-
-                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                        {item.title}
-                      </h3>
-
-                      <p className="font-inter text-arena text-xs opacity-85 leading-relaxed">
-                        {item.description}
-                      </p>
-
-                      {item.impactMetrics && item.impactMetrics.length > 0 && (
-                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1 mt-3">
-                          {item.impactMetrics.map((m: string, idx: number) => (
-                            <p key={idx} className="font-inter text-xs text-amber-300 font-semibold">
-                              {m}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-3 border-t border-white/10 flex justify-between items-center text-xs font-inter">
-                      <span className="text-amber-400 font-bold">LinkedIn Feed Verified ✓</span>
-                      {item.linkedinPostUrl && (
-                        <a
-                          href={item.linkedinPostUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blanco-lunar underline hover:text-amber-300 font-bold"
-                        >
-                          Ver en LinkedIn ↗
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {galleryWorks.map((item) => (
+              <LinkedInEmbedCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                date={item.date}
+                guardianTag={item.guardianTag}
+                sealStamp={item.sealStamp}
+                linkedinPostUrl={item.linkedinPostUrl}
+                imgSrc={item.imgSrc}
+                description={item.description}
+                impactMetrics={item.impactMetrics}
+                authorName={item.authorName}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -740,94 +762,35 @@ export default function EventosPage() {
 
                   <form onSubmit={handleTalkSubmit} className="space-y-4">
                     <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Tu Nombre Completo *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={talkForm.nombre}
-                        onChange={(e) => setTalkForm({ ...talkForm, nombre: e.target.value })}
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-ambar"
-                      />
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Tu Nombre Completo *</label>
+                      <input type="text" required value={talkForm.nombre} onChange={(e) => setTalkForm({ ...talkForm, nombre: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                     </div>
 
                     <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Correo Electrónico *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={talkForm.email}
-                        onChange={(e) => setTalkForm({ ...talkForm, email: e.target.value })}
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-ambar"
-                      />
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Correo Electrónico *</label>
+                      <input type="email" required value={talkForm.email} onChange={(e) => setTalkForm({ ...talkForm, email: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                     </div>
 
                     <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Pregunta para el ponente (Opcional)
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={talkForm.pregunta}
-                        onChange={(e) => setTalkForm({ ...talkForm, pregunta: e.target.value })}
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-ambar"
-                      />
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Pregunta para el ponente (Opcional)</label>
+                      <textarea rows={2} value={talkForm.pregunta} onChange={(e) => setTalkForm({ ...talkForm, pregunta: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                     </div>
 
                     <div className="flex justify-between items-center pt-3 border-t border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => setRegistrationModalOpen(false)}
-                        className="font-inter text-xs text-arena/70"
-                      >
-                        Cancelar
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl shadow-lg"
-                      >
-                        {isSubmitting ? "Guardando..." : "Reservar mi lugar →"}
-                      </button>
+                      <button type="button" onClick={() => setRegistrationModalOpen(false)} className="font-inter text-xs text-arena/70">Cancelar</button>
+                      <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl">{isSubmitting ? "Guardando..." : "Reservar mi lugar →"}</button>
                     </div>
                   </form>
                 </>
               ) : (
                 <div className="text-center space-y-5 py-4">
-                  <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">
-                    ✦ Lugar Confirmado ✦
-                  </span>
-                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                    ¡Tu acceso a la sesión está activo!
-                  </h3>
-                  <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
-                    Tu correo <strong>{talkForm.email || getUserProfile()?.email}</strong> ha quedado registrado. Aquí tienes el enlace oficial de la transmisión:
-                  </p>
-
+                  <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">✦ Lugar Confirmado ✦</span>
+                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">¡Tu acceso a la sesión está activo!</h3>
                   <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-inter space-y-2">
-                    <span className="text-emerald-300 font-bold block">
-                      📍 Enlace oficial de transmisión (Google Meet / Zoom):
-                    </span>
-                    <a
-                      href={activeTalk.meeting_link || "https://meet.google.com"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cursor-pointer font-bold text-amber-300 underline text-sm break-all hover:text-amber-200"
-                    >
-                      {activeTalk.meeting_link || "https://meet.google.com/abc-defg-hij"} ↗
-                    </a>
+                    <span className="text-emerald-300 font-bold block">📍 Enlace oficial de transmisión (Google Meet / Zoom):</span>
+                    <a href={activeTalk.meeting_link || "https://meet.google.com"} target="_blank" rel="noopener noreferrer" className="cursor-pointer font-bold text-amber-300 underline text-sm break-all">{activeTalk.meeting_link || "https://meet.google.com/abc-defg-hij"} ↗</a>
                   </div>
-
-                  <button
-                    onClick={() => setRegistrationModalOpen(false)}
-                    className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl hover:bg-emerald-400"
-                  >
-                    Entendido
-                  </button>
+                  <button onClick={() => setRegistrationModalOpen(false)} className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl">Entendido</button>
                 </div>
               )}
             </motion.div>
@@ -835,12 +798,47 @@ export default function EventosPage() {
         )}
       </AnimatePresence>
 
-      {/* MODAL 2: SUMARME A LA CARAVANA DE EVENTO EXTERNO */}
+      {/* MODAL 2: SUMARME A LA CARAVANA */}
       <AnimatePresence>
         {routeModalOpen && selectedRoute && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={() => setRouteModalOpen(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/50 max-w-lg w-full space-y-6 shadow-2xl relative">
+              {!routeFormSubmitted ? (
+                <form onSubmit={handleRouteSubmit} className="space-y-4">
+                  <div className="text-center space-y-1">
+                    <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold block">🪶 Me sumo a ir en grupo</span>
+                    <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">{selectedRoute.title}</h3>
+                  </div>
+                  <div>
+                    <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Tu Nombre Completo *</label>
+                    <input type="text" required value={routeForm.nombre} onChange={(e) => setRouteForm({ ...routeForm, nombre: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Correo Electrónico *</label>
+                    <input type="email" required value={routeForm.email} onChange={(e) => setRouteForm({ ...routeForm, email: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-white/10">
+                    <button type="button" onClick={() => setRouteModalOpen(false)} className="font-inter text-xs text-arena/70">Cancelar</button>
+                    <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl">{isSubmitting ? "Guardando..." : "Sumarme a la Caravana →"}</button>
+                  </div>
+                </form>
+              ) : (
+                <div className="text-center space-y-4 py-4">
+                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">¡Estás en la lista de la Caravana!</h3>
+                  <a href={selectedRoute.external_link} target="_blank" rel="noopener noreferrer" className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3 rounded-xl block text-center">Ir ahora al Registro Oficial ↗</a>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 3: COMPARTIR POST DE LINKEDIN PARA MIEMBROS DE LA COMUNIDAD */}
+      <AnimatePresence>
+        {shareLinkedInModalOpen && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
-            onClick={() => setRouteModalOpen(false)}
+            onClick={() => setShareLinkedInModalOpen(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -849,60 +847,86 @@ export default function EventosPage() {
               onClick={(e) => e.stopPropagation()}
               className="p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/50 max-w-lg w-full space-y-6 shadow-2xl relative"
             >
-              {!routeFormSubmitted ? (
+              {!linkedInFormSubmitted ? (
                 <>
                   <div className="text-center space-y-1">
                     <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold block">
-                      🪶 Me sumo a ir en grupo
+                      🖼️ Publicar en Memoria Colectiva
                     </span>
                     <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                      {selectedRoute.title}
+                      Compartir mi Post de LinkedIn
                     </h3>
+                    <p className="font-inter text-arena text-xs opacity-80">
+                      Debes estar registrado previamente en el Códice de la Tribu con tu correo electrónico.
+                    </p>
                   </div>
 
-                  <form onSubmit={handleRouteSubmit} className="space-y-4">
+                  <form onSubmit={handleShareLinkedInSubmit} className="space-y-4">
                     <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Tu Nombre Completo *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={routeForm.nombre}
-                        onChange={(e) => setRouteForm({ ...routeForm, nombre: e.target.value })}
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Correo Electrónico *
+                      <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
+                        Tu Correo Registrado en la Comunidad *
                       </label>
                       <input
                         type="email"
                         required
-                        value={routeForm.email}
-                        onChange={(e) => setRouteForm({ ...routeForm, email: e.target.value })}
+                        value={linkedInForm.email}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, email: e.target.value })}
+                        placeholder="tu-correo-registrado@ejemplo.com"
+                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
+                        🔗 Enlace de tu Post de LinkedIn * (lnkd.in o linkedin.com/feed/update/...)
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={linkedInForm.linkedin_url}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, linkedin_url: e.target.value })}
+                        placeholder="https://lnkd.in/p/g-Dc7yaS"
+                        className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
+                        Título o Frase del Post *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={linkedInForm.title}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, title: e.target.value })}
+                        placeholder="Ej. Mi testimonio en la Caravana del Vuelo Tequio"
                         className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
                       />
                     </div>
 
                     <div>
                       <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Comentarios (Opcional)
+                        Breve Reseña / Resumen (Opcional)
                       </label>
                       <textarea
                         rows={2}
-                        value={routeForm.notas}
-                        onChange={(e) => setRouteForm({ ...routeForm, notas: e.target.value })}
+                        value={linkedInForm.description}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, description: e.target.value })}
+                        placeholder="Cuéntanos un poco sobre tu experiencia..."
                         className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
                       />
                     </div>
 
+                    {memberValidationError && (
+                      <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-inter text-red-300 font-bold">
+                        {memberValidationError}
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center pt-3 border-t border-white/10">
                       <button
                         type="button"
-                        onClick={() => setRouteModalOpen(false)}
+                        onClick={() => setShareLinkedInModalOpen(false)}
                         className="font-inter text-xs text-arena/70"
                       >
                         Cancelar
@@ -911,9 +935,9 @@ export default function EventosPage() {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl shadow-lg"
+                        className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all"
                       >
-                        {isSubmitting ? "Guardando..." : "Sumarme a la Caravana →"}
+                        {isSubmitting ? "Verificando en la tribu..." : "Publicar mi Post →"}
                       </button>
                     </div>
                   </form>
@@ -921,25 +945,20 @@ export default function EventosPage() {
               ) : (
                 <div className="text-center space-y-4 py-4">
                   <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">
-                    ✦ Caravana Confirmada ✦
+                    ✦ Post Inmortalizado ✦
                   </span>
                   <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                    ¡Estás en la lista de la Caravana!
+                    ¡Tu publicación está en la Memoria Colectiva!
                   </h3>
                   <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
-                    Hemos guardado tu correo <strong>{routeForm.email}</strong>.
+                    Hemos validado tu membresía en la tribu y grabado tu post de LinkedIn con el sello ceremonial oficial.
                   </p>
-                  
-                  <div className="pt-2">
-                    <a
-                      href={selectedRoute.external_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3 rounded-xl block text-center"
-                    >
-                      Ir ahora al Registro Oficial ↗
-                    </a>
-                  </div>
+                  <button
+                    onClick={() => setShareLinkedInModalOpen(false)}
+                    className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl"
+                  >
+                    Ver en la Galería
+                  </button>
                 </div>
               )}
             </motion.div>
