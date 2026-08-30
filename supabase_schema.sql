@@ -283,7 +283,18 @@ INSERT INTO public.external_routes (
   14
 );
 
-INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, seal_stamp, linkedin_post_url, image_url, description, impact_metrics) VALUES
+INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, seal_stamp, linkedin_post_url, image_url, description, author_name, impact_metrics) VALUES
+(
+  'Experiencia en Faena Tequio — Publicación de Integrante',
+  '29 de Agosto, 2026',
+  '🦝 Tlacu · Forja Comunitaria',
+  '✦ PUBLICACIÓN DE LA TRIBU ✦',
+  'https://lnkd.in/p/g4_eGX8s',
+  '/jpg/moment1.jpg',
+  'Experiencia compartida por integrante de la comunidad Tequio en LinkedIn.',
+  'Diego Romero Mora',
+  '["🌟 Publicación de Integrante", "👥 Comunidad Tequio"]'::jsonb
+),
 (
   'Impulso a la Comunidad — Faena Tequio en LinkedIn',
   '28 de Agosto, 2026',
@@ -292,6 +303,7 @@ INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, sea
   'https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/',
   '/jpg/moment1.jpg',
   'Publicación oficial en LinkedIn sobre la iniciativa y el impacto de la faena colectiva en la comunidad.',
+  NULL,
   '["📊 +1,200 Impresiones en LinkedIn", "🚀 42 Desarrolladores sumados"]'::jsonb
 ),
 (
@@ -302,5 +314,6 @@ INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, sea
   'https://lnkd.in/p/g-Dc7yaS',
   '/jpg/moment3.jpg',
   'Testimonio publicado por integrante de la comunidad Tequio sobre la experiencia en la Caravana del Vuelo.',
+  NULL,
   '["🌟 Testimonio de la Tribu", "👥 Asistencia en Grupo"]'::jsonb
 );
