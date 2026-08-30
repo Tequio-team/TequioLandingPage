@@ -4,26 +4,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import BrasaParticles from "@/components/ui/BrasaParticles";
-import { formatLinkedInEmbedUrl } from "@/components/ui/LinkedInEmbedCard";
 
-const DEFAULT_POSTS: Array<{
-  id: string;
-  title: string;
-  date: string;
-  linkedinPostUrl: string;
-  authorName?: string;
-}> = [
+const DEFAULT_POSTS = [
   {
     id: "post-1",
-    title: "Impulso a la Comunidad — Faena Tequio en LinkedIn",
-    date: "28 de Agosto, 2026",
-    linkedinPostUrl: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
+    authorName: "Sofía Morales",
+    quote: "Aprender en comunidad rompió el miedo a programar en proyectos reales con impacto tangible.",
+    eventTitle: "Hackathon por la Comunidad: Código Abierto con Causa",
+    linkedinPostUrl: "https://www.linkedin.com/posts/sofia-morales-tequio-faena",
+    guardian: "tlacu",
   },
   {
     id: "post-2",
-    title: "Caravana y Encuentro Tech — Registro de Miembro",
-    date: "20 de Agosto, 2026",
-    linkedinPostUrl: "https://lnkd.in/p/g-Dc7yaS",
+    authorName: "David Reyes",
+    quote: "El verdadero poder del software está en poner el conocimiento al servicio de los demás.",
+    eventTitle: "De Estudiante a Tech Lead: El Camino Sin Secretos",
+    linkedinPostUrl: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
+    guardian: "tochtli",
+  },
+  {
+    id: "post-3",
+    authorName: "Carlos Mendoza",
+    quote: "Caminar en tribu te impulsa a llegar más lejos de lo que jamás imaginaste solo.",
+    eventTitle: "Caravana al DevFest CDMX 2026",
+    linkedinPostUrl: "https://www.linkedin.com/posts/carlos-mendoza-talent-land-tequio",
+    guardian: "kuku",
   },
 ];
 
@@ -45,15 +50,16 @@ export default function CommitmentSection() {
           setPosts(
             data.map((g) => ({
               id: g.id,
-              title: g.title,
-              date: g.event_date || "Agosto 2026",
-              linkedinPostUrl: g.linkedin_post_url,
               authorName: g.author_name,
+              quote: g.quote || "Construyendo en colectivo y dejando huella viva.",
+              eventTitle: g.event_title || "Faena Comunitaria",
+              linkedinPostUrl: g.linkedin_post_url,
+              guardian: g.guardian || "tlacu",
             }))
           );
         }
       } catch (err) {
-        console.warn("Error cargando posts de LinkedIn para compromiso:", err);
+        console.warn("Usando posts locales por defecto:", err);
       }
     }
 
@@ -70,6 +76,13 @@ export default function CommitmentSection() {
 
   const currentPost = posts[currentSlide] || posts[0];
 
+  const guardianAvatar =
+    currentPost.guardian === "tochtli"
+      ? "/png/tochtli.png"
+      : currentPost.guardian === "kuku"
+      ? "/png/kuku.png"
+      : "/png/tlacu.png";
+
   return (
     <section
       id="compromiso"
@@ -84,8 +97,6 @@ export default function CommitmentSection() {
       <BrasaParticles count={45} className="z-0 opacity-70 md:opacity-80" />
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
-        
-        {/* LAYOUT EN 1 COLUMNA EN MÓVIL (ESLOGAN ARRIBA, CARROUSEL ABAJO) Y 2 COLUMNAS EN DESKTOP */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           
           {/* COLUMNA IZQUIERDA (ESLOGAN & MANIFIESTO) */}
@@ -113,22 +124,19 @@ export default function CommitmentSection() {
             </div>
           </div>
 
-          {/* COLUMNA DERECHA (OBRAS Y PUBLICACIONES DE LA TRIBU EN LINKEDIN) */}
+          {/* COLUMNA DERECHA (MEMORIA VIVA DE LA TRIBU) */}
           <div className="relative w-full">
-            
             {/* Header Nav del Carrusel */}
             <div className="flex items-center justify-between font-inter text-xs text-amber-400 font-bold mb-3 px-1">
               <span>
-                🖼️ Obra de la Tribu ({currentSlide + 1} de {posts.length})
+                🖼️ Memoria Viva ({currentSlide + 1} de {posts.length})
               </span>
 
-              {/* Botones de Navegación Nav */}
+              {/* Botones de Navegación */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={prevSlide}
                   aria-label="Post anterior"
-                  aria-controls="carousel"
-                  tabIndex={0}
                   className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                 >
                   ←
@@ -136,8 +144,6 @@ export default function CommitmentSection() {
                 <button
                   onClick={nextSlide}
                   aria-label="Post siguiente"
-                  aria-controls="carousel"
-                  tabIndex={0}
                   className="cursor-pointer w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-blanco-lunar hover:bg-amber-500 hover:text-azul-noche transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                 >
                   →
@@ -145,7 +151,7 @@ export default function CommitmentSection() {
               </div>
             </div>
 
-            {/* MARCO CEREMONIAL SIN IFRAMES CON GUARDIÁN Y VER POST EN LINKEDIN */}
+            {/* TARJETA DE MEMORIA VIVA */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentPost.id}
@@ -153,64 +159,55 @@ export default function CommitmentSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.3 }}
-                role="region"
-                aria-live="polite"
-                aria-label="LinkedIn post carousel"
-                className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl p-6 sm:p-8 space-y-6 flex flex-col justify-between min-h-[340px]"
+                className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl p-6 sm:p-8 space-y-6 flex flex-col justify-between min-h-[320px]"
               >
-                {/* HEADER CON GUARDIÁN Y DATOS */}
+                {/* HEADER CON AVATAR, AUTOR Y BADGE */}
                 <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-terracota/20 border border-terracota/40 p-2 flex items-center justify-center relative shadow-lg flex-shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-terracota/20 border border-terracota/40 p-1.5 flex items-center justify-center relative shadow-lg flex-shrink-0">
                       <Image
-                        src="/png/tlacu.png"
-                        alt="Guardián Tlacu"
-                        width={44}
-                        height={44}
+                        src={guardianAvatar}
+                        alt="Guardián"
+                        width={40}
+                        height={40}
                         className="object-contain"
                       />
                     </div>
                     <div>
-                      <span className="font-inter text-xs text-amber-400 font-bold block uppercase tracking-wider">
-                        ✦ Obra de la Tribu Tequio
-                      </span>
-                      <h4 className="font-inter text-sm font-bold text-blanco-lunar">
-                        {currentPost.authorName || "Integrante de la Comunidad"}
+                      <h4 className="font-inter text-base font-bold text-blanco-lunar">
+                        {currentPost.authorName}
                       </h4>
-                      <span className="font-inter text-[11px] text-arena/60">
-                        📅 {currentPost.date}
+                      <span className="font-inter text-xs text-amber-400 font-semibold block">
+                        LinkedIn Verificado ✓
                       </span>
                     </div>
                   </div>
 
-                  <span className="font-inter text-[10px] uppercase font-bold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
-                    LinkedIn Verified ✓
+                  <span className="font-inter text-[10px] uppercase font-bold text-terracota bg-terracota/15 px-3 py-1 rounded-full border border-terracota/30 max-w-[180px] truncate">
+                    {currentPost.eventTitle}
                   </span>
                 </div>
 
-                {/* TÍTULO Y CITA */}
+                {/* FRASE / REFLEXIÓN CORTA (MAX 50 PALABRAS) */}
                 <div className="space-y-3 flex-1">
-                  <h3 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl font-bold leading-snug">
-                    {currentPost.title}
-                  </h3>
-                  <p className="font-inter text-arena/85 text-xs sm:text-sm leading-relaxed">
-                    &quot;Construyendo en colectivo y dejando huella viva en el ecosistema tecnológico.&quot;
+                  <p className="font-inter text-blanco-lunar text-base sm:text-lg italic font-medium leading-relaxed">
+                    &ldquo;{currentPost.quote}&rdquo;
                   </p>
                 </div>
 
                 {/* FOOTER CON BOTÓN DIRECTO A LINKEDIN */}
                 <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4">
                   <span className="font-inter text-xs text-arena/60">
-                    Comunidad Tequio ✦
+                    Memoria de la Tribu ✦
                   </span>
 
                   <a
                     href={currentPost.linkedinPostUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-terracota text-blanco-lunar px-5 py-3 rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-1.5"
+                    className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-terracota text-blanco-lunar px-5 py-2.5 rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-1.5"
                   >
-                    <span>Ver Post en LinkedIn</span>
+                    <span>Ver publicación en LinkedIn</span>
                     <span>↗</span>
                   </a>
                 </div>
@@ -235,7 +232,6 @@ export default function CommitmentSection() {
           </div>
 
         </div>
-
       </div>
     </section>
   );

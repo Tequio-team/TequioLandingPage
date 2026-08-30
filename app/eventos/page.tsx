@@ -8,453 +8,248 @@ import FooterSection from "@/components/sections/FooterSection";
 import BrasaCursor from "@/components/ui/BrasaCursor";
 import StarField from "@/components/ui/StarField";
 import BrasaParticles from "@/components/ui/BrasaParticles";
-import LinkedInEmbedCard, { CardSizeVariant } from "@/components/ui/LinkedInEmbedCard";
-import {
-  getUserProfile,
-  saveUserProfile,
-  saveEventRegistration,
-  isRegisteredForEvent,
-} from "@/lib/session";
+import LinkedInEmbedCard from "@/components/ui/LinkedInEmbedCard";
+import LumaCheckoutButton from "@/components/ui/LumaCheckoutButton";
+import Modal from "@/components/ui/Modal";
 
 // Fallback active event template in case Supabase table is empty
-const DEFAULT_ACTIVE_TALK = {
-  id: "00000000-0000-0000-0000-000000000001",
-  title: '"De Estudiante a Tech Lead: El Camino Sin Secretos"',
-  tagHeader: "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría e Inspiración)",
-  typeBadge: "🎙️ TEQUIO TALKS #01",
+const DEFAULT_ACTIVE_EVENT = {
+  id: "default-active-01",
+  title: "De Estudiante a Tech Lead: El Camino Sin Secretos",
+  event_date: "Jueves 17 de Septiembre, 2026",
+  time_display: "07:00 PM — 08:30 PM (CDMX)",
+  is_online: true,
+  location: "Google Meet",
+  luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
+  description:
+    "Mentoría directa sobre cómo navegar la transición académica a liderazgo técnico, romper el síndrome del impostor y destacar en la industria tech.",
   guardian: "tochtli",
-  guardianSrc: "/png/tochtli.png",
-  date: "Jueves 17 de Septiembre, 2026",
-  time: "07:00 PM — 08:30 PM (CDMX)",
-  location: "Google Meet / YouTube Live",
-  meeting_link: "https://meet.google.com/abc-defg-hij",
-  speaker: "Senior Dev & Tech Lead Mentor",
-  speaker_social: "https://linkedin.com",
-  dynamic: "Q&A Abierto + Revisión de CV en Vivo",
-  access: "Acceso libre · Registro previo necesario",
-  registeredCount: 0,
-  capacityLimit: 60,
+  is_featured: true,
+  status: "abierto",
 };
 
-const TARGET_TALK_DATE = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 + 35 * 60 * 1000);
+const DEFAULT_EVENTS_LIST = [
+  DEFAULT_ACTIVE_EVENT,
+  {
+    id: "default-event-02",
+    title: "Hackathon por la Comunidad: Código Abierto con Causa",
+    event_date: "Sábado 20 de Septiembre, 2026",
+    time_display: "10:00 AM — 06:00 PM (CDMX)",
+    is_online: false,
+    location: "Centro Comunitario La Esperanza, CDMX",
+    luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
+    description: "8 horas de desarrollo colaborativo construyendo soluciones reales a retos comunitarios.",
+    guardian: "tlacu",
+    is_featured: false,
+    status: "abierto",
+  },
+  {
+    id: "default-event-03",
+    title: "Caravana al DevFest CDMX 2026",
+    event_date: "Sábado 24 de Octubre, 2026",
+    time_display: "09:00 AM — 06:00 PM (CDMX)",
+    is_online: false,
+    location: "Telmex Hub / WTC CDMX",
+    luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
+    description: "Asistiremos en bloque como tribu Tequio al gran encuentro anual de desarrolladores.",
+    guardian: "kuku",
+    is_featured: false,
+    status: "abierto",
+  },
+];
 
-// Pattern of varying sizes for Masonry
-const SIZE_VARIANTS: CardSizeVariant[] = ["tall", "compact", "medium", "standard"];
+const DEFAULT_MEMORIA_LIST = [
+  {
+    id: "memoria-1",
+    author_name: "Sofía Morales",
+    quote: "Aprender en comunidad rompió el miedo a programar en proyectos reales con impacto tangible.",
+    event_title: "Hackathon por la Comunidad: Código Abierto con Causa",
+    linkedin_post_url: "https://www.linkedin.com/posts/sofia-morales-tequio-faena",
+    guardian: "tlacu",
+  },
+  {
+    id: "memoria-2",
+    author_name: "David Reyes",
+    quote: "El verdadero poder del software está en poner el conocimiento al servicio de los demás.",
+    event_title: "De Estudiante a Tech Lead: El Camino Sin Secretos",
+    linkedin_post_url: "https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/",
+    guardian: "tochtli",
+  },
+  {
+    id: "memoria-3",
+    author_name: "Carlos Mendoza",
+    quote: "Caminar en tribu te impulsa a llegar más lejos de lo que jamás imaginaste solo.",
+    event_title: "Caravana al DevFest CDMX 2026",
+    linkedin_post_url: "https://www.linkedin.com/posts/carlos-mendoza-talent-land-tequio",
+    guardian: "kuku",
+  },
+];
 
-// Hash SHA-256 de la Clave Secreta de Mayordomía (sin texto plano)
-const MAYORDOMIA_PASSHASH = "c18e203d322c5b8e4bcebd79abfedb3fad1fec0f970c2ed39dc47bf36f79da1c";
+// Helper to count words
+function countWords(str: string): number {
+  return str.trim() ? str.trim().split(/\s+/).length : 0;
+}
 
-async function sha256Hex(str: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str.trim()));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+// Strict LinkedIn URL validator
+function isValidLinkedInUrl(url: string): boolean {
+  if (!url) return false;
+  const clean = url.trim().toLowerCase();
+  return (
+    clean.includes("linkedin.com/") ||
+    clean.includes("lnkd.in/") ||
+    clean.startsWith("https://linkedin.com") ||
+    clean.startsWith("https://www.linkedin.com")
+  );
 }
 
 export default function EventosPage() {
-  const [hasActiveEvent, setHasActiveEvent] = useState(true);
   const [selectedGuardian, setSelectedGuardian] = useState<string>("all");
-  const [galleryFilter, setGalleryFilter] = useState<string>("all");
-  const [gallerySearch, setGallerySearch] = useState<string>("");
-  const [galleryVisibleLimit, setGalleryVisibleLimit] = useState<number>(6);
-  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(true);
+  const [events, setEvents] = useState<any[]>(DEFAULT_EVENTS_LIST);
+  const [memoriaList, setMemoriaList] = useState<any[]>(DEFAULT_MEMORIA_LIST);
+  const [activeEvent, setActiveEvent] = useState<any>(DEFAULT_ACTIVE_EVENT);
 
-  const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
-  const [routeModalOpen, setRouteModalOpen] = useState(false);
-  const [shareLinkedInModalOpen, setShareLinkedInModalOpen] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
-  const [selectedPinModal, setSelectedPinModal] = useState<any | null>(null);
-
+  // Modal State for Memoria Viva
+  const [isMemoriaModalOpen, setIsMemoriaModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [routeFormSubmitted, setRouteFormSubmitted] = useState(false);
-  const [linkedInFormSubmitted, setLinkedInFormSubmitted] = useState(false);
-  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
-  
-  const [needNamePrompt, setNeedNamePrompt] = useState(false);
-  const [memberValidationMessage, setMemberValidationMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const [activeTalk, setActiveTalk] = useState(DEFAULT_ACTIVE_TALK);
-  const [allEvents, setAllEvents] = useState<any[]>([]);
-  const [externalRoutes, setExternalRoutes] = useState<any[]>([]);
-  const [galleryWorks, setGalleryWorks] = useState<any[]>([]);
-
-
-  const [talkForm, setTalkForm] = useState({
-    nombre: "",
-    email: "",
-    pregunta: "",
+  // Form State
+  const [memoriaForm, setMemoriaForm] = useState({
+    author_name: "",
+    event_title: "",
+    linkedin_post_url: "",
+    quote: "",
+    guardian: "tlacu",
   });
 
-  const [routeForm, setRouteForm] = useState({
-    nombre: "",
-    email: "",
-    notas: "",
-  });
-
-  const [linkedInForm, setLinkedInForm] = useState({
-    email: "",
-    nombre: "",
-    title: "",
-    area: "tlacu",
-    avatar: "tlacu",
-    clave: "",
-    linkedin_url: "",
-    description: "",
-  });
-
-  const [timeLeft, setTimeLeft] = useState({ days: 4, hours: 12, minutes: 35, seconds: 20 });
-
+  // Load live data from Supabase
   useEffect(() => {
-    const savedProfile = getUserProfile();
-    if (savedProfile) {
-      setTalkForm((prev) => ({
-        ...prev,
-        nombre: savedProfile.nombre || prev.nombre,
-        email: savedProfile.email || prev.email,
-      }));
-      setRouteForm((prev) => ({
-        ...prev,
-        nombre: savedProfile.nombre || prev.nombre,
-        email: savedProfile.email || prev.email,
-      }));
-      setLinkedInForm((prev) => ({
-        ...prev,
-        email: savedProfile.email || prev.email,
-        nombre: savedProfile.nombre || prev.nombre,
-      }));
-    }
-
-    if (activeTalk.id) {
-      setAlreadyRegistered(isRegisteredForEvent(activeTalk.id));
-    }
-  }, [activeTalk.id]);
-
-  useEffect(() => {
-    async function loadSupabaseData() {
+    async function loadData() {
       try {
         const { supabase } = await import("@/lib/supabase");
-        
+
+        // 1. Fetch Events
         const { data: eventsData } = await supabase
           .from("events")
           .select("*")
+          .order("is_featured", { ascending: false })
           .order("created_at", { ascending: false });
 
         if (eventsData && eventsData.length > 0) {
+          setEvents(eventsData);
           const featured = eventsData.find((e) => e.is_featured) || eventsData[0];
-          
-          setActiveTalk({
-            id: featured.id,
-            title: featured.title,
-            tagHeader: featured.guardian_tag || "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)",
-            typeBadge: featured.type_badge || "🎙️ TEQUIO TALKS",
-            guardian: featured.guardian,
-            guardianSrc: featured.guardian === "tlacu" ? "/png/tlacu.png" : featured.guardian === "kuku" ? "/png/kuku.png" : "/png/tochtli.png",
-            date: featured.date_display,
-            time: featured.time_display,
-            location: featured.location,
-            meeting_link: featured.meeting_link || "https://meet.google.com",
-            speaker: featured.speaker || "Senior Dev Mentor",
-            speaker_social: featured.speaker_social,
-            dynamic: featured.dynamic_desc || "Q&A + CV Review",
-            access: featured.access_info || "Acceso libre",
-            registeredCount: featured.registered_count || 0,
-            capacityLimit: featured.capacity_limit || 60,
-          });
+          setActiveEvent(featured);
 
-          setAlreadyRegistered(isRegisteredForEvent(featured.id));
-
-          setAllEvents(
-            eventsData.map((e) => ({
-              id: e.id,
-              title: e.title,
-              guardian: e.guardian,
-              guardianBadge: e.guardian_tag || e.guardian,
-              type: e.type_category,
-              typeLabel: e.type_badge,
-              date: e.date_display,
-              time: e.time_display,
-              location: e.location,
-              meeting_link: e.meeting_link || "https://meet.google.com",
-              speaker: e.speaker,
-              speaker_social: e.speaker_social,
-              statusTag: isRegisteredForEvent(e.id) ? "Ya Inscripto ✓" : e.is_featured ? "Faena Activa 🔥" : e.status === "abierto" ? "Cupos disponibles" : "Presencial",
-              statusColor: isRegisteredForEvent(e.id) ? "#10b981" : e.is_featured ? "#F5A623" : e.guardian === "tlacu" ? "#C15B3A" : "#10b981",
-            }))
-          );
+          // Default event in form
+          setMemoriaForm((prev) => ({
+            ...prev,
+            event_title: prev.event_title || featured.title,
+          }));
         }
 
-        const { data: routesData } = await supabase
-          .from("external_routes")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (routesData && routesData.length > 0) {
-          setExternalRoutes(routesData);
-        }
-
-        // FETCH MOST RECENT GALLERY POSTS DIRECTLY FROM SUPABASE TABLE
-        const { data: galleryData } = await supabase
+        // 2. Fetch Memoria Viva (Completed Works Gallery)
+        const { data: memoriaData } = await supabase
           .from("completed_works_gallery")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (galleryData && galleryData.length > 0) {
-          setGalleryWorks(
-            galleryData.map((g, idx) => {
-              const tagLower = (g.guardian_tag || "").toLowerCase();
-              const avatarKey = tagLower.includes("tochtli")
-                ? "tochtli"
-                : tagLower.includes("kuku")
-                ? "kuku"
-                : "tlacu";
-
-              return {
-                id: g.id,
-                title: g.title,
-                date: g.event_date || "Agosto 2026",
-                guardianTag: g.guardian_tag || "🦝 Tlacu · Comunidad",
-                avatarGuardian: avatarKey,
-                sealStamp: g.seal_stamp || "✦ SELLO DE MAYORDOMÍA ✦",
-                linkedinPostUrl: g.linkedin_post_url,
-                description: g.description,
-                authorName: g.author_name,
-                impactMetrics: Array.isArray(g.impact_metrics) ? g.impact_metrics : [],
-                tags: ["#ComunidadTequio", "#FaenaTech"],
-                sizeVariant: SIZE_VARIANTS[idx % SIZE_VARIANTS.length],
-              };
-            })
-          );
-        } else {
-          setGalleryWorks([]);
+        if (memoriaData && memoriaData.length > 0) {
+          setMemoriaList(memoriaData);
         }
       } catch (err) {
-        console.warn("Error consultando Supabase:", err);
-      } finally {
-        setIsLoadingGallery(false);
+        console.warn("Error cargando datos de Supabase:", err);
       }
     }
 
-    loadSupabaseData();
+    loadData();
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const diff = TARGET_TALK_DATE.getTime() - new Date().getTime();
-      if (diff <= 0) return;
-      setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / 1000 / 60) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const filteredEvents = allEvents.filter((evt) => {
-    return selectedGuardian === "all" || evt.guardian === selectedGuardian;
+  const filteredEvents = events.filter((evt) => {
+    if (selectedGuardian === "all") return true;
+    return evt.guardian === selectedGuardian;
   });
 
-  // Filter gallery works by selected category and search query
-  const filteredGalleryWorks = galleryWorks.filter((item) => {
-    let matchesCat = true;
-    if (galleryFilter === "tlacu") matchesCat = item.guardianTag?.toLowerCase().includes("tlacu") || item.guardianTag?.toLowerCase().includes("forja");
-    else if (galleryFilter === "tochtli") matchesCat = item.guardianTag?.toLowerCase().includes("tochtli") || item.guardianTag?.toLowerCase().includes("mentor");
-    else if (galleryFilter === "kuku") matchesCat = item.guardianTag?.toLowerCase().includes("kuku") || item.guardianTag?.toLowerCase().includes("caravana");
-    else if (galleryFilter === "tribu") matchesCat = !!item.authorName || item.guardianTag?.toLowerCase().includes("tribu");
+  const quoteWordCount = countWords(memoriaForm.quote);
+  const isWordLimitExceeded = quoteWordCount > 50;
 
-    if (!matchesCat) return false;
-
-    if (gallerySearch.trim()) {
-      const q = gallerySearch.toLowerCase().trim();
-      const matchTitle = item.title?.toLowerCase().includes(q);
-      const matchAuthor = item.authorName?.toLowerCase().includes(q);
-      const matchDesc = item.description?.toLowerCase().includes(q);
-      const matchTag = item.tags?.some((t: string) => t.toLowerCase().includes(q));
-      const matchGuardian = item.guardianTag?.toLowerCase().includes(q);
-      return matchTitle || matchAuthor || matchDesc || matchTag || matchGuardian;
-    }
-
-    return true;
-  });
-
-  // Limit display to visible limit
-  const visibleGalleryWorks = filteredGalleryWorks.slice(0, galleryVisibleLimit);
-  const remainingGalleryCount = filteredGalleryWorks.length - galleryVisibleLimit;
-
-  const handleTalkSubmit = async (e: React.FormEvent) => {
+  const handleMemoriaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!talkForm.nombre || !talkForm.email) return;
+    setSubmitError(null);
 
-    setIsSubmitting(true);
-
-    try {
-      saveUserProfile({ nombre: talkForm.nombre, email: talkForm.email });
-      saveEventRegistration(activeTalk.id);
-      setAlreadyRegistered(true);
-
-      const { supabase } = await import("@/lib/supabase");
-      
-      const { error } = await supabase.from("event_registrations").insert([
-        {
-          event_id: activeTalk.id,
-          full_name: talkForm.nombre,
-          email: talkForm.email,
-          speaker_question: talkForm.pregunta || null,
-          role_type: "Estudiante",
-          modality: "Virtual",
-        },
-      ]);
-
-      if (!error) {
-        setActiveTalk((prev) => ({ ...prev, registeredCount: prev.registeredCount + 1 }));
-      }
-    } catch (err) {
-      console.warn("Error en registro Supabase:", err);
-    } finally {
-      setIsSubmitting(false);
-      setFormSubmitted(true);
-    }
-  };
-
-  const handleRouteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!routeForm.nombre || !routeForm.email || !selectedRoute) return;
-
-    setIsSubmitting(true);
-
-    try {
-      saveUserProfile({ nombre: routeForm.nombre, email: routeForm.email });
-
-      const { supabase } = await import("@/lib/supabase");
-      await supabase.from("route_interests").insert([
-        {
-          route_id: selectedRoute.id,
-          full_name: routeForm.nombre,
-          email: routeForm.email,
-          notes: routeForm.notas || null,
-        },
-      ]);
-
-      setExternalRoutes((prev) =>
-        prev.map((r) => (r.id === selectedRoute.id ? { ...r, interested_count: (r.interested_count || 0) + 1 } : r))
-      );
-    } catch (err) {
-      console.warn("Error enviando interés de ruta:", err);
-    } finally {
-      setIsSubmitting(false);
-      setRouteFormSubmitted(true);
-    }
-  };
-
-  const handleShareLinkedInSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!linkedInForm.email || !linkedInForm.linkedin_url) return;
-
-    setIsSubmitting(true);
-    setMemberValidationMessage(null);
-
-    // Verificación criptográfica con Hash SHA-256 de la Clave de Mayordomía
-    if (!linkedInForm.clave) {
-      setMemberValidationMessage("🔒 Debes ingresar tu Clave Secreta de Mayordomía para poder publicar.");
-      setIsSubmitting(false);
+    // 1. Validate Author Name
+    if (!memoriaForm.author_name.trim()) {
+      setSubmitError("Por favor escribe tu nombre completo.");
       return;
     }
 
+    // 2. Validate Event
+    if (!memoriaForm.event_title.trim()) {
+      setSubmitError("Por favor selecciona el evento al que asististe.");
+      return;
+    }
+
+    // 3. Strict 100% LinkedIn URL validation
+    if (!isValidLinkedInUrl(memoriaForm.linkedin_post_url)) {
+      setSubmitError("El enlace debe ser una URL válida de LinkedIn (ej: https://www.linkedin.com/posts/...)");
+      return;
+    }
+
+    // 4. Validate Quote length (max 50 words)
+    if (!memoriaForm.quote.trim()) {
+      setSubmitError("Por favor escribe una frase o reflexión corta que obtuviste del evento.");
+      return;
+    }
+
+    if (quoteWordCount > 50) {
+      setSubmitError(`La frase excede el límite de 50 palabras (actual: ${quoteWordCount} palabras). Por favor hazla más concisa.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      const inputHash = await sha256Hex(linkedInForm.clave);
-      if (inputHash !== MAYORDOMIA_PASSHASH) {
-        setMemberValidationMessage("❌ Clave de Mayordomía incorrecta. Solicita tu acceso a los coordinadores de Tequio.");
-        setIsSubmitting(false);
-        return;
-      }
       const { supabase } = await import("@/lib/supabase");
 
-      const cleanEmail = linkedInForm.email.toLowerCase().trim();
+      // Find matching event id if any
+      const matchingEvt = events.find((e) => e.title === memoriaForm.event_title);
 
-      const { data: existingMember } = await supabase
-        .from("community_members")
-        .select("*")
-        .eq("email", cleanEmail)
-        .maybeSingle();
+      const newEntry = {
+        author_name: memoriaForm.author_name.trim(),
+        event_title: memoriaForm.event_title.trim(),
+        event_id: matchingEvt?.id || null,
+        linkedin_post_url: memoriaForm.linkedin_post_url.trim(),
+        quote: memoriaForm.quote.trim(),
+        guardian: matchingEvt?.guardian || memoriaForm.guardian || "tlacu",
+      };
 
-      let authorFullName = existingMember?.full_name || linkedInForm.nombre.trim();
-
-      if (!existingMember) {
-        if (!authorFullName) {
-          setNeedNamePrompt(true);
-          setMemberValidationMessage(
-            "💡 Tu correo aún no está registrado en la tribu. Por favor escribe tu Nombre Completo abajo para darte de alta y publicar en 1 solo paso."
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
-        const { data: newMember } = await supabase
-          .from("community_members")
-          .insert([
-            {
-              full_name: authorFullName,
-              email: cleanEmail,
-              role_interest: "Integrante con Publicación",
-            },
-          ])
-          .select()
-          .single();
-
-        if (newMember) {
-          saveUserProfile({ nombre: authorFullName, email: cleanEmail });
-        }
-      } else {
-        saveUserProfile({ nombre: existingMember.full_name, email: cleanEmail });
-      }
-
-      const chosenAvatar = linkedInForm.avatar || linkedInForm.area || "tlacu";
-      const areaTag =
-        chosenAvatar === "tochtli"
-          ? "🐰 Tochtli · Círculo de la Luna"
-          : chosenAvatar === "kuku"
-          ? "🪶 Kuku · Caravana del Vuelo"
-          : "🦝 Tlacu · Forja Comunitaria";
-
-      const { error } = await supabase.from("completed_works_gallery").insert([
-        {
-          author_email: cleanEmail,
-          author_name: authorFullName,
-          title: linkedInForm.title || `Obra de ${authorFullName}`,
-          event_date: "Reciente 2026",
-          guardian_tag: areaTag,
-          seal_stamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
-          linkedin_post_url: linkedInForm.linkedin_url.trim(),
-          description: linkedInForm.description || `Experiencia compartida por ${authorFullName} en la faena comunitaria de Tequio.`,
-          impact_metrics: ["🌟 Obra de Integrante", "👥 Comunidad Tequio"],
-        },
-      ]);
+      const { data, error } = await supabase
+        .from("completed_works_gallery")
+        .insert([newEntry])
+        .select()
+        .single();
 
       if (error) {
-        setMemberValidationMessage(`❌ Error: ${error.message}`);
-      } else {
-        setLinkedInFormSubmitted(true);
-        setGalleryWorks((prev) => [
-          {
-            id: Date.now().toString(),
-            title: linkedInForm.title || `Obra de ${authorFullName}`,
-            date: "Reciente 2026",
-            guardianTag: areaTag,
-            avatarGuardian: chosenAvatar,
-            sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
-            linkedinPostUrl: linkedInForm.linkedin_url.trim(),
-            description: linkedInForm.description || `Experiencia compartida por ${authorFullName} en la faena comunitaria de Tequio.`,
-            authorName: authorFullName,
-            impactMetrics: ["🌟 Obra de Integrante", "👥 Comunidad Tequio"],
-            sizeVariant: SIZE_VARIANTS[prev.length % SIZE_VARIANTS.length],
-          },
-          ...prev,
-        ]);
+        throw error;
       }
+
+      // Prepend to local list
+      setMemoriaList((prev) => [data || { id: Date.now().toString(), ...newEntry }, ...prev]);
+      setSubmitSuccess(true);
+      setMemoriaForm({
+        author_name: "",
+        event_title: events[0]?.title || "",
+        linkedin_post_url: "",
+        quote: "",
+        guardian: "tlacu",
+      });
+
+      setTimeout(() => {
+        setIsMemoriaModalOpen(false);
+        setSubmitSuccess(false);
+      }, 1500);
     } catch (err: any) {
-      setMemberValidationMessage(`❌ Error de proceso: ${err.message}`);
+      setSubmitError(err?.message || "Error al guardar en Memoria Viva. Inténtalo de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -465,992 +260,401 @@ export default function EventosPage() {
       <BrasaCursor />
       <Navbar />
 
-      {/* Header Banner */}
-      <section className="relative pt-36 pb-16 px-6 text-center overflow-hidden">
-        <StarField count={30} isMitlaShape={true} />
-        <BrasaParticles count={35} className="opacity-70" />
+      {/* 1. HERO & PRÓXIMA FAENA DESTACADA (CON REGISTRO LUMA) */}
+      <section className="relative pt-36 pb-20 px-6">
+        <StarField count={35} isMitlaShape={true} />
+        <BrasaParticles count={40} className="opacity-70" />
 
-        <div className="container mx-auto max-w-4xl relative z-10 space-y-4">
-          <span className="font-inter text-ambar text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
-            ✦ Registro de Mayordomía & Caravanas ✦
-          </span>
-          <h1 className="font-cinzel text-blanco-lunar text-4xl md:text-6xl font-bold tracking-wide">
-            El Fuego Vivo de la Faena
-          </h1>
-          <p className="font-inter text-arena text-base md:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
-            &quot;Aquí se registra el llamado a la faena comunitaria y a las Caravanas del Vuelo hacia eventos de la industria tech.&quot;
-          </p>
-
-          {getUserProfile() && (
-            <div className="pt-2">
-              <span className="inline-flex items-center gap-2 font-inter text-xs bg-white/5 border border-ambar/30 text-ambar px-4 py-1.5 rounded-full">
-                <span>👤 Sesión activa:</span>
-                <strong>{getUserProfile()?.nombre}</strong>
-                <span className="text-arena/60">({getUserProfile()?.email})</span>
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* TARJETA PRINCIPAL ("EL EVENTO EN PUERTA — TEQUIO TALKS #01") */}
-      <section className="py-8 px-6">
         <div className="container mx-auto max-w-5xl relative z-10">
-          <AnimatePresence mode="wait">
-            {hasActiveEvent && (
-              <motion.div
-                id="active-talk"
-                key="active-talk"
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.6 }}
-                className="relative p-6 md:p-12 rounded-3xl border-2 border-amber-500/40 bg-white/[0.03] backdrop-blur-xl shadow-2xl space-y-8"
-                style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.15)" }}
-              >
-                {/* 1. NÚMERO DE LA TEQUIO TALK DE INICIO */}
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <span className="font-inter text-sm md:text-base uppercase font-extrabold tracking-widest text-amber-400">
-                    🎙️ TEQUIO TALKS #01
-                  </span>
-
-                  {alreadyRegistered ? (
-                    <span className="font-inter text-xs font-bold text-emerald-400 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                      ✓ Ya estás inscripto
-                    </span>
-                  ) : (
-                    <span className="font-inter text-xs font-bold text-amber-400 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-                      🔥 Evento Abierto
-                    </span>
-                  )}
-                </div>
-
-                {/* 2. TÍTULO DE LA PONENCIA */}
-                <div className="space-y-2">
-                  <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-5xl font-bold leading-tight">
-                    {activeTalk.title}
-                  </h2>
-                </div>
-
-                {/* 3. PONENTE PRINCIPAL (MISMA IMPORTANCIA TIPOGRÁFICA QUE EL TÍTULO DE LA PONENCIA) */}
-                <div className="pt-2 pb-4 border-y border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="font-inter text-xs uppercase font-extrabold text-amber-400 tracking-wider block">
-                      👤 Ponente Principal:
-                    </span>
-                    <h3 className="font-cinzel text-blanco-lunar text-2xl md:text-4xl font-bold text-amber-300">
-                      {activeTalk.speaker}
-                    </h3>
-                    <p className="font-inter text-sm text-arena/90 font-medium">
-                      Senior Tech Lead & Mentor Invitado por la Comunidad Tequio
-                    </p>
-                  </div>
-
-                  {activeTalk.speaker_social && (
-                    <a
-                      href={activeTalk.speaker_social}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap self-start md:self-center"
-                    >
-                      <span>Perfil LinkedIn del Ponente</span>
-                      <span>↗</span>
-                    </a>
-                  )}
-                </div>
-
-                {/* 4. FECHA, HORA Y SEDE EN TEXTO LIMPIO SIN CUADROS SOBRESATURADOS */}
-                <div className="flex flex-wrap gap-6 font-inter text-sm md:text-base text-arena/90">
-                  <p>📅 <strong>Fecha:</strong> {activeTalk.date}</p>
-                  <p>⏰ <strong>Horario:</strong> {activeTalk.time}</p>
-                  <p>📍 <strong>Transmisión:</strong> {activeTalk.location}</p>
-                </div>
-
-                {/* 5. LIGERO SIN TANTOS CUADROS: COUNTER DE TIEMPO + BOTÓN DE RESERVA ABAJO */}
-                <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  
-                  {/* COUNTER DE TIEMPO LIGERO Y FLUIDO */}
-                  <div className="flex items-center gap-3 font-inter text-xs md:text-sm text-arena/90">
-                    <span className="text-amber-400 font-bold">⏳ Live en:</span>
-                    <div className="flex items-center gap-2 font-cinzel text-lg md:text-xl font-bold text-blanco-lunar">
-                      <span>{String(timeLeft.days).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">d</span></span>:
-                      <span>{String(timeLeft.hours).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">h</span></span>:
-                      <span>{String(timeLeft.minutes).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">m</span></span>:
-                      <span>{String(timeLeft.seconds).padStart(2, "0")}<span className="text-xs font-inter text-arena/60">s</span></span>
-                    </div>
-                  </div>
-
-                  {/* BOTÓN QUIERO RESERVAR MI LUGAR EN LA CHARLA */}
-                  <div className="flex flex-col gap-1.5 min-w-[280px]">
-                    <button
-                      onClick={() => {
-                        setFormSubmitted(alreadyRegistered);
-                        setRegistrationModalOpen(true);
-                      }}
-                      className="cursor-pointer font-inter font-bold text-base text-blanco-lunar py-4 px-8 rounded-2xl shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2"
-                      style={{
-                        background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
-                      }}
-                    >
-                      <span>{alreadyRegistered ? "✓ Ver liga de acceso a la charla" : "🚀 Quiero reservar mi lugar en la charla"}</span>
-                      <span className="text-xl">→</span>
-                    </button>
-
-                    <span className="font-inter text-xs text-arena/70 text-center">
-                      👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
-                    </span>
-                  </div>
-
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
-
-      {/* RUTAS DEL VUELO */}
-      <section className="py-16 px-6 border-t border-white/10 bg-black/20">
-        <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-2">
-              <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
-                🪶 Caravana del Vuelo (Comunidades Externas)
-              </span>
-              <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
-                Eventos Externos a los que Iremos en Grupo
-              </h2>
-            </div>
+          
+          {/* Header Title */}
+          <div className="text-center space-y-4 mb-14">
+            <span className="font-inter text-terracota text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
+              ✦ Agenda de Faenas & Encuentros ✦
+            </span>
+            <h1 className="font-cinzel text-blanco-lunar text-4xl sm:text-5xl md:text-6xl font-bold tracking-wide">
+              Eventos de la Tribu
+            </h1>
+            <p className="font-inter text-arena text-base sm:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
+              Talleres prácticos, mentorías con líderes tech y hackathons comunitarios. Elige tu faena y regístrate directamente con Luma.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {externalRoutes.map((route) => (
-              <div
-                key={route.id}
-                className="rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/30 flex flex-col justify-between hover:border-amber-400 transition-all duration-300 shadow-2xl group"
-              >
-                <div className="relative h-52 w-full overflow-hidden">
-                  <Image
-                    src={route.image_url || "/jpg/moment3.jpg"}
-                    alt={route.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className="absolute top-4 left-4 font-inter text-xs uppercase font-bold px-3.5 py-1 rounded-full bg-azul-noche/90 text-amber-400 border border-amber-400/40">
-                    {route.organizer_name}
-                  </span>
+          {/* ACTIVE TALK CARD CON CHECKOUT LUMA */}
+          {activeEvent && (
+            <motion.div
+              id="active-talk"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="relative rounded-3xl p-8 sm:p-10 md:p-14 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl"
+              style={{
+                background: "linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+              }}
+            >
+              {/* Header Badges */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
+                  <span>✦ FAENA ACTIVA DESTACADA</span>
+                </span>
+
+                <span className="font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
+                  <span className="animate-pulse">🔥</span>
+                  <span>Inscripciones Abiertas con Luma</span>
+                </span>
+              </div>
+
+              {/* Title */}
+              <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+                {activeEvent.title}
+              </h2>
+
+              {/* Grid: Fecha y Modalidad con Iconos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-white/5 p-5 rounded-2xl border border-white/10">
+                <div className="flex items-center gap-3.5">
+                  <span className="text-2xl">📅</span>
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
+                      Cuándo es
+                    </span>
+                    <p className="font-inter text-blanco-lunar text-sm sm:text-base font-bold">
+                      {activeEvent.event_date}
+                    </p>
+                    <span className="font-inter text-xs text-arena/75 block">
+                      {activeEvent.time_display}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">{route.title}</h3>
-                    <p className="font-inter text-arena text-xs leading-relaxed opacity-90">{route.description}</p>
-                  </div>
-
-                  <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => {
-                        setSelectedRoute(route);
-                        setRouteFormSubmitted(false);
-                        setRouteModalOpen(true);
-                      }}
-                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl hover:bg-amber-400 transition-all flex-1 text-center"
-                    >
-                      Me sumo a ir en grupo →
-                    </button>
-                    <a
-                      href={route.external_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cursor-pointer font-inter font-bold text-xs bg-white/10 text-blanco-lunar border border-white/20 px-5 py-3 rounded-xl hover:bg-white/20 transition-all flex-1 text-center"
-                    >
-                      Registro Oficial ↗
-                    </a>
+                <div className="flex items-center gap-3.5">
+                  <span className="text-2xl">
+                    {activeEvent.is_online ? "🖥️" : "📍"}
+                  </span>
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider text-arena/60 font-semibold block">
+                      Modalidad & Lugar
+                    </span>
+                    <p className="font-inter text-blanco-lunar text-sm sm:text-base font-bold flex items-center gap-1.5">
+                      <span>{activeEvent.is_online ? "En línea (Google Meet / Live)" : "Presencial (En persona)"}</span>
+                    </p>
+                    <span className="font-inter text-xs text-arena/75 block">
+                      {activeEvent.location}
+                    </span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Description */}
+              {activeEvent.description && (
+                <p className="font-inter text-arena/90 text-sm sm:text-base leading-relaxed mb-8 max-w-3xl">
+                  {activeEvent.description}
+                </p>
+              )}
+
+              {/* Luma Button CTA */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-2">
+                <LumaCheckoutButton
+                  lumaUrl={activeEvent.luma_url}
+                  variant="primary"
+                >
+                  <span>Registrarme con Luma</span>
+                  <span className="text-xl">→</span>
+                </LumaCheckoutButton>
+
+                <div className="font-inter text-xs text-arena/60 flex items-center gap-1.5">
+                  <span>🎟️ Check-in instantáneo vía</span>
+                  <strong className="text-amber-400">Luma Checkout</strong>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
         </div>
       </section>
 
-      {/* AGENDA DE FAENAS */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-5xl relative z-10 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl font-bold">
-              📅 Agenda de Faenas Tequio
-            </h2>
+      {/* 2. AGENDA DE TODOS LOS EVENTOS */}
+      <section className="relative py-16 px-6 border-t border-white/5">
+        <div className="container mx-auto max-w-6xl relative z-10">
+          
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <span className="font-inter text-terracota text-xs uppercase tracking-widest font-semibold block mb-2">
+                ✦ Calendario Tequio
+              </span>
+              <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
+                Próximas Faenas y Encuentros
+              </h2>
+            </div>
 
+            {/* Filter by Guardian */}
             <div className="flex flex-wrap gap-2">
               {[
-                { id: "all", label: "✦ Todos" },
+                { id: "all", label: "Todos" },
                 { id: "tochtli", label: "🐰 Tochtli (Mentoría)" },
-                { id: "tlacu", label: "🦝 Tlacu (Construcción)" },
+                { id: "tlacu", label: "🦝 Tlacu (Forja)" },
                 { id: "kuku", label: "🪶 Kuku (Caravanas)" },
-              ].map((chip) => (
+              ].map((filter) => (
                 <button
-                  key={chip.id}
-                  onClick={() => setSelectedGuardian(chip.id)}
-                  className={`cursor-pointer font-inter text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                    selectedGuardian === chip.id
-                      ? "bg-amber-500 text-azul-noche scale-105"
-                      : "bg-white/5 text-arena/80 hover:bg-white/10"
+                  key={filter.id}
+                  onClick={() => setSelectedGuardian(filter.id)}
+                  className={`cursor-pointer font-inter text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+                    selectedGuardian === filter.id
+                      ? "bg-amber-400 text-azul-noche shadow-lg scale-105"
+                      : "bg-white/5 hover:bg-white/10 text-arena/80 border border-white/10"
                   }`}
                 >
-                  {chip.label}
+                  {filter.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* AGENDA PINTEREST MASONRY DE EVENTOS */}
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          {/* Events Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((evt, idx) => (
               <motion.div
-                key={evt.id}
-                initial={false}
+                key={evt.id || idx}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-30px" }}
-                transition={{
-                  duration: 0.5,
-                  delay: (idx % 3) * 0.12,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                whileHover={{ y: -5 }}
-                className="break-inside-avoid mb-6 rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/30 flex flex-col justify-between hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.2)] transition-all duration-300 backdrop-blur-xl group"
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: (idx % 3) * 0.1 }}
+                className="rounded-3xl bg-azul-noche/80 border border-white/10 p-6 flex flex-col justify-between space-y-5 hover:border-amber-400/50 hover:shadow-xl transition-all backdrop-blur-md"
               >
-                {/* Event Poster / Image Header if present */}
-                {evt.image_url && (
-                  <div className="relative h-44 w-full overflow-hidden border-b border-white/10">
-                    <Image
-                      src={evt.image_url}
-                      alt={evt.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-transparent to-transparent" />
-                    <span className="absolute top-3 left-3 font-inter text-[10px] uppercase font-bold px-3 py-1 rounded-full bg-azul-noche/90 text-amber-400 border border-amber-400/40">
-                      {evt.typeLabel || " Faena Tequio"}
+                <div className="space-y-4">
+                  {/* Top Badges */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-inter text-[11px] font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                      {evt.guardian === "tochtli"
+                        ? "🐰 Tochtli"
+                        : evt.guardian === "kuku"
+                        ? "🪶 Kuku"
+                        : "🦝 Tlacu"}
+                    </span>
+
+                    <span className="font-inter text-[11px] font-semibold text-arena/60 flex items-center gap-1">
+                      <span>{evt.is_online ? "🖥️ En línea" : "📍 Presencial"}</span>
                     </span>
                   </div>
-                )}
 
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-inter text-xs font-bold text-amber-400">
-                        {evt.guardianBadge}
-                      </span>
-                      <span className="font-inter text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                        {evt.statusTag}
-                      </span>
-                    </div>
+                  {/* Title */}
+                  <h3 className="font-cinzel text-blanco-lunar text-lg md:text-xl font-bold leading-snug">
+                    {evt.title}
+                  </h3>
 
-                    <h3 className="font-cinzel text-blanco-lunar text-xl font-bold group-hover:text-amber-300 transition-colors">
-                      {evt.title}
-                    </h3>
-
-                    <div className="space-y-1.5 font-inter text-xs text-arena/80 p-4 rounded-2xl bg-white/5 border border-white/10">
-                      <p>📅 <strong>Fecha:</strong> {evt.date}</p>
-                      <p>⏰ <strong>Horario:</strong> {evt.time}</p>
-                      <p>📍 <strong>Transmisión:</strong> {evt.location}</p>
-                      {evt.speaker && <p className="text-amber-300 pt-1">👤 <strong>Ponente:</strong> {evt.speaker}</p>}
-                    </div>
+                  {/* Date & Location */}
+                  <div className="space-y-1.5 text-xs text-arena/80 font-inter bg-white/5 p-3.5 rounded-xl border border-white/5">
+                    <p className="font-bold text-blanco-lunar flex items-center gap-2">
+                      <span>📅</span>
+                      <span>{evt.event_date}</span>
+                    </p>
+                    <p className="text-arena/70 flex items-center gap-2">
+                      <span>⏰</span>
+                      <span>{evt.time_display}</span>
+                    </p>
+                    <p className="text-arena/70 flex items-center gap-2">
+                      <span>{evt.is_online ? "🌐" : "📍"}</span>
+                      <span className="truncate">{evt.location}</span>
+                    </p>
                   </div>
 
-                  <div className="pt-3 border-t border-white/10 flex justify-between items-center">
-                    <button
-                      onClick={() => {
-                        setFormSubmitted(isRegisteredForEvent(evt.id));
-                        setRegistrationModalOpen(true);
-                      }}
-                      className="cursor-pointer font-inter text-xs font-bold text-amber-400 hover:underline inline-flex items-center gap-1.5"
+                  {/* Description */}
+                  {evt.description && (
+                    <p className="font-inter text-arena/75 text-xs leading-relaxed line-clamp-3">
+                      {evt.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bottom CTA Luma */}
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+                  <span className="font-inter text-[11px] text-arena/50">
+                    {evt.status === "finalizado" ? "Evento concluido" : "Cupo con Luma"}
+                  </span>
+
+                  {evt.status === "finalizado" ? (
+                    <span className="font-inter text-xs text-arena/50 bg-white/5 px-3 py-1.5 rounded-lg">
+                      Finalizado
+                    </span>
+                  ) : (
+                    <LumaCheckoutButton
+                      lumaUrl={evt.luma_url}
+                      variant="compact"
                     >
-                      <span>{isRegisteredForEvent(evt.id) ? "Ver liga de acceso ✓" : "Reservar lugar →"}</span>
-                    </button>
-
-                    {evt.speaker_social && (
-                      <a
-                        href={evt.speaker_social}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-inter text-[10px] text-arena/60 hover:text-amber-300 underline"
-                      >
-                        Ponente ↗
-                      </a>
-                    )}
-                  </div>
+                      <span>Inscribirme en Luma →</span>
+                    </LumaCheckoutButton>
+                  )}
                 </div>
               </motion.div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* MEMORIA COLECTIVA VIVA — PINTEREST MASONRY BOARD */}
-      <section id="colectiva-viva" className="py-20 px-6 border-t border-white/10 bg-black/20 relative">
-        {/* Subtle Mitla background glow */}
-        <div className="absolute inset-0 bg-radial-at-c from-amber-500/5 via-transparent to-transparent pointer-events-none" />
-
-        <div className="container mx-auto max-w-7xl relative z-10 space-y-10">
+      {/* 3. MEMORIA VIVA (PUBLICACIONES DE INTEGRANTES CON VALIDACIÓN LINKEDIN) */}
+      <section className="relative py-24 px-6 bg-slate-900/60 border-t border-white/10">
+        <div className="container mx-auto max-w-6xl relative z-10">
           
-          {/* HEADER & FILTROS ESTILO PINTEREST */}
-          <div className="space-y-8">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-              <div className="space-y-2 max-w-2xl">
-                <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block flex items-center gap-1.5">
-                  <span>📌</span>
-                  <span>MURO COLECTIVO · HISTORIAS & PINES DE LA TRIBU</span>
-                </span>
-                <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-5xl font-bold">
-                  Memoria Colectiva Viva
-                </h2>
-                <p className="font-inter text-arena text-sm md:text-base opacity-85 leading-relaxed">
-                  &quot;Cada piedra cuenta en la obra. Explora hackathons, testimonios de mentoría y publicaciones compartidas por los integrantes de la tribu.&quot;
-                </p>
-              </div>
-
-              {/* ACTION BUTTON */}
-              <div className="flex-shrink-0">
-                <button
-                  onClick={() => {
-                    setLinkedInFormSubmitted(false);
-                    setNeedNamePrompt(false);
-                    setMemberValidationMessage(null);
-                    setShareLinkedInModalOpen(true);
-                  }}
-                  className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-terracota text-blanco-lunar px-6 py-3.5 rounded-2xl shadow-2xl hover:scale-105 transition-all flex items-center gap-2 border border-amber-300/30"
-                >
-                  <span>✍️ Publicar Pin de LinkedIn</span>
-                  <span>→</span>
-                </button>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+            <div className="space-y-3 max-w-2xl">
+              <span className="font-inter text-terracota text-xs uppercase tracking-widest font-semibold block">
+                ✦ Memoria Colectiva
+              </span>
+              <h2 className="font-cinzel text-blanco-lunar text-3xl sm:text-4xl md:text-5xl font-bold">
+                Memoria Viva de la Tribu
+              </h2>
+              <p className="font-inter text-arena text-sm sm:text-base leading-relaxed opacity-85">
+                Reflexiones cortas y publicaciones en LinkedIn de quienes han participado en nuestras faenas y encuentros tecnológicos.
+              </p>
             </div>
 
-            {/* PINTEREST SEARCH & TOPIC BAR */}
-            <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4">
-              
-              {/* SEARCH INPUT */}
-              <div className="relative w-full md:w-80">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-arena/60 text-xs">
-                  🔍
-                </span>
-                <input
-                  type="text"
-                  value={gallerySearch}
-                  onChange={(e) => setGallerySearch(e.target.value)}
-                  placeholder="Buscar autor, tema o #tag..."
-                  className="w-full font-inter text-xs bg-white/5 border border-white/10 focus:border-amber-400 text-blanco-lunar pl-9 pr-8 py-2.5 rounded-xl focus:outline-none placeholder:text-arena/50"
-                />
-                {gallerySearch && (
-                  <button
-                    onClick={() => setGallerySearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-arena/60 hover:text-blanco-lunar text-xs"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {/* CATEGORY CHIPS */}
-              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                {[
-                  { id: "all", label: "✦ Todos los Pines" },
-                  { id: "tlacu", label: "🦝 Forja & Hackathons" },
-                  { id: "tochtli", label: "🐰 Mentoría & Talks" },
-                  { id: "kuku", label: "🪶 Caravanas del Vuelo" },
-                  { id: "tribu", label: "👥 Testimonios de la Tribu" },
-                ].map((chip) => (
-                  <button
-                    key={chip.id}
-                    onClick={() => {
-                      setGalleryFilter(chip.id);
-                      setGalleryVisibleLimit(6);
-                    }}
-                    className={`cursor-pointer font-inter text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                      galleryFilter === chip.id
-                        ? "bg-amber-500 text-azul-noche scale-105 shadow-[0_0_15px_#F5A623]"
-                        : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-
-            </div>
+            {/* Botón para compartir experiencia */}
+            <button
+              onClick={() => setIsMemoriaModalOpen(true)}
+              className="cursor-pointer font-inter font-bold text-sm bg-gradient-to-r from-amber-500 to-terracota hover:from-amber-400 hover:to-orange-500 text-blanco-lunar px-6 py-3.5 rounded-2xl shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2 flex-shrink-0"
+            >
+              <span>✦ Publicar en Memoria Viva</span>
+              <span>✍️</span>
+            </button>
           </div>
 
-          {/* GALERÍA MASONRY ESTILO PINTEREST (2 COLUMNAS PURAS EN MÓVIL Y 2-4 EN DESKTOP) */}
-          {isLoadingGallery ? (
-            <>
-              {/* SKELETON MÓVIL (< sm) */}
-              <div className="grid grid-cols-2 sm:hidden gap-3 items-start">
-                <div className="flex flex-col gap-3">
-                  {[1, 3, 5].map((sk) => (
-                    <div key={sk} className="w-full rounded-2xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 space-y-2 animate-pulse">
-                      <div className={`w-full bg-white/10 rounded-xl ${sk === 1 ? "h-36" : "h-28"}`} />
-                      <div className="h-3 bg-white/10 rounded w-3/4" />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3">
-                  {[2, 4, 6].map((sk) => (
-                    <div key={sk} className="w-full rounded-2xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 space-y-2 animate-pulse">
-                      <div className={`w-full bg-white/10 rounded-xl ${sk === 2 ? "h-28" : "h-40"}`} />
-                      <div className="h-3 bg-white/10 rounded w-3/4" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SKELETON DESKTOP (>= sm) */}
-              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
-                {[1, 2, 3, 4, 5, 6].map((sk) => (
-                  <div key={sk} className="w-full rounded-3xl overflow-hidden bg-white/[0.03] border border-white/10 p-5 space-y-3 animate-pulse">
-                    <div className={`w-full bg-white/10 rounded-xl ${sk % 2 === 0 ? "h-56" : "h-44"}`} />
-                    <div className="h-4 bg-white/10 rounded w-3/4" />
-                    <div className="h-3 bg-white/5 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : visibleGalleryWorks.length > 0 ? (
-            <>
-              {/* REJILLA 2 COLUMNAS PURA PARA MÓVIL (< sm) */}
-              <div className="grid grid-cols-2 sm:hidden gap-3 items-start w-full">
-                {/* Columna Izquierda (Índices pares 0, 2, 4...) */}
-                <div className="flex flex-col gap-3 w-full">
-                  {visibleGalleryWorks
-                    .filter((_, idx) => idx % 2 === 0)
-                    .map((item, idx) => (
-                      <LinkedInEmbedCard
-                        key={item.id}
-                        id={item.id}
-                        index={idx * 2}
-                        sizeVariant={item.sizeVariant || SIZE_VARIANTS[(idx * 2) % SIZE_VARIANTS.length]}
-                        title={item.title}
-                        date={item.date}
-                        guardianTag={item.guardianTag}
-                        avatarGuardian={item.avatarGuardian}
-                        sealStamp={item.sealStamp}
-                        linkedinPostUrl={item.linkedinPostUrl}
-                        description={item.description}
-                        impactMetrics={item.impactMetrics}
-                        authorName={item.authorName}
-                        tags={item.tags}
-                        onOpenDetail={(pin) => setSelectedPinModal(pin)}
-                      />
-                    ))}
-                </div>
-
-                {/* Columna Derecha (Índices impares 1, 3, 5...) */}
-                <div className="flex flex-col gap-3 w-full">
-                  {visibleGalleryWorks
-                    .filter((_, idx) => idx % 2 === 1)
-                    .map((item, idx) => (
-                      <LinkedInEmbedCard
-                        key={item.id}
-                        id={item.id}
-                        index={idx * 2 + 1}
-                        sizeVariant={item.sizeVariant || SIZE_VARIANTS[(idx * 2 + 1) % SIZE_VARIANTS.length]}
-                        title={item.title}
-                        date={item.date}
-                        guardianTag={item.guardianTag}
-                        avatarGuardian={item.avatarGuardian}
-                        sealStamp={item.sealStamp}
-                        linkedinPostUrl={item.linkedinPostUrl}
-                        description={item.description}
-                        impactMetrics={item.impactMetrics}
-                        authorName={item.authorName}
-                        tags={item.tags}
-                        onOpenDetail={(pin) => setSelectedPinModal(pin)}
-                      />
-                    ))}
-                </div>
-              </div>
-
-              {/* REJILLA MULTI-COLUMNA PARA TABLET & DESKTOP (>= sm) */}
-              <div className="hidden sm:block">
-                <div className="columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
-                  {visibleGalleryWorks.map((item, idx) => (
-                    <LinkedInEmbedCard
-                      key={item.id}
-                      id={item.id}
-                      index={idx}
-                      sizeVariant={item.sizeVariant || SIZE_VARIANTS[idx % SIZE_VARIANTS.length]}
-                      title={item.title}
-                      date={item.date}
-                      guardianTag={item.guardianTag}
-                      avatarGuardian={item.avatarGuardian}
-                      sealStamp={item.sealStamp}
-                      linkedinPostUrl={item.linkedinPostUrl}
-                      description={item.description}
-                      impactMetrics={item.impactMetrics}
-                      authorName={item.authorName}
-                      tags={item.tags}
-                      onOpenDetail={(pin) => setSelectedPinModal(pin)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-16 space-y-4 p-8 rounded-3xl bg-white/[0.02] border border-white/10 max-w-lg mx-auto">
-              <span className="text-3xl block">🔍</span>
-              <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                {gallerySearch ? "No encontramos pines con esa búsqueda" : "Aún no hay publicaciones en la galería"}
-              </h3>
-              <p className="font-inter text-arena/80 text-xs">
-                {gallerySearch
-                  ? "Prueba con otro término o sé el primero en compartir una nueva publicación."
-                  : "¡Sé el primer integrante en compartir un post de LinkedIn con la comunidad!"}
-              </p>
-              {gallerySearch ? (
-                <button
-                  onClick={() => {
-                    setGallerySearch("");
-                    setGalleryFilter("all");
-                  }}
-                  className="font-inter font-bold text-xs bg-white/10 text-amber-300 px-4 py-2 rounded-xl hover:bg-white/20"
-                >
-                  Limpiar filtros
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setLinkedInFormSubmitted(false);
-                    setNeedNamePrompt(false);
-                    setMemberValidationMessage(null);
-                    setShareLinkedInModalOpen(true);
-                  }}
-                  className="font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-2.5 rounded-xl hover:bg-amber-400"
-                >
-                  ✍️ Publicar Primer Pin
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* BOTÓN DE "VER MÁS PINES" */}
-          {remainingGalleryCount > 0 && (
-            <div className="text-center pt-6">
-              <button
-                onClick={() => setGalleryVisibleLimit((prev) => prev + 6)}
-                className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-white/10 text-blanco-lunar border border-amber-500/40 px-8 py-3.5 rounded-2xl hover:bg-amber-500 hover:text-azul-noche hover:border-amber-400 transition-all duration-300 shadow-xl inline-flex items-center gap-2"
-              >
-                <span>📜 Cargar Más Obras de la Tribu (+{remainingGalleryCount} más)</span>
-                <span>↓</span>
-              </button>
-            </div>
-          )}
+          {/* Grid de Memoria Viva */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {memoriaList.map((item, idx) => (
+              <LinkedInEmbedCard
+                key={item.id || idx}
+                id={item.id}
+                index={idx}
+                authorName={item.author_name}
+                eventTitle={item.event_title}
+                quote={item.quote}
+                linkedinPostUrl={item.linkedin_post_url}
+                guardian={item.guardian}
+              />
+            ))}
+          </div>
 
         </div>
       </section>
 
-      {/* MODAL LIGHTBOX ESTILO PINTEREST (DETALLE COMPLETO DEL TESTIMONIO / OBRA) */}
-      <AnimatePresence>
-        {selectedPinModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-lg overflow-y-auto"
-            onClick={() => setSelectedPinModal(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              onClick={(e) => e.stopPropagation()}
-              className="p-6 sm:p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/40 max-w-2xl w-full shadow-2xl overflow-hidden relative space-y-6 max-h-[90vh] overflow-y-auto"
+      {/* MODAL DE PUBLICACIÓN EN MEMORIA VIVA */}
+      <Modal
+        isOpen={isMemoriaModalOpen}
+        onClose={() => setIsMemoriaModalOpen(false)}
+        title="Publicar en Memoria Viva"
+      >
+        <form onSubmit={handleMemoriaSubmit} className="flex flex-col gap-5 pt-2">
+          <p className="font-inter text-xs text-arena/80 leading-relaxed">
+            Comparte la frase o lección principal que te llevaste del evento y enlaza tu publicación de LinkedIn.
+          </p>
+
+          {/* Mensajes de Alerta / Error */}
+          {submitError && (
+            <div className="bg-red-500/15 border border-red-500/40 text-red-300 px-4 py-2.5 rounded-xl text-xs font-inter">
+              {submitError}
+            </div>
+          )}
+
+          {submitSuccess && (
+            <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 px-4 py-2.5 rounded-xl text-xs font-inter flex items-center gap-2">
+              <span>✓</span>
+              <span>¡Tu experiencia se ha publicado en la Memoria Viva!</span>
+            </div>
+          )}
+
+          {/* 1. Nombre Completo */}
+          <div className="space-y-1.5">
+            <label className="font-inter text-xs font-bold text-blanco-lunar uppercase tracking-wider block">
+              Tu Nombre Completo *
+            </label>
+            <input
+              type="text"
+              required
+              value={memoriaForm.author_name}
+              onChange={(e) => setMemoriaForm({ ...memoriaForm, author_name: e.target.value })}
+              placeholder="Ej: Sofía Morales"
+              className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-sm"
+            />
+          </div>
+
+          {/* 2. Selector de Evento al que asistió */}
+          <div className="space-y-1.5">
+            <label className="font-inter text-xs font-bold text-blanco-lunar uppercase tracking-wider block">
+              Evento al que asististe *
+            </label>
+            <select
+              required
+              value={memoriaForm.event_title}
+              onChange={(e) => setMemoriaForm({ ...memoriaForm, event_title: e.target.value })}
+              className="w-full font-inter bg-azul-noche border border-white/15 text-blanco-lunar px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-sm"
             >
-              {/* BOTÓN CERRAR */}
-              <button
-                onClick={() => setSelectedPinModal(null)}
-                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-blanco-lunar flex items-center justify-center text-sm font-bold border border-white/20 transition-all"
+              <option value="">Selecciona el evento...</option>
+              {events.map((evt) => (
+                <option key={evt.id} value={evt.title}>
+                  {evt.title} ({evt.event_date})
+                </option>
+              ))}
+              <option value="Faena Comunitaria Tequio">Otra Faena o Taller Tequio</option>
+            </select>
+          </div>
+
+          {/* 3. URL de LinkedIn (100% Verificada) */}
+          <div className="space-y-1.5">
+            <label className="font-inter text-xs font-bold text-blanco-lunar uppercase tracking-wider block">
+              Enlace de tu Publicación en LinkedIn *
+            </label>
+            <input
+              type="url"
+              required
+              value={memoriaForm.linkedin_post_url}
+              onChange={(e) => setMemoriaForm({ ...memoriaForm, linkedin_post_url: e.target.value })}
+              placeholder="https://www.linkedin.com/posts/... o https://lnkd.in/..."
+              className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-sm"
+            />
+            <span className="font-inter text-[11px] text-amber-400/80 block">
+              Verificamos que sea un enlace válido de LinkedIn para garantizar la autenticidad.
+            </span>
+          </div>
+
+          {/* 4. Frase / Reflexión corta (Máx 50 palabras) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="font-inter text-xs font-bold text-blanco-lunar uppercase tracking-wider block">
+                Frase o lección que te llevas (Máx. 50 palabras) *
+              </label>
+              <span
+                className={`font-inter text-xs font-bold ${
+                  isWordLimitExceeded ? "text-red-400" : "text-arena/70"
+                }`}
               >
-                ✕
-              </button>
-
-              {/* HEADER CON AVATAR DEL GUARDIÁN */}
-              <div className="flex items-center gap-4 border-b border-white/10 pb-4 pr-10">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/50 p-2 flex items-center justify-center shadow-lg flex-shrink-0">
-                  <Image
-                    src={
-                      selectedPinModal.guardianTag?.toLowerCase().includes("tochtli")
-                        ? "/png/tochtli.png"
-                        : selectedPinModal.guardianTag?.toLowerCase().includes("kuku")
-                        ? "/png/kuku.png"
-                        : "/png/tlacu.png"
-                    }
-                    alt="Guardián"
-                    width={48}
-                    height={48}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="font-inter text-xs text-amber-400 font-bold block">
-                    {selectedPinModal.guardianTag || "✦ Obra Comunitaria"}
-                  </span>
-                  <h4 className="font-inter text-base font-bold text-blanco-lunar">
-                    {selectedPinModal.authorName || "Integrante de Tequio"}
-                  </h4>
-                  <span className="font-inter text-xs text-arena/60">
-                    📅 {selectedPinModal.date}
-                  </span>
-                </div>
-              </div>
-
-              {/* TÍTULO Y DESCRIPCIÓN */}
-              <div className="space-y-3">
-                <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold leading-snug">
-                  {selectedPinModal.title}
-                </h3>
-                <p className="font-inter text-arena text-sm leading-relaxed whitespace-pre-line opacity-90">
-                  {selectedPinModal.description}
-                </p>
-              </div>
-
-              {/* IMPACT METRICS */}
-              {selectedPinModal.impactMetrics && selectedPinModal.impactMetrics.length > 0 && (
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1.5">
-                  <span className="font-inter text-xs uppercase font-bold text-amber-400 block tracking-wider">
-                    📊 Impacto Comunitario:
-                  </span>
-                  {selectedPinModal.impactMetrics.map((m: string, idx: number) => (
-                    <p key={idx} className="font-inter text-xs text-amber-200 font-medium">
-                      {m}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {/* ACCIONES LINKEDIN */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3">
-                {selectedPinModal.linkedinPostUrl && (
-                  <a
-                    href={selectedPinModal.linkedinPostUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer font-inter font-bold text-sm bg-amber-500 hover:bg-amber-400 text-azul-noche px-6 py-3.5 rounded-2xl shadow-xl transition-all hover:scale-105 w-full sm:flex-1 text-center flex items-center justify-center gap-2"
-                  >
-                    <span>Abrir Publicación en LinkedIn</span>
-                    <span>↗</span>
-                  </a>
-                )}
-
-                <button
-                  onClick={() => {
-                    if (selectedPinModal.linkedinPostUrl) {
-                      navigator.clipboard?.writeText(selectedPinModal.linkedinPostUrl);
-                      alert("¡Enlace copiado al portapapeles! 📋");
-                    }
-                  }}
-                  className="cursor-pointer font-inter font-bold text-xs bg-white/10 hover:bg-white/20 text-blanco-lunar border border-white/20 px-4 py-3.5 rounded-2xl transition-all w-full sm:w-auto text-center"
-                >
-                  🔗 Copiar Enlace
-                </button>
-              </div>
-            </motion.div>
+                {quoteWordCount}/50 palabras
+              </span>
+            </div>
+            <textarea
+              required
+              rows={3}
+              value={memoriaForm.quote}
+              onChange={(e) => setMemoriaForm({ ...memoriaForm, quote: e.target.value })}
+              placeholder="Ej: Aprender en comunidad rompió mi miedo a programar proyectos reales con impacto social."
+              className={`w-full font-inter bg-white/5 border text-blanco-lunar px-4 py-3 rounded-xl focus:outline-none text-sm resize-none ${
+                isWordLimitExceeded
+                  ? "border-red-500 focus:border-red-400"
+                  : "border-white/15 focus:border-amber-400"
+              }`}
+            />
           </div>
-        )}
-      </AnimatePresence>
 
-      {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO */}
-      <AnimatePresence>
-        {registrationModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
-            onClick={() => setRegistrationModalOpen(false)}
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting || isWordLimitExceeded}
+            className="cursor-pointer font-inter font-bold text-blanco-lunar py-3.5 rounded-xl transition-all duration-300 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            style={{ background: "#C15B3A" }}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/50 max-w-lg w-full space-y-6 shadow-2xl relative"
-            >
-              {!formSubmitted ? (
-                <>
-                  <div className="text-center space-y-1">
-                    <span className="font-inter text-xs uppercase tracking-widest text-ambar font-bold block">
-                      🎙️ Reservación a Faena Interna
-                    </span>
-                    <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                      {activeTalk.title}
-                    </h3>
-                  </div>
-
-                  <form onSubmit={handleTalkSubmit} className="space-y-4">
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Tu Nombre Completo *</label>
-                      <input type="text" required value={talkForm.nombre} onChange={(e) => setTalkForm({ ...talkForm, nombre: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Correo Electrónico *</label>
-                      <input type="email" required value={talkForm.email} onChange={(e) => setTalkForm({ ...talkForm, email: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
-                    </div>
-
-                    <div className="flex justify-between items-center pt-3 border-t border-white/10">
-                      <button type="button" onClick={() => setRegistrationModalOpen(false)} className="font-inter text-xs text-arena/70">Cancelar</button>
-                      <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl">{isSubmitting ? "Guardando..." : "Reservar mi lugar →"}</button>
-                    </div>
-                  </form>
-                </>
-              ) : (
-                <div className="text-center space-y-5 py-4">
-                  <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">✦ Lugar Confirmado ✦</span>
-                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">¡Tu acceso a la sesión está activo!</h3>
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-inter space-y-2">
-                    <span className="text-emerald-300 font-bold block">📍 Enlace oficial de transmisión (Google Meet / Zoom):</span>
-                    <a href={activeTalk.meeting_link || "https://meet.google.com"} target="_blank" rel="noopener noreferrer" className="cursor-pointer font-bold text-amber-300 underline text-sm break-all">{activeTalk.meeting_link || "https://meet.google.com/abc-defg-hij"} ↗</a>
-                  </div>
-                  <button onClick={() => setRegistrationModalOpen(false)} className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl">Entendido</button>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* MODAL 2: SUMARME A LA CARAVANA */}
-      <AnimatePresence>
-        {routeModalOpen && selectedRoute && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={() => setRouteModalOpen(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/50 max-w-lg w-full space-y-6 shadow-2xl relative">
-              {!routeFormSubmitted ? (
-                <form onSubmit={handleRouteSubmit} className="space-y-4">
-                  <div className="text-center space-y-1">
-                    <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold block">🪶 Me sumo a ir en grupo</span>
-                    <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">{selectedRoute.title}</h3>
-                  </div>
-                  <div>
-                    <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Tu Nombre Completo *</label>
-                    <input type="text" required value={routeForm.nombre} onChange={(e) => setRouteForm({ ...routeForm, nombre: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
-                  </div>
-                  <div>
-                    <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Correo Electrónico *</label>
-                    <input type="email" required value={routeForm.email} onChange={(e) => setRouteForm({ ...routeForm, email: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-white/10">
-                    <button type="button" onClick={() => setRouteModalOpen(false)} className="font-inter text-xs text-arena/70">Cancelar</button>
-                    <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl">{isSubmitting ? "Guardando..." : "Sumarme a la Caravana →"}</button>
-                  </div>
-                </form>
-              ) : (
-                <div className="text-center space-y-4 py-4">
-                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">¡Estás en la lista de la Caravana!</h3>
-                  <a href={selectedRoute.external_link} target="_blank" rel="noopener noreferrer" className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3 rounded-xl block text-center">Ir ahora al Registro Oficial ↗</a>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* MODAL 3: COMPARTIR POST DE LINKEDIN CON AUTO-REGISTRO */}
-      <AnimatePresence>
-        {shareLinkedInModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
-            onClick={() => setShareLinkedInModalOpen(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="p-8 rounded-3xl bg-azul-noche border-2 border-amber-500/50 max-w-lg w-full space-y-6 shadow-2xl relative"
-            >
-              {!linkedInFormSubmitted ? (
-                <>
-                  <div className="text-center space-y-1">
-                    <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold block">
-                      🖼️ Publicar en Memoria Colectiva
-                    </span>
-                    <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                      Compartir mi Post de LinkedIn
-                    </h3>
-                  </div>
-
-                  <form onSubmit={handleShareLinkedInSubmit} className="space-y-4">
-                    {/* 1. SELECTOR DE AVATAR ENTRE LOS 3 GUARDIANES */}
-                    <div>
-                      <label className="block font-inter text-xs text-amber-400 font-bold mb-2">
-                        Escoge tu Avatar Guardián *
-                      </label>
-                      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                        {[
-                          { id: "tlacu", name: "Tlacu", role: "Forja & Código", icon: "/png/tlacu.png", color: "#C15B3A", badge: "🦝" },
-                          { id: "tochtli", name: "Tochtli", role: "Mentoría & Talks", icon: "/png/tochtli.png", color: "#F5A623", badge: "🐰" },
-                          { id: "kuku", name: "Kuku", role: "Caravanas & Redes", icon: "/png/kuku.png", color: "#10b981", badge: "🪶" },
-                        ].map((av) => (
-                          <button
-                            key={av.id}
-                            type="button"
-                            onClick={() => setLinkedInForm({ ...linkedInForm, avatar: av.id, area: av.id })}
-                            className={`p-2.5 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all text-center border cursor-pointer ${
-                              linkedInForm.avatar === av.id
-                                ? "bg-white/10 scale-105 shadow-lg"
-                                : "bg-white/[0.03] border-white/10 opacity-70 hover:opacity-100"
-                            }`}
-                            style={{
-                              borderColor: linkedInForm.avatar === av.id ? av.color : undefined,
-                              boxShadow: linkedInForm.avatar === av.id ? `0 0 15px ${av.color}50` : undefined,
-                            }}
-                          >
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 relative flex items-center justify-center">
-                              <Image src={av.icon} alt={av.name} width={36} height={36} className="object-contain" />
-                            </div>
-                            <span className="font-cinzel text-xs font-bold text-blanco-lunar">
-                              {av.badge} {av.name}
-                            </span>
-                            <span className="font-inter text-[9px] text-arena/70">
-                              {av.role}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                        Tu Correo Electrónico *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={linkedInForm.email}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, email: e.target.value })}
-                        placeholder="tu-correo@ejemplo.com"
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    <div className={needNamePrompt ? "p-3 rounded-2xl bg-amber-500/10 border-2 border-amber-400" : ""}>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Nombre Completo {needNamePrompt ? "* (Necesario para inscribirte en la tribu)" : "(Opcional)"}
-                      </label>
-                      <input
-                        type="text"
-                        required={needNamePrompt}
-                        value={linkedInForm.nombre}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, nombre: e.target.value })}
-                        placeholder="Ej. Sofía Morales / Carlos Mendoza"
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                        Título de la Obra o Experiencia *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={linkedInForm.title}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, title: e.target.value })}
-                        placeholder="Ej. Hackathon Comunitario: Forjando Código con Causa"
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Descripción o Testimonio de la Obra *
-                      </label>
-                      <textarea
-                        rows={3}
-                        required
-                        value={linkedInForm.description}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, description: e.target.value })}
-                        placeholder="Cuéntanos qué construiste, qué aprendiste o cómo fue tu experiencia..."
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                        🔗 Enlace de tu Post de LinkedIn *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={linkedInForm.linkedin_url}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, linkedin_url: e.target.value })}
-                        placeholder="https://www.linkedin.com/feed/update/..."
-                        className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="font-inter text-xs text-amber-400 font-bold flex items-center gap-1">
-                          <span>🔒 Clave de Mayordomía *</span>
-                        </label>
-                        <span className="font-inter text-[10px] text-arena/60">
-                          (Para miembros autorizados)
-                        </span>
-                      </div>
-                      <input
-                        type="password"
-                        required
-                        value={linkedInForm.clave}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, clave: e.target.value })}
-                        placeholder="••••••••••••"
-                        className="w-full font-inter bg-white/5 border border-amber-400/40 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-sm tracking-widest"
-                      />
-                    </div>
-
-                    {memberValidationMessage && (
-                      <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-400 text-xs font-inter text-amber-200 font-semibold">
-                        {memberValidationMessage}
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center pt-3 border-t border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => setShareLinkedInModalOpen(false)}
-                        className="font-inter text-xs text-arena/70"
-                      >
-                        Cancelar
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all"
-                      >
-                        {isSubmitting ? "Publicando..." : needNamePrompt ? "Inscribirme y Publicar Post →" : "Publicar mi Post →"}
-                      </button>
-                    </div>
-                  </form>
-                </>
-              ) : (
-                <div className="text-center space-y-4 py-4">
-                  <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">
-                    ✦ Post Inmortalizado ✦
-                  </span>
-                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                    ¡Tu publicación está en la Memoria Colectiva!
-                  </h3>
-                  <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
-                    Hemos registrado tu membresía en la tribu y grabado tu post de LinkedIn en la galería viva.
-                  </p>
-                  <button
-                    onClick={() => setShareLinkedInModalOpen(false)}
-                    className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl"
-                  >
-                    Ver en la Galería
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            {isSubmitting ? "Publicando en Memoria..." : "Publicar en Memoria Viva →"}
+          </button>
+        </form>
+      </Modal>
 
       <FooterSection />
     </main>
