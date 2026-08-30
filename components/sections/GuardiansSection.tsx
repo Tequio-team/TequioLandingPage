@@ -173,8 +173,9 @@ function GuardianCard({
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: isDimmed ? 0.75 : 1, y: 0 } : {}}
-      transition={{ delay: index * 0.2, duration: 0.8 }}
+      whileInView={{ opacity: isDimmed ? 0.75 : 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       onHoverStart={onHoverStart}
       onHoverEnd={onHoverEnd}
       onClick={onClick}

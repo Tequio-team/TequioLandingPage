@@ -100,8 +100,9 @@ export default function CommitmentSection() {
           <motion.div
             className="lg:col-span-6 space-y-6 text-left"
             initial={{ opacity: 0, x: -30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
           >
             <span className="font-inter text-terracota text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
               ✦ Nuestro Compromiso ✦
@@ -130,8 +131,9 @@ export default function CommitmentSection() {
           <motion.div
             className="lg:col-span-6 relative"
             initial={{ opacity: 0, x: 30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.15 }}
           >
             {/* Header Nav del Carrusel */}
             <div className="flex items-center justify-between font-inter text-xs text-amber-400 font-bold mb-3 px-1">

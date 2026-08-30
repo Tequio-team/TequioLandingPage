@@ -105,7 +105,8 @@ export default function PillarsSection() {
         <motion.div
           className="text-center mb-20"
           initial={{ opacity: 0, y: 25 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
           <h2 className="font-cinzel text-blanco-lunar text-4xl md:text-5xl mb-4 tracking-wide font-bold">
@@ -142,8 +143,9 @@ function PillarCard({
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: delays[index], duration: 0.7 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: delays[index], duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -4 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}

@@ -85,8 +85,9 @@ export default function FooterSection() {
           <motion.div
             className="flex items-center gap-5 relative"
             initial={{ opacity: 0, y: 15 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
             {GUARDIANS_FOOTER.map((g) => (
               <motion.div
