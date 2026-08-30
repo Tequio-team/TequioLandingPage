@@ -3,9 +3,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
+export type CardSizeVariant = "tall" | "compact" | "medium" | "standard";
+
 interface LinkedInEmbedCardProps {
   id: string;
   index?: number;
+  sizeVariant?: CardSizeVariant;
   title: string;
   date: string;
   guardianTag: string;
@@ -34,6 +37,7 @@ export function formatLinkedInEmbedUrl(url?: string): string | null {
 
 export default function LinkedInEmbedCard({
   index = 0,
+  sizeVariant = "standard",
   title,
   date,
   guardianTag,
@@ -48,46 +52,53 @@ export default function LinkedInEmbedCard({
   const embedUrl = formatLinkedInEmbedUrl(linkedinPostUrl);
   const isShortLink = linkedinPostUrl.includes("lnkd.in");
 
+  // Dynamic IFrame height mapping according to sizeVariant requested by user
+  const heightMap: Record<CardSizeVariant, { iframeH: string; pxVal: number }> = {
+    tall: { iframeH: "h-[420px]", pxVal: 420 },
+    medium: { iframeH: "h-[350px]", pxVal: 350 },
+    standard: { iframeH: "h-[300px]", pxVal: 300 },
+    compact: { iframeH: "h-[250px]", pxVal: 250 },
+  };
+
+  const currentSize = heightMap[sizeVariant] || heightMap.standard;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 25 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      initial={{ opacity: 0, y: 45, filter: "blur(4px)" }}
+      whileInView={{ opacity: 0.95, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-30px" }}
       transition={{
-        duration: 0.5,
-        delay: index * 0.12,
-        ease: [0.16, 1, 0.3, 1],
+        duration: 0.7,
+        delay: (index % 4) * 0.14,
+        ease: [0.22, 1, 0.36, 1], // Soft natural rise easing
       }}
       whileHover={{
-        y: -5,
-        transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+        y: -6,
+        opacity: 1,
+        transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
       }}
-      className="break-inside-avoid mb-6 rounded-2xl overflow-hidden bg-white/[0.035] border border-amber-500/30 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.2)] transition-all duration-300 backdrop-blur-xl"
+      className="break-inside-avoid mb-6 rounded-2xl overflow-hidden bg-white/[0.03] border border-amber-500/25 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.22)] transition-all duration-300 backdrop-blur-xl"
     >
       {/* SELLO CEREMONIAL FLOTANTE */}
       <div className="absolute top-3 right-3 z-20 pointer-events-none">
-        <span className="font-inter text-[9px] uppercase font-bold px-2.5 py-1 rounded-full bg-amber-500 text-azul-noche shadow-[0_0_12px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1">
+        <span className="font-inter text-[9px] uppercase font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-azul-noche shadow-[0_0_12px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1">
           <span>✦</span>
           <span>{sealStamp || "✦ SELLO TEQUIO ✦"}</span>
         </span>
       </div>
 
-      {/* CONTENEDOR CON SKELETON LOADER COMPACTO */}
-      <div className="relative w-full bg-black/60 min-h-[320px] flex items-center justify-center overflow-hidden border-b border-white/10">
-        
-        {/* SKELETON SHIMMER LOADER */}
+      {/* CONTENEDOR CON ALTURA VARIABLE Y SKELETON LOADER */}
+      <div
+        className={`relative w-full bg-black/60 flex items-center justify-center overflow-hidden border-b border-white/10 ${currentSize.iframeH}`}
+      >
         {!iframeLoaded && !isShortLink && (
           <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex flex-col justify-between p-6 z-10">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-white/10 animate-pulse" />
-              <div className="space-y-1.5 flex-1">
+              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+              <div className="space-y-1 flex-1">
                 <div className="h-3 bg-white/10 rounded w-2/3 animate-pulse" />
-                <div className="h-2.5 bg-white/10 rounded w-1/3 animate-pulse" />
+                <div className="h-2 bg-white/10 rounded w-1/3 animate-pulse" />
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-16 bg-white/10 rounded-xl animate-pulse" />
-              <div className="h-24 bg-white/10 rounded-xl animate-pulse" />
             </div>
             <span className="font-inter text-[10px] text-amber-400 font-bold text-center animate-bounce">
               ⚡ Cargando post en vivo...
@@ -95,22 +106,21 @@ export default function LinkedInEmbedCard({
           </div>
         )}
 
-        {/* IFRAME DE TAMAÑO COMPACTO (360PX) */}
         {embedUrl && !isShortLink ? (
           <iframe
             src={embedUrl}
-            height="360"
+            height={currentSize.pxVal}
             width="100%"
             frameBorder="0"
             allowFullScreen={false}
             title={title}
             onLoad={() => setIframeLoaded(true)}
-            className={`w-full h-[360px] rounded-t-xl transition-opacity duration-500 ease-in-out ${
+            className={`w-full ${currentSize.iframeH} rounded-t-xl transition-opacity duration-700 ease-in-out ${
               iframeLoaded ? "opacity-100" : "opacity-0"
             }`}
           />
         ) : (
-          <div className="relative h-56 w-full flex flex-col items-center justify-center p-5 text-center bg-white/5 space-y-3">
+          <div className="relative h-full w-full flex flex-col items-center justify-center p-5 text-center bg-white/5 space-y-2">
             <Image
               src={imgSrc}
               alt={title}
@@ -121,7 +131,7 @@ export default function LinkedInEmbedCard({
               <span className="font-inter text-[10px] text-amber-400 font-bold uppercase tracking-widest block">
                 🔗 Publicación compartida por la tribu
               </span>
-              <p className="font-cinzel text-blanco-lunar text-base font-bold line-clamp-2">
+              <p className="font-cinzel text-blanco-lunar text-sm font-bold line-clamp-2">
                 {title}
               </p>
               <a
@@ -139,10 +149,10 @@ export default function LinkedInEmbedCard({
       </div>
 
       {/* METADATOS Y MÉTRICAS COMPACTAS */}
-      <div className="p-4 space-y-3 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
+      <div className="p-4 space-y-2.5 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="font-inter text-[11px] text-amber-400 font-bold">
+            <span className="font-inter text-[10px] text-amber-400 font-bold">
               {guardianTag}
             </span>
             <span className="font-inter text-[10px] text-arena/60">
@@ -169,7 +179,7 @@ export default function LinkedInEmbedCard({
           {impactMetrics && impactMetrics.length > 0 && (
             <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5 mt-2">
               {impactMetrics.map((m: string, idx: number) => (
-                <p key={idx} className="font-inter text-[11px] text-amber-300 font-semibold">
+                <p key={idx} className="font-inter text-[10px] text-amber-300 font-semibold">
                   {m}
                 </p>
               ))}
