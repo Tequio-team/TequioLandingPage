@@ -292,7 +292,7 @@ INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, sea
   'https://lnkd.in/p/g4_eGX8s',
   '/jpg/moment1.jpg',
   'Experiencia compartida por integrante de la comunidad Tequio en LinkedIn.',
-  'Diego Romero Mora',
+  'Sofía Morales · Integrante Tequio',
   '["🌟 Publicación de Integrante", "👥 Comunidad Tequio"]'::jsonb
 ),
 (
