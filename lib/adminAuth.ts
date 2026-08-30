@@ -1,9 +1,5 @@
 "use client";
 
-// SHA-256 Hash of default password "tequio2026"
-// User can override this by setting NEXT_PUBLIC_ADMIN_PASSWORD_HASH in .env.local or Vercel
-const DEFAULT_PASSWORD_HASH = "8e9185a62f5921868352b2f6b8f15b81a7b1b3fb490f8450125bb7e2d93e1b02";
-
 const ADMIN_SESSION_KEY = "tequio_admin_authenticated";
 
 // Hash a string using SHA-256 Web Crypto API
@@ -16,10 +12,18 @@ export async function hashPassword(password: string): Promise<string> {
   return hashHex;
 }
 
-// Verify if the input password matches the SHA-256 hash
+// Verify if the input password matches the SHA-256 hash defined strictly in process.env
 export async function verifyAdminPassword(passwordInput: string): Promise<boolean> {
   const inputHash = await hashPassword(passwordInput);
-  const targetHash = process.env.NEXT_PUBLIC_ADMIN_PASSWORD_HASH || DEFAULT_PASSWORD_HASH;
+  
+  // Read hash strictly from environment variable
+  const targetHash = process.env.NEXT_PUBLIC_ADMIN_PASSWORD_HASH || process.env.NEXT_ADMIN_PASSWORD_HASH;
+
+  if (!targetHash) {
+    console.warn("⚠️ No se ha definido NEXT_PUBLIC_ADMIN_PASSWORD_HASH en .env.local o Vercel.");
+    return false;
+  }
+
   return inputHash === targetHash;
 }
 
