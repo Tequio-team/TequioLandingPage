@@ -15,9 +15,9 @@ export async function hashPassword(password: string): Promise<string> {
 // Verify if the input password matches the SHA-256 hash defined strictly in process.env
 export async function verifyAdminPassword(passwordInput: string): Promise<boolean> {
   const inputHash = await hashPassword(passwordInput);
-  
+
   // Read hash strictly from environment variable
-  const targetHash = process.env.NEXT_PUBLIC_ADMIN_PASSWORD_HASH || process.env.NEXT_ADMIN_PASSWORD_HASH;
+  const targetHash = process.env.NEXT_ADMIN_PASSWORD_HASH || process.env.NEXT_ADMIN_PASSWORD_HASH;
 
   if (!targetHash) {
     console.warn("⚠️ No se ha definido NEXT_PUBLIC_ADMIN_PASSWORD_HASH en .env.local o Vercel.");
