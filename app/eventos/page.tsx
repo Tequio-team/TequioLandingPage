@@ -36,7 +36,6 @@ const DEFAULT_ACTIVE_TALK = {
   capacityLimit: 60,
 };
 
-// Target Date for Live Countdown (Sept 17)
 const TARGET_TALK_DATE = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 + 35 * 60 * 1000);
 
 export default function EventosPage() {
@@ -52,9 +51,11 @@ export default function EventosPage() {
   const [routeFormSubmitted, setRouteFormSubmitted] = useState(false);
   const [linkedInFormSubmitted, setLinkedInFormSubmitted] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
-  const [memberValidationError, setMemberValidationError] = useState<string | null>(null);
+  
+  // State to request full_name when email is not registered yet
+  const [needNamePrompt, setNeedNamePrompt] = useState(false);
+  const [memberValidationMessage, setMemberValidationMessage] = useState<string | null>(null);
 
-  // Live Dynamic States initialized strictly from Supabase
   const [activeTalk, setActiveTalk] = useState(DEFAULT_ACTIVE_TALK);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [externalRoutes, setExternalRoutes] = useState<any[]>([]);
@@ -74,15 +75,14 @@ export default function EventosPage() {
 
   const [linkedInForm, setLinkedInForm] = useState({
     email: "",
+    nombre: "", // Opcional / Auto-registro
     title: "",
     linkedin_url: "",
     description: "",
   });
 
-  // Real-time Countdown logic
   const [timeLeft, setTimeLeft] = useState({ days: 4, hours: 12, minutes: 35, seconds: 20 });
 
-  // Auto-fill form from LocalStorage user profile & check registration status
   useEffect(() => {
     const savedProfile = getUserProfile();
     if (savedProfile) {
@@ -99,6 +99,7 @@ export default function EventosPage() {
       setLinkedInForm((prev) => ({
         ...prev,
         email: savedProfile.email || prev.email,
+        nombre: savedProfile.nombre || prev.nombre,
       }));
     }
 
@@ -107,13 +108,11 @@ export default function EventosPage() {
     }
   }, [activeTalk.id]);
 
-  // 1. Fetch EXCLUSIVELY from Supabase tables
   useEffect(() => {
     async function loadSupabaseData() {
       try {
         const { supabase } = await import("@/lib/supabase");
         
-        // A) Fetch Internal Events
         const { data: eventsData } = await supabase
           .from("events")
           .select("*")
@@ -163,7 +162,6 @@ export default function EventosPage() {
           );
         }
 
-        // B) Fetch External Routes
         const { data: routesData } = await supabase
           .from("external_routes")
           .select("*")
@@ -173,7 +171,6 @@ export default function EventosPage() {
           setExternalRoutes(routesData);
         }
 
-        // C) Fetch completed works gallery WITH LINKEDIN EMBEDS
         const { data: galleryData } = await supabase
           .from("completed_works_gallery")
           .select("*")
@@ -203,7 +200,6 @@ export default function EventosPage() {
     loadSupabaseData();
   }, []);
 
-  // 2. Real-time Countdown timer
   useEffect(() => {
     const interval = setInterval(() => {
       const diff = TARGET_TALK_DATE.getTime() - new Date().getTime();
@@ -222,7 +218,6 @@ export default function EventosPage() {
     return selectedGuardian === "all" || evt.guardian === selectedGuardian;
   });
 
-  // Handle Internal Event Registration Submission
   const handleTalkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!talkForm.nombre || !talkForm.email) return;
@@ -258,7 +253,6 @@ export default function EventosPage() {
     }
   };
 
-  // Handle External Route Interest Submission
   const handleRouteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!routeForm.nombre || !routeForm.email || !selectedRoute) return;
@@ -289,69 +283,96 @@ export default function EventosPage() {
     }
   };
 
-  // Handle Community Member LinkedIn Post Submission
+  // SMART AUTO-REGISTRATION & LINKEDIN POST SUBMISSION
   const handleShareLinkedInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!linkedInForm.email || !linkedInForm.linkedin_url) return;
 
     setIsSubmitting(true);
-    setMemberValidationError(null);
+    setMemberValidationMessage(null);
 
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      // Verify member exists in community_members
-      const { data: member } = await supabase
+      const cleanEmail = linkedInForm.email.toLowerCase().trim();
+
+      // 1. Check if member exists in community_members
+      const { data: existingMember } = await supabase
         .from("community_members")
         .select("*")
-        .eq("email", linkedInForm.email.toLowerCase().trim())
-        .single();
+        .eq("email", cleanEmail)
+        .maybeSingle();
 
-      if (!member) {
-        setMemberValidationError(
-          "❌ Este correo no se encuentra registrado en el Códice de la Tribu. Por favor inscribe tu nombre primero en la sección Unirse."
-        );
-        setIsSubmitting(false);
-        return;
+      let authorFullName = existingMember?.full_name || linkedInForm.nombre.trim();
+
+      // 2. If member does NOT exist, check if name was provided
+      if (!existingMember) {
+        if (!authorFullName) {
+          // Ask for name and highlight field
+          setNeedNamePrompt(true);
+          setMemberValidationMessage(
+            "💡 Tu correo aún no está registrado en la tribu. Por favor escribe tu Nombre Completo abajo para darte de alta y publicar en 1 solo paso."
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Auto-register member into community_members
+        const { data: newMember } = await supabase
+          .from("community_members")
+          .insert([
+            {
+              full_name: authorFullName,
+              email: cleanEmail,
+              role_interest: "Integrante con Publicación",
+            },
+          ])
+          .select()
+          .single();
+
+        if (newMember) {
+          saveUserProfile({ nombre: authorFullName, email: cleanEmail });
+        }
+      } else {
+        saveUserProfile({ nombre: existingMember.full_name, email: cleanEmail });
       }
 
-      // Insert member post into completed_works_gallery
+      // 3. Insert post into completed_works_gallery
       const { error } = await supabase.from("completed_works_gallery").insert([
         {
-          author_email: member.email,
-          author_name: member.full_name,
-          title: linkedInForm.title || `Publicación de ${member.full_name}`,
+          author_email: cleanEmail,
+          author_name: authorFullName,
+          title: linkedInForm.title || `Publicación de ${authorFullName}`,
           event_date: "Reciente 2026",
           guardian_tag: "🪶 Tribu Tequio",
           seal_stamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
           linkedin_post_url: linkedInForm.linkedin_url.trim(),
-          description: linkedInForm.description || `Experiencia compartida en LinkedIn por ${member.full_name}.`,
+          description: linkedInForm.description || `Experiencia compartida por ${authorFullName}.`,
           impact_metrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
         },
       ]);
 
       if (error) {
-        setMemberValidationError(`❌ Error: ${error.message}`);
+        setMemberValidationMessage(`❌ Error: ${error.message}`);
       } else {
         setLinkedInFormSubmitted(true);
-        // Refresh local gallery
         setGalleryWorks((prev) => [
           {
             id: Date.now().toString(),
-            title: linkedInForm.title || `Publicación de ${member.full_name}`,
+            title: linkedInForm.title || `Publicación de ${authorFullName}`,
             date: "Reciente 2026",
             guardianTag: "🪶 Tribu Tequio",
             sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
             linkedinPostUrl: linkedInForm.linkedin_url.trim(),
-            description: linkedInForm.description || `Experiencia compartida por ${member.full_name}.`,
-            authorName: member.full_name,
+            description: linkedInForm.description || `Experiencia compartida por ${authorFullName}.`,
+            authorName: authorFullName,
             impactMetrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
           },
           ...prev,
         ]);
       }
     } catch (err: any) {
-      setMemberValidationError(`❌ Error de verificación: ${err.message}`);
+      setMemberValidationMessage(`❌ Error de proceso: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -378,7 +399,6 @@ export default function EventosPage() {
             &quot;Aquí se registra el llamado a la faena comunitaria y a las Caravanas del Vuelo hacia eventos de la industria tech.&quot;
           </p>
 
-          {/* User Session Welcome Badge if Profile Exists */}
           {getUserProfile() && (
             <div className="pt-2">
               <span className="inline-flex items-center gap-2 font-inter text-xs bg-white/5 border border-ambar/30 text-ambar px-4 py-1.5 rounded-full">
@@ -394,7 +414,6 @@ export default function EventosPage() {
       {/* TARJETA PRINCIPAL ("EL EVENTO EN PUERTA — TEQUIO TALKS #01") */}
       <section className="py-8 px-6">
         <div className="container mx-auto max-w-5xl relative z-10">
-          
           <AnimatePresence mode="wait">
             {hasActiveEvent && (
               <motion.div
@@ -406,7 +425,6 @@ export default function EventosPage() {
                 className="relative p-8 md:p-12 rounded-3xl border-2 border-ambar/50 bg-white/[0.04] backdrop-blur-xl shadow-2xl overflow-visible space-y-8"
                 style={{ boxShadow: "0 20px 60px rgba(245, 166, 35, 0.2)" }}
               >
-                {/* Header Superior */}
                 <div className="flex items-center justify-between">
                   <span className="font-inter text-xs uppercase tracking-widest font-bold text-ambar px-4 py-1 rounded-full bg-ambar/10 border border-ambar/30">
                     {activeTalk.tagHeader}
@@ -419,10 +437,7 @@ export default function EventosPage() {
                   )}
                 </div>
 
-                {/* Dos Columnas Limpias (60% Contenido / 40% Anfitrión & Acción) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  
-                  {/* Columna Izquierda (60% - Contenido) */}
                   <div className="lg:col-span-7 space-y-6">
                     <div>
                       <span className="font-inter text-xs uppercase tracking-wider text-ambar font-bold block mb-2">
@@ -453,21 +468,14 @@ export default function EventosPage() {
                           </a>
                         )}
                       </p>
-                      <p className="flex items-center gap-2">
-                        <span className="text-ambar font-bold">✦</span>
-                        <span><strong>Dinámica:</strong> {activeTalk.dynamic}</span>
-                      </p>
                     </div>
                   </div>
 
-                  {/* Columna Derecha (40% - Anfitrión Tochtli & Acción) */}
                   <div className="lg:col-span-5 flex flex-col items-center text-center space-y-6 relative pt-4 lg:pt-0">
-                    
-                    {/* Tochtli desbordando 25px hacia arriba */}
                     <div className="relative -mt-12 lg:-mt-16 flex flex-col items-center">
                       <Image
                         src={activeTalk.guardianSrc}
-                        alt="Tochtli, el sabio Conejo Lunar"
+                        alt="Tochtli Sabio"
                         width={180}
                         height={220}
                         className="object-contain animate-breathe relative z-10 drop-shadow-2xl"
@@ -475,7 +483,6 @@ export default function EventosPage() {
                       />
                     </div>
 
-                    {/* Reloj Regresivo en Tiempo Real */}
                     <div className="bg-white/5 px-5 py-3 rounded-2xl border border-white/10 w-full">
                       <span className="font-inter text-[10px] uppercase tracking-widest text-arena/70 font-semibold block mb-1">
                         ⏳ Tiempo Restante para el Live
@@ -488,14 +495,13 @@ export default function EventosPage() {
                       </div>
                     </div>
 
-                    {/* Botón de Inscripción */}
                     <div className="w-full space-y-2">
                       <button
                         onClick={() => {
                           setFormSubmitted(alreadyRegistered);
                           setRegistrationModalOpen(true);
                         }}
-                        className="w-full cursor-pointer font-inter font-bold text-base text-blanco-lunar py-4 rounded-2xl shadow-2xl transition-all hover:scale-105 hover:shadow-[0_12px_35px_rgba(229,169,60,0.6)] flex items-center justify-center gap-2"
+                        className="w-full cursor-pointer font-inter font-bold text-base text-blanco-lunar py-4 rounded-2xl shadow-2xl transition-all hover:scale-105 flex items-center justify-center gap-2"
                         style={{
                           background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
                         }}
@@ -508,21 +514,17 @@ export default function EventosPage() {
                         👥 <strong>{activeTalk.registeredCount} / {activeTalk.capacityLimit}</strong> Lugares Reservados
                       </span>
                     </div>
-
                   </div>
-
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-
         </div>
       </section>
 
-      {/* SECCIÓN: RUTAS DEL VUELO (EVENTOS DE COMUNIDADES EXTERNAS) */}
+      {/* RUTAS DEL VUELO */}
       <section className="py-16 px-6 border-t border-white/10 bg-black/20">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
-          
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-2">
               <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
@@ -531,9 +533,6 @@ export default function EventosPage() {
               <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
                 Eventos Externos a los que Iremos en Grupo
               </h2>
-              <p className="font-inter text-arena text-sm opacity-85 max-w-2xl">
-                Nos organizamos como tribu para asistir juntos a conferencias, meetups y hackathons de otras comunidades tech. Suma tu correo para ir en caravana.
-              </p>
             </div>
           </div>
 
@@ -550,7 +549,6 @@ export default function EventosPage() {
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-azul-noche/40 to-transparent" />
                   <span className="absolute top-4 left-4 font-inter text-xs uppercase font-bold px-3.5 py-1 rounded-full bg-azul-noche/90 text-amber-400 border border-amber-400/40">
                     {route.organizer_name}
                   </span>
@@ -558,20 +556,8 @@ export default function EventosPage() {
 
                 <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-3">
-                    <h3 className="font-cinzel text-blanco-lunar text-xl font-bold group-hover:text-amber-300 transition-colors">
-                      {route.title}
-                    </h3>
-                    
-                    <p className="font-inter text-arena text-xs leading-relaxed opacity-90">
-                      {route.description}
-                    </p>
-
-                    <div className="space-y-1 font-inter text-xs text-arena/80 p-4 rounded-2xl bg-white/5 border border-white/10">
-                      <p>📅 <strong>Fecha:</strong> {route.date_display}</p>
-                      <p>⏰ <strong>Horario:</strong> {route.time_display}</p>
-                      <p>📍 <strong>Sede:</strong> {route.location}</p>
-                      <p className="text-amber-400 font-bold pt-1">👥 <strong>{route.interested_count || 0} integrantes</strong> irán en caravana</p>
-                    </div>
+                    <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">{route.title}</h3>
+                    <p className="font-inter text-arena text-xs leading-relaxed opacity-90">{route.description}</p>
                   </div>
 
                   <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
@@ -581,11 +567,10 @@ export default function EventosPage() {
                         setRouteFormSubmitted(false);
                         setRouteModalOpen(true);
                       }}
-                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl hover:bg-amber-400 transition-all flex-1 text-center shadow-lg"
+                      className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-3 rounded-xl hover:bg-amber-400 transition-all flex-1 text-center"
                     >
                       Me sumo a ir en grupo →
                     </button>
-
                     <a
                       href={route.external_link}
                       target="_blank"
@@ -599,14 +584,12 @@ export default function EventosPage() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
-      {/* AGENDA DE FAENAS INTERNAS Y FILTROS */}
+      {/* AGENDA DE FAENAS */}
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-8">
-          
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl font-bold">
               📅 Agenda de Faenas Tequio
@@ -643,24 +626,12 @@ export default function EventosPage() {
                 className="p-6 rounded-2xl bg-white/[0.035] border border-white/10 flex flex-col justify-between hover:border-ambar/50 transition-all duration-300 group"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="font-inter text-xs font-bold text-ambar">
-                      {evt.guardianBadge}
-                    </span>
-                    <span className="font-inter text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                      {evt.statusTag}
-                    </span>
-                  </div>
-
                   <h3 className="font-cinzel text-blanco-lunar text-lg font-bold mb-3 group-hover:text-ambar transition-colors">
                     {evt.title}
                   </h3>
-
                   <div className="space-y-1 font-inter text-xs text-arena/80 mb-4">
                     <p>📅 {evt.date}</p>
-                    <p>⏰ {evt.time}</p>
                     <p>📍 {evt.location}</p>
-                    {evt.speaker && <p className="text-amber-300 pt-1">👤 Ponente: {evt.speaker}</p>}
                   </div>
                 </div>
 
@@ -677,11 +648,10 @@ export default function EventosPage() {
               </motion.div>
             ))}
           </div>
-
         </div>
       </section>
 
-      {/* MEMORIA COLECTIVA CON BOTÓN DE COMPARTIR POST DE LINKEDIN Y SKELETON LOADER */}
+      {/* MEMORIA COLECTIVA CON BOTÓN DE COMPARTIR POST DE LINKEDIN Y AUTO-REGISTRO */}
       <section className="py-20 px-6 border-t border-white/10 bg-black/20">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-12">
           
@@ -694,16 +664,16 @@ export default function EventosPage() {
                 Obras Colectivas & Publicaciones de la Tribu
               </h2>
               <p className="font-inter text-arena text-sm opacity-85">
-                &quot;Los miembros registrados en el Códice de la Tribu pueden inmortalizar su testimonio en la galería compartiendo el enlace de su post de LinkedIn.&quot;
+                &quot;Comparte tu post de LinkedIn para inmortalizar tu huella en la galería. Si aún no estás en el Códice de la Tribu, tu publicación te dará de alta de forma automática.&quot;
               </p>
             </div>
 
-            {/* BOTÓN PARA COMPARTIR MI POST DE LINKEDIN */}
             <div>
               <button
                 onClick={() => {
                   setLinkedInFormSubmitted(false);
-                  setMemberValidationError(null);
+                  setNeedNamePrompt(false);
+                  setMemberValidationMessage(null);
                   setShareLinkedInModalOpen(true);
                 }}
                 className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3.5 rounded-2xl shadow-xl hover:bg-amber-400 transition-all hover:scale-105 flex items-center gap-2"
@@ -772,11 +742,6 @@ export default function EventosPage() {
                       <input type="email" required value={talkForm.email} onChange={(e) => setTalkForm({ ...talkForm, email: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
                     </div>
 
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">Pregunta para el ponente (Opcional)</label>
-                      <textarea rows={2} value={talkForm.pregunta} onChange={(e) => setTalkForm({ ...talkForm, pregunta: e.target.value })} className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl" />
-                    </div>
-
                     <div className="flex justify-between items-center pt-3 border-t border-white/10">
                       <button type="button" onClick={() => setRegistrationModalOpen(false)} className="font-inter text-xs text-arena/70">Cancelar</button>
                       <button type="submit" disabled={isSubmitting} className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl">{isSubmitting ? "Guardando..." : "Reservar mi lugar →"}</button>
@@ -834,7 +799,7 @@ export default function EventosPage() {
         )}
       </AnimatePresence>
 
-      {/* MODAL 3: COMPARTIR POST DE LINKEDIN PARA MIEMBROS DE LA COMUNIDAD */}
+      {/* MODAL 3: COMPARTIR POST DE LINKEDIN CON AUTO-REGISTRO Y PROMPT DE NOMBRE */}
       <AnimatePresence>
         {shareLinkedInModalOpen && (
           <div
@@ -857,22 +822,34 @@ export default function EventosPage() {
                     <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
                       Compartir mi Post de LinkedIn
                     </h3>
-                    <p className="font-inter text-arena text-xs opacity-80">
-                      Debes estar registrado previamente en el Códice de la Tribu con tu correo electrónico.
-                    </p>
                   </div>
 
                   <form onSubmit={handleShareLinkedInSubmit} className="space-y-4">
                     <div>
                       <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
-                        Tu Correo Registrado en la Comunidad *
+                        Tu Correo Electrónico *
                       </label>
                       <input
                         type="email"
                         required
                         value={linkedInForm.email}
                         onChange={(e) => setLinkedInForm({ ...linkedInForm, email: e.target.value })}
-                        placeholder="tu-correo-registrado@ejemplo.com"
+                        placeholder="tu-correo@ejemplo.com"
+                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    {/* CAMPO DE NOMBRE COMPLETO (REQUERIDO/REVELADO SI EL CORREO NO EXISTE) */}
+                    <div className={needNamePrompt ? "p-3 rounded-2xl bg-amber-500/10 border-2 border-amber-400" : ""}>
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
+                        Nombre Completo {needNamePrompt ? "* (Necesario para inscribirte en la tribu)" : "(Opcional)"}
+                      </label>
+                      <input
+                        type="text"
+                        required={needNamePrompt}
+                        value={linkedInForm.nombre}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, nombre: e.target.value })}
+                        placeholder="Ej. Sofía Morales / Carlos Mendoza"
                         className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
                       />
                     </div>
@@ -893,11 +870,10 @@ export default function EventosPage() {
 
                     <div>
                       <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Título o Frase del Post *
+                        Título o Frase del Post
                       </label>
                       <input
                         type="text"
-                        required
                         value={linkedInForm.title}
                         onChange={(e) => setLinkedInForm({ ...linkedInForm, title: e.target.value })}
                         placeholder="Ej. Mi testimonio en la Caravana del Vuelo Tequio"
@@ -905,22 +881,9 @@ export default function EventosPage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                        Breve Reseña / Resumen (Opcional)
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={linkedInForm.description}
-                        onChange={(e) => setLinkedInForm({ ...linkedInForm, description: e.target.value })}
-                        placeholder="Cuéntanos un poco sobre tu experiencia..."
-                        className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    {memberValidationError && (
-                      <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-inter text-red-300 font-bold">
-                        {memberValidationError}
+                    {memberValidationMessage && (
+                      <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-400 text-xs font-inter text-amber-200 font-semibold">
+                        {memberValidationMessage}
                       </div>
                     )}
 
@@ -938,7 +901,7 @@ export default function EventosPage() {
                         disabled={isSubmitting}
                         className="font-inter font-bold text-sm bg-amber-500 text-azul-noche px-6 py-3 rounded-xl shadow-lg hover:bg-amber-400 transition-all"
                       >
-                        {isSubmitting ? "Verificando en la tribu..." : "Publicar mi Post →"}
+                        {isSubmitting ? "Publicando..." : needNamePrompt ? "Inscribirme y Publicar Post →" : "Publicar mi Post →"}
                       </button>
                     </div>
                   </form>
@@ -952,7 +915,7 @@ export default function EventosPage() {
                     ¡Tu publicación está en la Memoria Colectiva!
                   </h3>
                   <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
-                    Hemos validado tu membresía en la tribu y grabado tu post de LinkedIn con el sello ceremonial oficial.
+                    Hemos registrado tu membresía en la tribu y grabado tu post de LinkedIn en la galería viva.
                   </p>
                   <button
                     onClick={() => setShareLinkedInModalOpen(false)}
