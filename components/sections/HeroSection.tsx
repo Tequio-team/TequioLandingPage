@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import StarField from "@/components/ui/StarField";
+import BrasaParticles from "@/components/ui/BrasaParticles";
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,7 +36,10 @@ export default function HeroSection() {
         <rect width="100%" height="100%" filter="url(#heroAmateNoise)" />
       </svg>
 
-      {/* Manto de Polvo de Estrellas Dorado */}
+      {/* Partículas de Brasa con Opacidad Reducida en Mobile */}
+      <BrasaParticles count={28} className="z-10 opacity-30 md:opacity-60" />
+
+      {/* Manto de Polvo de Estrellas Dorado con Opacidad Suave */}
       <StarField count={36} isMitlaShape={true} className="z-10 opacity-40 md:opacity-80" />
 
       {/* Main Content Container */}

@@ -50,7 +50,7 @@ export default function GuardiansSection() {
   return (
     <section
       id="guardianes"
-      className="relative py-32 overflow-hidden bg-azul-noche"
+      className="relative py-28 md:py-36 overflow-hidden bg-azul-noche"
       style={{
         background: "linear-gradient(to bottom, #0F172A 0%, #181524 50%, #0F172A 100%)",
       }}
@@ -66,7 +66,7 @@ export default function GuardiansSection() {
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-24 max-w-3xl mx-auto">
+        <div className="text-center mb-20 md:mb-24 max-w-3xl mx-auto">
           <span className="font-inter text-ambar text-xs md:text-sm uppercase tracking-[0.25em] font-semibold mb-2 block">
             Nuestros Alebrijes
           </span>
@@ -78,8 +78,8 @@ export default function GuardiansSection() {
           </p>
         </div>
 
-        {/* 3 Columnas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pt-10">
+        {/* 3 Columnas con espaciado superior adecuado */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 pt-8">
           {GUARDIANS.map((g, i) => (
             <GuardianCard
               key={g.id}
@@ -110,8 +110,8 @@ export default function GuardiansSection() {
               <Image
                 src={openGuardian.src}
                 alt={openGuardian.name}
-                width={150}
-                height={180}
+                width={140}
+                height={160}
                 className="object-contain"
               />
             </div>
@@ -163,58 +163,58 @@ function GuardianCard({
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
       onClick={onClick}
-      className={`cursor-pointer relative pt-16 pb-8 px-6 flex flex-col justify-between transition-all duration-300 ${
+      className={`cursor-pointer relative mt-8 pt-12 pb-8 px-6 flex flex-col justify-between transition-all duration-300 rounded-3xl ${
         isDimmed ? "opacity-75 scale-98" : "opacity-100 scale-100"
       }`}
       style={{
         background: "rgba(255, 255, 255, 0.035)",
-        borderRadius: "24px",
         border: `1px solid ${isHovered ? guardian.color : "rgba(217, 203, 184, 0.12)"}`,
         boxShadow: isHovered
-          ? `0 15px 40px ${guardian.color}35, inset 0 0 20px ${guardian.color}15`
+          ? `0 15px 35px ${guardian.color}30, inset 0 0 15px ${guardian.color}15`
           : "0 6px 25px rgba(11, 16, 32, 0.5)",
       }}
     >
-      {/* Aura Ceremonial */}
+      {/* Aura Ceremonial Contenida */}
       <div
-        className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none transition-opacity duration-300"
+        className="absolute -top-10 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full pointer-events-none transition-opacity duration-300"
         style={{
           background: guardian.auraBg,
-          opacity: isHovered ? 1 : 0.6,
+          opacity: isHovered ? 0.9 : 0.5,
         }}
       />
 
-      {/* PNG 3D Ilustración con Oscilación Suave */}
+      {/* PNG 3D Ilustración con Altura y Posición Contenida (Sin Salirse Excesivamente) */}
       <motion.div
-        className="absolute -top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
+        className="absolute -top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
         animate={
           isHovered
-            ? { y: -8, scale: 1.08 }
-            : { y: [0, -3, 0], rotate: index === 0 ? [0, 0.4, 0] : index === 1 ? [0, -0.4, 0] : [0, 0.5, 0] }
+            ? { y: -4, scale: 1.04 }
+            : { y: [0, -3, 0], rotate: index === 0 ? [0, 0.3, 0] : index === 1 ? [0, -0.3, 0] : [0, 0.3, 0] }
         }
         transition={
           isHovered
-            ? { duration: 0.3, ease: "easeOut" }
-            : { duration: 6 + index, repeat: Infinity, ease: "easeInOut" }
+            ? { duration: 0.25, ease: "easeOut" }
+            : { duration: 5 + index, repeat: Infinity, ease: "easeInOut" }
         }
       >
-        <Image
-          src={guardian.src}
-          alt={guardian.name}
-          width={130}
-          height={155}
-          className={`object-contain ${guardian.id === "kuku" ? "scale-125" : ""}`}
-          priority
-        />
+        <div className="relative w-28 h-28 flex items-center justify-center">
+          <Image
+            src={guardian.src}
+            alt={guardian.name}
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
         <div
-          className="w-20 h-3 rounded-full blur-md opacity-30 bg-black -mt-2 transition-opacity duration-300"
-          style={{ opacity: isHovered ? 0.45 : 0.25 }}
+          className="w-16 h-2.5 rounded-full blur-sm opacity-30 bg-black -mt-1 transition-opacity duration-300"
+          style={{ opacity: isHovered ? 0.4 : 0.2 }}
         />
       </motion.div>
 
       {/* Header Info */}
-      <div className="flex flex-col items-center text-center mb-6 pt-6">
-        <h3 className="font-cinzel text-blanco-lunar text-3xl font-bold tracking-wide mb-1">
+      <div className="flex flex-col items-center text-center mb-5 pt-8">
+        <h3 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl font-bold tracking-wide mb-1">
           {guardian.name}
         </h3>
         <p
@@ -226,7 +226,7 @@ function GuardianCard({
       </div>
 
       {/* Description */}
-      <p className="font-inter text-arena text-sm leading-[1.8] text-center mb-6 opacity-85">
+      <p className="font-inter text-arena text-xs sm:text-sm leading-[1.7] text-center mb-6 opacity-85">
         {guardian.description}
       </p>
 
@@ -235,7 +235,7 @@ function GuardianCard({
         {guardian.traits.slice(0, 4).map((t) => (
           <span
             key={t}
-            className="font-inter text-[11px] px-2.5 py-1 rounded-full"
+            className="font-inter text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full"
             style={{
               background: `${guardian.color}15`,
               color: guardian.color,
@@ -253,10 +253,11 @@ function GuardianCard({
           className="font-inter text-xs font-bold inline-flex items-center gap-1 transition-transform group-hover:translate-x-1"
           style={{ color: guardian.color }}
         >
-          <span>Conocermito de origen</span>
+          <span>Conocer mito de origen</span>
           <span>→</span>
         </span>
       </div>
     </div>
   );
 }
+

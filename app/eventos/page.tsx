@@ -45,12 +45,15 @@ export default function EventosPage() {
   const [hasActiveEvent, setHasActiveEvent] = useState(true);
   const [selectedGuardian, setSelectedGuardian] = useState<string>("all");
   const [galleryFilter, setGalleryFilter] = useState<string>("all");
-  const [galleryVisibleLimit, setGalleryVisibleLimit] = useState<number>(4); // ONLY 4 INITIALLY
+  const [gallerySearch, setGallerySearch] = useState<string>("");
+  const [galleryVisibleLimit, setGalleryVisibleLimit] = useState<number>(6);
+  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(true);
 
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
   const [routeModalOpen, setRouteModalOpen] = useState(false);
   const [shareLinkedInModalOpen, setShareLinkedInModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
+  const [selectedPinModal, setSelectedPinModal] = useState<any | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -65,6 +68,7 @@ export default function EventosPage() {
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [externalRoutes, setExternalRoutes] = useState<any[]>([]);
   const [galleryWorks, setGalleryWorks] = useState<any[]>([]);
+
 
   const [talkForm, setTalkForm] = useState({
     nombre: "",
@@ -177,7 +181,7 @@ export default function EventosPage() {
           setExternalRoutes(routesData);
         }
 
-        // FETCH MOST RECENT GALLERY POSTS FIRST
+        // FETCH MOST RECENT GALLERY POSTS DIRECTLY FROM SUPABASE TABLE
         const { data: galleryData } = await supabase
           .from("completed_works_gallery")
           .select("*")
@@ -188,20 +192,25 @@ export default function EventosPage() {
             galleryData.map((g, idx) => ({
               id: g.id,
               title: g.title,
-              date: g.event_date,
-              guardianTag: g.guardian_tag,
+              date: g.event_date || "Agosto 2026",
+              guardianTag: g.guardian_tag || "🦝 Tlacu · Comunidad",
               sealStamp: g.seal_stamp || "✦ SELLO DE MAYORDOMÍA ✦",
               linkedinPostUrl: g.linkedin_post_url,
               imgSrc: g.image_url || "/jpg/moment1.jpg",
               description: g.description,
               authorName: g.author_name,
               impactMetrics: Array.isArray(g.impact_metrics) ? g.impact_metrics : [],
+              tags: ["#ComunidadTequio", "#FaenaTech"],
               sizeVariant: SIZE_VARIANTS[idx % SIZE_VARIANTS.length], // Dynamic size variations
             }))
           );
+        } else {
+          setGalleryWorks([]);
         }
       } catch (err) {
         console.warn("Error consultando Supabase:", err);
+      } finally {
+        setIsLoadingGallery(false);
       }
     }
 
@@ -226,17 +235,30 @@ export default function EventosPage() {
     return selectedGuardian === "all" || evt.guardian === selectedGuardian;
   });
 
-  // Filter gallery works by selected category
+  // Filter gallery works by selected category and search query
   const filteredGalleryWorks = galleryWorks.filter((item) => {
-    if (galleryFilter === "all") return true;
-    if (galleryFilter === "tlacu") return item.guardianTag?.toLowerCase().includes("tlacu") || item.guardianTag?.toLowerCase().includes("forja");
-    if (galleryFilter === "tochtli") return item.guardianTag?.toLowerCase().includes("tochtli") || item.guardianTag?.toLowerCase().includes("mentor");
-    if (galleryFilter === "kuku") return item.guardianTag?.toLowerCase().includes("kuku") || item.guardianTag?.toLowerCase().includes("caravana");
-    if (galleryFilter === "tribu") return item.authorName || item.guardianTag?.toLowerCase().includes("tribu");
+    let matchesCat = true;
+    if (galleryFilter === "tlacu") matchesCat = item.guardianTag?.toLowerCase().includes("tlacu") || item.guardianTag?.toLowerCase().includes("forja");
+    else if (galleryFilter === "tochtli") matchesCat = item.guardianTag?.toLowerCase().includes("tochtli") || item.guardianTag?.toLowerCase().includes("mentor");
+    else if (galleryFilter === "kuku") matchesCat = item.guardianTag?.toLowerCase().includes("kuku") || item.guardianTag?.toLowerCase().includes("caravana");
+    else if (galleryFilter === "tribu") matchesCat = !!item.authorName || item.guardianTag?.toLowerCase().includes("tribu");
+
+    if (!matchesCat) return false;
+
+    if (gallerySearch.trim()) {
+      const q = gallerySearch.toLowerCase().trim();
+      const matchTitle = item.title?.toLowerCase().includes(q);
+      const matchAuthor = item.authorName?.toLowerCase().includes(q);
+      const matchDesc = item.description?.toLowerCase().includes(q);
+      const matchTag = item.tags?.some((t: string) => t.toLowerCase().includes(q));
+      const matchGuardian = item.guardianTag?.toLowerCase().includes(q);
+      return matchTitle || matchAuthor || matchDesc || matchTag || matchGuardian;
+    }
+
     return true;
   });
 
-  // Limit display to 4 items initially
+  // Limit display to visible limit
   const visibleGalleryWorks = filteredGalleryWorks.slice(0, galleryVisibleLimit);
   const remainingGalleryCount = filteredGalleryWorks.length - galleryVisibleLimit;
 
@@ -410,7 +432,7 @@ export default function EventosPage() {
       {/* Header Banner */}
       <section className="relative pt-36 pb-16 px-6 text-center overflow-hidden">
         <StarField count={30} isMitlaShape={true} />
-        <BrasaParticles count={35} className="opacity-60" />
+        <BrasaParticles count={35} className="opacity-70" />
 
         <div className="container mx-auto max-w-4xl relative z-10 space-y-4">
           <span className="font-inter text-ambar text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
@@ -729,26 +751,31 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* MEMORIA COLECTIVA CON FILTROS, MASONRY DIVERSO, INICIAL 4 POSTS Y BOTÓN VER MÁS */}
-      <section className="py-20 px-6 border-t border-white/10 bg-black/20">
-        <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
+      {/* MEMORIA COLECTIVA VIVA — PINTEREST MASONRY BOARD */}
+      <section id="colectiva-viva" className="py-20 px-6 border-t border-white/10 bg-black/20 relative">
+        {/* Subtle Mitla background glow */}
+        <div className="absolute inset-0 bg-radial-at-c from-amber-500/5 via-transparent to-transparent pointer-events-none" />
+
+        <div className="container mx-auto max-w-7xl relative z-10 space-y-10">
           
-          {/* HEADER & FILTROS CATEGORÍA DE GALERÍA */}
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          {/* HEADER & FILTROS ESTILO PINTEREST */}
+          <div className="space-y-8">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
               <div className="space-y-2 max-w-2xl">
-                <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block">
-                  🖼️ MEMORIA COLECTIVA VIVA (LinkedIn Embeds)
+                <span className="font-inter text-amber-400 text-xs uppercase tracking-[0.25em] font-bold block flex items-center gap-1.5">
+                  <span>📌</span>
+                  <span>MURO COLECTIVO · HISTORIAS & PINES DE LA TRIBU</span>
                 </span>
-                <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
-                  Obras Colectivas & Publicaciones de la Tribu
+                <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-5xl font-bold">
+                  Memoria Colectiva Viva
                 </h2>
-                <p className="font-inter text-arena text-sm opacity-85">
-                  &quot;Se muestran las 4 publicaciones más recientes. Inmortaliza tu testimonio en la galería compartiendo el enlace de tu post.&quot;
+                <p className="font-inter text-arena text-sm md:text-base opacity-85 leading-relaxed">
+                  &quot;Cada piedra cuenta en la obra. Explora hackathons, testimonios de mentoría y publicaciones compartidas por los integrantes de la tribu.&quot;
                 </p>
               </div>
 
-              <div>
+              {/* ACTION BUTTON */}
+              <div className="flex-shrink-0">
                 <button
                   onClick={() => {
                     setLinkedInFormSubmitted(false);
@@ -756,68 +783,147 @@ export default function EventosPage() {
                     setMemberValidationMessage(null);
                     setShareLinkedInModalOpen(true);
                   }}
-                  className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-6 py-3.5 rounded-2xl shadow-xl hover:bg-amber-400 transition-all hover:scale-105 flex items-center gap-2"
+                  className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-terracota text-blanco-lunar px-6 py-3.5 rounded-2xl shadow-2xl hover:scale-105 transition-all flex items-center gap-2 border border-amber-300/30"
                 >
-                  <span>✍️ Compartir mi Post de LinkedIn</span>
+                  <span>✍️ Publicar Pin de LinkedIn</span>
                   <span>→</span>
                 </button>
               </div>
             </div>
 
-            {/* CHIPS DE FILTRADO PARA MEMORIA COLECTIVA */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
-              {[
-                { id: "all", label: "✦ Todas las Obras" },
-                { id: "tlacu", label: "🦝 Forja & Hackathons" },
-                { id: "tochtli", label: "🐰 Mentoría & Talks" },
-                { id: "kuku", label: "🪶 Caravanas del Vuelo" },
-                { id: "tribu", label: "👥 Post de Integrantes" },
-              ].map((chip) => (
-                <button
-                  key={chip.id}
-                  onClick={() => {
-                    setGalleryFilter(chip.id);
-                    setGalleryVisibleLimit(4); // Reset to 4 on filter change
-                  }}
-                  className={`cursor-pointer font-inter text-xs font-bold px-4 py-2 rounded-full transition-all ${
-                    galleryFilter === chip.id
-                      ? "bg-amber-500 text-azul-noche scale-105 shadow-[0_0_15px_#F5A623]"
-                      : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
+            {/* PINTEREST SEARCH & TOPIC BAR */}
+            <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              
+              {/* SEARCH INPUT */}
+              <div className="relative w-full md:w-80">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-arena/60 text-xs">
+                  🔍
+                </span>
+                <input
+                  type="text"
+                  value={gallerySearch}
+                  onChange={(e) => setGallerySearch(e.target.value)}
+                  placeholder="Buscar autor, tema o #tag..."
+                  className="w-full font-inter text-xs bg-white/5 border border-white/10 focus:border-amber-400 text-blanco-lunar pl-9 pr-8 py-2.5 rounded-xl focus:outline-none placeholder:text-arena/50"
+                />
+                {gallerySearch && (
+                  <button
+                    onClick={() => setGallerySearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-arena/60 hover:text-blanco-lunar text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* CATEGORY CHIPS */}
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                {[
+                  { id: "all", label: "✦ Todos los Pines" },
+                  { id: "tlacu", label: "🦝 Forja & Hackathons" },
+                  { id: "tochtli", label: "🐰 Mentoría & Talks" },
+                  { id: "kuku", label: "🪶 Caravanas del Vuelo" },
+                  { id: "tribu", label: "👥 Testimonios de la Tribu" },
+                ].map((chip) => (
+                  <button
+                    key={chip.id}
+                    onClick={() => {
+                      setGalleryFilter(chip.id);
+                      setGalleryVisibleLimit(6);
+                    }}
+                    className={`cursor-pointer font-inter text-xs font-bold px-4 py-2 rounded-full transition-all ${
+                      galleryFilter === chip.id
+                        ? "bg-amber-500 text-azul-noche scale-105 shadow-[0_0_15px_#F5A623]"
+                        : "bg-white/5 text-arena/80 hover:bg-white/10 hover:text-blanco-lunar border border-white/10"
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
             </div>
           </div>
 
-          {/* GALERÍA MASONRY DE 4 POSTS INICIALES CON TAMAÑOS VARIABLES & APARICIÓN SUAVE */}
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            {visibleGalleryWorks.map((item, idx) => (
-              <LinkedInEmbedCard
-                key={item.id}
-                id={item.id}
-                index={idx}
-                sizeVariant={item.sizeVariant || SIZE_VARIANTS[idx % SIZE_VARIANTS.length]}
-                title={item.title}
-                date={item.date}
-                guardianTag={item.guardianTag}
-                sealStamp={item.sealStamp}
-                linkedinPostUrl={item.linkedinPostUrl}
-                imgSrc={item.imgSrc}
-                description={item.description}
-                impactMetrics={item.impactMetrics}
-                authorName={item.authorName}
-              />
-            ))}
-          </div>
+          {/* GALERÍA MASONRY ESTILO PINTEREST (COLUMNAS ORGÁNICAS 2 EN MÓVIL / 3-4 EN DESKTOP) */}
+          {isLoadingGallery ? (
+            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3.5 sm:gap-6 space-y-3.5 sm:space-y-6">
+              {[1, 2, 3, 4, 5, 6].map((sk) => (
+                <div
+                  key={sk}
+                  className="break-inside-avoid mb-3.5 sm:mb-6 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.03] border border-white/10 p-3 sm:p-5 space-y-3 animate-pulse"
+                >
+                  <div className={`w-full bg-white/10 rounded-xl ${sk % 2 === 0 ? "h-36 sm:h-64" : "h-28 sm:h-48"}`} />
+                  <div className="h-4 bg-white/10 rounded w-3/4" />
+                  <div className="h-3 bg-white/5 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : visibleGalleryWorks.length > 0 ? (
+            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3.5 sm:gap-6 space-y-3.5 sm:space-y-6">
+              {visibleGalleryWorks.map((item, idx) => (
+                <LinkedInEmbedCard
+                  key={item.id}
+                  id={item.id}
+                  index={idx}
+                  sizeVariant={item.sizeVariant || SIZE_VARIANTS[idx % SIZE_VARIANTS.length]}
+                  title={item.title}
+                  date={item.date}
+                  guardianTag={item.guardianTag}
+                  sealStamp={item.sealStamp}
+                  linkedinPostUrl={item.linkedinPostUrl}
+                  imgSrc={item.imgSrc}
+                  description={item.description}
+                  impactMetrics={item.impactMetrics}
+                  authorName={item.authorName}
+                  tags={item.tags}
+                  onOpenDetail={(pin) => setSelectedPinModal(pin)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 space-y-4 p-8 rounded-3xl bg-white/[0.02] border border-white/10 max-w-lg mx-auto">
+              <span className="text-3xl block">🔍</span>
+              <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
+                {gallerySearch ? "No encontramos pines con esa búsqueda" : "Aún no hay publicaciones en la galería"}
+              </h3>
+              <p className="font-inter text-arena/80 text-xs">
+                {gallerySearch
+                  ? "Prueba con otro término o sé el primero en compartir una nueva publicación."
+                  : "¡Sé el primer integrante en compartir un post de LinkedIn con la comunidad!"}
+              </p>
+              {gallerySearch ? (
+                <button
+                  onClick={() => {
+                    setGallerySearch("");
+                    setGalleryFilter("all");
+                  }}
+                  className="font-inter font-bold text-xs bg-white/10 text-amber-300 px-4 py-2 rounded-xl hover:bg-white/20"
+                >
+                  Limpiar filtros
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setLinkedInFormSubmitted(false);
+                    setNeedNamePrompt(false);
+                    setMemberValidationMessage(null);
+                    setShareLinkedInModalOpen(true);
+                  }}
+                  className="font-inter font-bold text-xs bg-amber-500 text-azul-noche px-5 py-2.5 rounded-xl hover:bg-amber-400"
+                >
+                  ✍️ Publicar Primer Pin
+                </button>
+              )}
+            </div>
+          )}
 
-          {/* BOTÓN DE "VER MÁS OBRAS" SI EXISTEN MÁS POSTS */}
+          {/* BOTÓN DE "VER MÁS PINES" */}
           {remainingGalleryCount > 0 && (
             <div className="text-center pt-6">
               <button
-                onClick={() => setGalleryVisibleLimit((prev) => prev + 4)}
-                className="cursor-pointer font-inter font-bold text-xs bg-white/10 text-blanco-lunar border border-amber-500/40 px-8 py-3.5 rounded-2xl hover:bg-amber-500 hover:text-azul-noche hover:border-amber-400 transition-all duration-300 shadow-xl inline-flex items-center gap-2"
+                onClick={() => setGalleryVisibleLimit((prev) => prev + 6)}
+                className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-white/10 text-blanco-lunar border border-amber-500/40 px-8 py-3.5 rounded-2xl hover:bg-amber-500 hover:text-azul-noche hover:border-amber-400 transition-all duration-300 shadow-xl inline-flex items-center gap-2"
               >
                 <span>📜 Cargar Más Obras de la Tribu (+{remainingGalleryCount} más)</span>
                 <span>↓</span>
@@ -827,6 +933,145 @@ export default function EventosPage() {
 
         </div>
       </section>
+
+      {/* MODAL LIGHTBOX ESTILO PINTEREST (DETALLE COMPLETO DEL PIN) */}
+      <AnimatePresence>
+        {selectedPinModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-lg overflow-y-auto"
+            onClick={() => setSelectedPinModal(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="p-0 rounded-3xl bg-azul-noche border-2 border-amber-500/40 max-w-4xl w-full shadow-2xl overflow-hidden relative grid grid-cols-1 md:grid-cols-12 max-h-[90vh]"
+            >
+              {/* BOTÓN CERRAR */}
+              <button
+                onClick={() => setSelectedPinModal(null)}
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/70 hover:bg-white/20 text-blanco-lunar flex items-center justify-center text-sm font-bold border border-white/20 transition-all"
+              >
+                ✕
+              </button>
+
+              {/* COLUMNA IZQUIERDA: IMAGEN / MEDIA HEADER */}
+              <div className="md:col-span-6 bg-black/70 relative min-h-[280px] md:min-h-[480px] flex items-center justify-center overflow-hidden">
+                <Image
+                  src={selectedPinModal.imgSrc || "/jpg/moment1.jpg"}
+                  alt={selectedPinModal.title}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-transparent to-transparent md:hidden" />
+              </div>
+
+              {/* COLUMNA DERECHA: METADATOS, HISTORIA & ACCIONES PINTEREST */}
+              <div className="md:col-span-6 p-6 sm:p-8 flex flex-col justify-between space-y-6 overflow-y-auto max-h-[480px] md:max-h-none">
+                <div className="space-y-4">
+                  
+                  {/* CATEGORY & SEAL */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <span className="font-inter text-[11px] font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                      {selectedPinModal.guardianTag || "✦ Tequio"}
+                    </span>
+                    <span className="font-inter text-[10px] text-arena/60">
+                      📅 {selectedPinModal.date}
+                    </span>
+                  </div>
+
+                  {/* AUTHOR PROFILE */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-terracota via-amber-500 to-amber-300 text-azul-noche font-inter font-black text-sm flex items-center justify-center shadow-lg flex-shrink-0">
+                      {(selectedPinModal.authorName || "Tequio")
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((w: string) => w[0])
+                        .join("")
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-inter text-sm font-bold text-blanco-lunar">
+                        {selectedPinModal.authorName || "Integrante de Tequio"}
+                      </h4>
+                      <span className="font-inter text-[10px] text-amber-400 font-semibold block">
+                        Miembro Verificado de la Tribu ✓
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* TITLE */}
+                  <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold leading-tight">
+                    {selectedPinModal.title}
+                  </h3>
+
+                  {/* DESCRIPTION */}
+                  <p className="font-inter text-arena text-xs sm:text-sm leading-relaxed opacity-90">
+                    {selectedPinModal.description}
+                  </p>
+
+                  {/* TAGS */}
+                  {selectedPinModal.tags && selectedPinModal.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {selectedPinModal.tags.map((t: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="font-inter text-[11px] text-amber-300/90 font-medium px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* IMPACT METRICS BOX */}
+                  {selectedPinModal.impactMetrics && selectedPinModal.impactMetrics.length > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1">
+                      <span className="font-inter text-[10px] uppercase font-bold text-amber-400 block tracking-wider">
+                        📊 Impacto & Logros:
+                      </span>
+                      {selectedPinModal.impactMetrics.map((m: string, idx: number) => (
+                        <p key={idx} className="font-inter text-xs text-amber-200 font-medium">
+                          {m}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ACTION BUTTONS (PINTEREST STYLE) */}
+                <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3">
+                  {selectedPinModal.linkedinPostUrl && (
+                    <a
+                      href={selectedPinModal.linkedinPostUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer font-inter font-bold text-xs sm:text-sm bg-amber-500 hover:bg-amber-400 text-azul-noche px-6 py-3.5 rounded-2xl shadow-xl transition-all hover:scale-105 w-full sm:flex-1 text-center flex items-center justify-center gap-2"
+                    >
+                      <span>Abrir Post en LinkedIn</span>
+                      <span>↗</span>
+                    </a>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      if (selectedPinModal.linkedinPostUrl) {
+                        navigator.clipboard?.writeText(selectedPinModal.linkedinPostUrl);
+                        alert("¡Enlace copiado al portapapeles! 📋");
+                      }
+                    }}
+                    className="cursor-pointer font-inter font-bold text-xs bg-white/10 hover:bg-white/20 text-blanco-lunar border border-white/20 px-4 py-3.5 rounded-2xl transition-all w-full sm:w-auto text-center"
+                  >
+                    🔗 Copiar Enlace
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO */}
       <AnimatePresence>

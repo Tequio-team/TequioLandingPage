@@ -86,7 +86,7 @@ export default function CommitmentSection() {
         `,
       }}
     >
-      <BrasaParticles count={45} className="z-0 opacity-40 md:opacity-80" />
+      <BrasaParticles count={45} className="z-0 opacity-70 md:opacity-80" />
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         

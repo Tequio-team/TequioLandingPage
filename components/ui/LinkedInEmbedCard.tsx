@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export type CardSizeVariant = "tall" | "compact" | "medium" | "standard";
 
-interface LinkedInEmbedCardProps {
+export interface LinkedInEmbedCardProps {
   id: string;
   index?: number;
   sizeVariant?: CardSizeVariant;
@@ -18,6 +18,8 @@ interface LinkedInEmbedCardProps {
   description?: string;
   impactMetrics?: string[];
   authorName?: string;
+  tags?: string[];
+  onOpenDetail?: (item: any) => void;
 }
 
 export function formatLinkedInEmbedUrl(url?: string): string | null {
@@ -51,6 +53,7 @@ export function formatLinkedInEmbedUrl(url?: string): string | null {
 }
 
 export default function LinkedInEmbedCard({
+  id,
   index = 0,
   sizeVariant = "standard",
   title,
@@ -62,19 +65,59 @@ export default function LinkedInEmbedCard({
   description,
   impactMetrics = [],
   authorName,
+  tags = [],
+  onOpenDetail,
 }: LinkedInEmbedCardProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
   const embedUrl = formatLinkedInEmbedUrl(linkedinPostUrl);
 
-  // Dynamic IFrame height mapping according to sizeVariant requested by user
-  const heightMap: Record<CardSizeVariant, { iframeH: string; pxVal: number }> = {
-    tall: { iframeH: "h-[420px]", pxVal: 420 },
-    medium: { iframeH: "h-[350px]", pxVal: 350 },
-    standard: { iframeH: "h-[300px]", pxVal: 300 },
-    compact: { iframeH: "h-[250px]", pxVal: 250 },
+  // Responsive Height mapping for 2-column mobile Pinterest and desktop
+  const heightMap: Record<CardSizeVariant, { mediaH: string; pxVal: number }> = {
+    tall: { mediaH: "h-[220px] sm:h-[380px]", pxVal: 380 },
+    medium: { mediaH: "h-[180px] sm:h-[310px]", pxVal: 310 },
+    standard: { mediaH: "h-[150px] sm:h-[260px]", pxVal: 260 },
+    compact: { mediaH: "h-[120px] sm:h-[210px]", pxVal: 210 },
   };
 
   const currentSize = heightMap[sizeVariant] || heightMap.standard;
+
+  // Derive initials for avatar
+  const initials = (authorName || "Tequio Tribu")
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (linkedinPostUrl) {
+      navigator.clipboard?.writeText(linkedinPostUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (onOpenDetail) {
+      onOpenDetail({
+        id,
+        title,
+        date,
+        guardianTag,
+        sealStamp,
+        linkedinPostUrl,
+        imgSrc,
+        description,
+        impactMetrics,
+        authorName,
+        tags,
+        sizeVariant,
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -82,44 +125,38 @@ export default function LinkedInEmbedCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{
-        duration: 0.7,
-        delay: (index % 4) * 0.14,
-        ease: [0.22, 1, 0.36, 1], // Soft natural rise easing
+        duration: 0.6,
+        delay: (index % 4) * 0.1,
+        ease: [0.22, 1, 0.36, 1],
       }}
       whileHover={{
         y: -6,
-        opacity: 1,
         transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
       }}
-      className="break-inside-avoid mb-6 rounded-2xl overflow-hidden bg-white/[0.03] border border-amber-500/25 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.22)] transition-all duration-300 backdrop-blur-xl"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onClick={handleCardClick}
+      className="break-inside-avoid mb-3.5 sm:mb-6 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/20 flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_20px_45px_rgba(245,166,35,0.25)] transition-all duration-300 backdrop-blur-xl cursor-pointer select-none"
     >
-      {/* SELLO CEREMONIAL FLOTANTE */}
-      <div className="absolute right-2 bottom-2 sm:right-28 sm:bottom-4 w-28 h-28 opacity-25 pointer-events-none z-0">
-        <span className="font-inter text-[9px] uppercase font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-azul-noche shadow-[0_0_12px_#F5A623] border border-amber-300 tracking-wider flex items-center gap-1">
-          <span>✦</span>
-          <span>{sealStamp || "✦ SELLO TEQUIO ✦"}</span>
-        </span>
-      </div>
-
-      {/* CONTENEDOR CON ALTURA VARIABLE Y SKELETON LOADER */}
-      <div
-        className={`relative w-full bg-black/60 flex items-center justify-center overflow-hidden border-b border-white/10 ${currentSize.iframeH}`}
-      >
-        {!iframeLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex flex-col justify-between p-6 z-10">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+      {/* 1. MEDIA CONTAINER (FOTO / IFRAME CON OVERLAY FLOTANTE ESTILO PINTEREST) */}
+      <div className={`relative w-full bg-black/60 overflow-hidden ${currentSize.mediaH}`}>
+        
+        {/* SKELETON LOADER IF USING EMBED */}
+        {embedUrl && !iframeLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex flex-col justify-between p-4 z-10">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-white/10 animate-pulse" />
               <div className="space-y-1 flex-1">
-                <div className="h-3 bg-white/10 rounded w-2/3 animate-pulse" />
-                <div className="h-2 bg-white/10 rounded w-1/3 animate-pulse" />
+                <div className="h-2.5 bg-white/10 rounded w-2/3 animate-pulse" />
               </div>
             </div>
-            <span className="font-inter text-[10px] text-amber-400 font-bold text-center animate-bounce">
-              ⚡ Cargando post en vivo...
+            <span className="font-inter text-[9px] text-amber-400 font-bold text-center">
+              ⚡ Cargando post...
             </span>
           </div>
         )}
 
+        {/* IMAGE PREVIEW OR LIVE EMBED */}
         {embedUrl ? (
           <iframe
             src={embedUrl}
@@ -129,93 +166,134 @@ export default function LinkedInEmbedCard({
             allowFullScreen={false}
             title={title}
             onLoad={() => setIframeLoaded(true)}
-            className={`w-full ${currentSize.iframeH} rounded-t-xl transition-opacity duration-700 ease-in-out ${
+            className={`w-full ${currentSize.mediaH} transition-opacity duration-500 ${
               iframeLoaded ? "opacity-100" : "opacity-0"
             }`}
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 relative h-full w-full flex flex-col items-center justify-center p-5 text-center bg-white/5 space-y-2">
+          <div className="relative w-full h-full">
             <Image
               src={imgSrc}
               alt={title}
               fill
-              className="object-cover opacity-30 group-hover:scale-105 transition-transform duration-500"
+              className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             />
-            <div className="relative z-10 space-y-2">
-              <span className="font-inter text-[10px] text-amber-400 font-bold uppercase tracking-widest block">
-                🔗 Publicación compartida por la tribu
-              </span>
-              <p className="font-cinzel text-blanco-lunar text-sm font-bold line-clamp-2">
-                {title}
-              </p>
-              <a
-                href={linkedinPostUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer font-inter font-bold text-[11px] bg-amber-500 text-azul-noche px-4 py-2 rounded-lg inline-flex items-center gap-1.5 shadow-md hover:bg-amber-400 transition-all hover:scale-105"
-              >
-                <span>Ver Post en LinkedIn</span>
-                <span>↗</span>
-              </a>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-black/20 to-black/10 group-hover:opacity-75 transition-opacity duration-300" />
           </div>
         )}
-      </div>
 
-      {/* METADATOS Y MÉTRICAS COMPACTAS */}
-      <div className="p-4 space-y-2.5 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="font-inter text-[10px] text-amber-400 font-bold">
-              {guardianTag}
+        {/* PINTEREST FLOATING ACTION BUTTONS (VISIBLE EN MOBILE Y EN DESKTOP AL HOVER) */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 p-2 sm:p-3.5 flex flex-col justify-between z-20 ${
+            isHovered ? "opacity-100" : "opacity-90 sm:opacity-0"
+          }`}
+        >
+          {/* TOP BAR: GUARDIAN PILL (LEFT) + SAVE / LINK BUTTON (RIGHT) */}
+          <div className="flex items-center justify-between gap-1.5 pointer-events-auto">
+            <span className="font-inter text-[9px] sm:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-azul-noche/90 text-amber-300 border border-amber-400/40 shadow-lg backdrop-blur-md truncate max-w-[65%] sm:max-w-none">
+              {guardianTag || "✦ Tequio"}
             </span>
-            <span className="font-inter text-[10px] text-arena/60">
-              📅 {date}
-            </span>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleCopyLink}
+                title="Copiar enlace"
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-azul-noche/90 hover:bg-white/20 text-blanco-lunar border border-white/20 flex items-center justify-center text-[10px] sm:text-xs transition-all shadow-lg backdrop-blur-md"
+              >
+                {copied ? "✓" : "🔗"}
+              </button>
+
+              {linkedinPostUrl && (
+                <a
+                  href={linkedinPostUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="font-inter font-bold text-[10px] sm:text-xs bg-amber-500 hover:bg-amber-400 text-azul-noche px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-xl transition-all hover:scale-105 inline-flex items-center gap-0.5 sm:gap-1"
+                >
+                  <span className="hidden sm:inline">LinkedIn</span>
+                  <span>↗</span>
+                </a>
+              )}
+            </div>
           </div>
 
-          <h3 className="font-cinzel text-blanco-lunar text-base font-bold leading-snug">
+          {/* BOTTOM BAR: QUICK EXPAND HINT */}
+          <div className="pointer-events-auto flex items-center justify-between">
+            <span className="font-inter text-[9px] sm:text-[11px] font-bold text-blanco-lunar bg-black/70 backdrop-blur-md px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/10 flex items-center gap-1">
+              <span>🔍</span>
+              <span className="hidden sm:inline">Ver detalle</span>
+            </span>
+
+            {sealStamp && (
+              <span className="font-inter text-[8px] sm:text-[9px] uppercase font-bold text-amber-300 bg-amber-500/20 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded border border-amber-400/30 truncate max-w-[80px] sm:max-w-none">
+                {sealStamp}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. PIN METADATA & CREATOR DETAILS */}
+      <div className="p-3 sm:p-5 space-y-2 sm:space-y-3 bg-azul-noche/90 backdrop-blur-md flex-1 flex flex-col justify-between">
+        <div className="space-y-1.5 sm:space-y-2">
+          
+          {/* CREATOR PROFILE ROW (AVATAR + NAME + DATE) */}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-terracota via-amber-500 to-amber-300 text-azul-noche font-inter font-extrabold text-[9px] sm:text-[11px] flex items-center justify-center shadow-md flex-shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1 flex items-center justify-between">
+              <span className="font-inter text-[11px] sm:text-xs font-bold text-blanco-lunar truncate">
+                {authorName || "Tribu Tequio"}
+              </span>
+              <span className="font-inter text-[9px] sm:text-[10px] text-arena/60 ml-1 whitespace-nowrap">
+                {date}
+              </span>
+            </div>
+          </div>
+
+          {/* PIN TITLE */}
+          <h3 className="font-cinzel text-blanco-lunar text-xs sm:text-base md:text-lg font-bold leading-snug group-hover:text-amber-300 transition-colors line-clamp-2">
             {title}
           </h3>
 
-          {authorName && (
-            <span className="font-inter text-[11px] text-arena/80 block italic">
-              ✍️ Publicado por: <strong>{authorName}</strong>
-            </span>
-          )}
-
+          {/* DESCRIPTION EXCERPT */}
           {description && (
-            <p className="font-inter text-arena text-[11px] opacity-85 leading-relaxed line-clamp-2">
+            <p className="font-inter text-arena/80 text-[10px] sm:text-xs leading-relaxed line-clamp-2 hidden sm:block">
               {description}
             </p>
           )}
 
+          {/* TAGS OR IMPACT METRICS */}
           {impactMetrics && impactMetrics.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5 mt-2">
-              {impactMetrics.map((m: string, idx: number) => (
-                <p key={idx} className="font-inter text-[10px] text-amber-300 font-semibold">
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {impactMetrics.slice(0, 1).map((m: string, idx: number) => (
+                <span
+                  key={idx}
+                  className="font-inter text-[9px] sm:text-[10px] text-amber-300 font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 truncate"
+                >
                   {m}
-                </p>
+                </span>
               ))}
             </div>
           )}
         </div>
 
-        <div className="pt-2 border-t border-white/10 flex justify-between items-center text-[10px] font-inter">
-          <span className="text-amber-400 font-bold">LinkedIn Feed Verified ✓</span>
-          {linkedinPostUrl && (
-            <a
-              href={linkedinPostUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blanco-lunar underline hover:text-amber-300 font-bold"
-            >
-              Abrir ↗
-            </a>
-          )}
+        {/* FOOTER ROW */}
+        <div className="pt-2 sm:pt-2.5 border-t border-white/10 flex items-center justify-between text-[9px] sm:text-[11px] font-inter text-arena/70">
+          <span className="flex items-center gap-0.5 sm:gap-1 text-amber-400 font-semibold text-[9px] sm:text-[10px]">
+            <span>✦</span>
+            <span>Tequio</span>
+          </span>
+
+          <span className="text-amber-400/90 group-hover:text-amber-300 font-bold group-hover:translate-x-0.5 transition-all inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs">
+            <span>Ver</span>
+            <span>→</span>
+          </span>
         </div>
       </div>
-
     </motion.div>
   );
 }
+
