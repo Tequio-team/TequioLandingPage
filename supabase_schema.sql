@@ -1,5 +1,5 @@
 -- ==============================================================================
--- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (CON RUTAS EXTERNAS Y ADMIN) ✦
+-- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (CON MEETING LINK Y CALENDARIO) ✦
 -- Copia y ejecuta este script en el SQL Editor de tu consola de Supabase.
 -- ==============================================================================
 
@@ -51,10 +51,11 @@ CREATE TABLE public.events (
   type_category TEXT NOT NULL CHECK (type_category IN ('tequio_talks', 'hackathon', 'caravana', 'taller', 'jornada', 'meetup')),
   
   date_display TEXT NOT NULL, -- ej. 'Jueves 17 de Septiembre, 2026'
-  start_at TIMESTAMPTZ NOT NULL,
+  start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   end_at TIMESTAMPTZ,
   time_display TEXT NOT NULL,
   location TEXT NOT NULL,
+  meeting_link TEXT DEFAULT 'https://meet.google.com/abc-defg-hij', -- LIGA DE GOOGLE MEET / ZOOM
   
   speaker TEXT, -- Ponente invitado
   speaker_social TEXT, -- LinkedIn / X del ponente
@@ -104,14 +105,14 @@ CREATE INDEX idx_registrations_email ON public.event_registrations(email);
 CREATE TABLE public.external_routes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
-  organizer_name TEXT NOT NULL, -- ej. 'DevFest CDMX', 'Python México', 'KubeCon'
+  organizer_name TEXT NOT NULL,
   description TEXT NOT NULL,
   image_url TEXT NOT NULL,
-  external_link TEXT NOT NULL, -- Link directo al registro oficial del organizador
-  date_display TEXT NOT NULL, -- ej. 'Sábado 24 de Octubre, 2026'
-  time_display TEXT NOT NULL, -- ej. '09:00 AM — 06:00 PM'
-  location TEXT NOT NULL, -- ej. 'World Trade Center CDMX'
-  interested_count INT NOT NULL DEFAULT 0, -- Cuántos se suman a ir en grupo con Tequio
+  external_link TEXT NOT NULL,
+  date_display TEXT NOT NULL,
+  time_display TEXT NOT NULL,
+  location TEXT NOT NULL,
+  interested_count INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -148,7 +149,6 @@ CREATE TABLE public.completed_works_gallery (
 -- TRIGGERS DE CONTROL AUTOMÁTICO
 -- ==============================================================================
 
--- 1. Auto-vincula el miembro por email al inscribirse
 CREATE OR REPLACE FUNCTION public.link_registration_to_member()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -174,7 +174,6 @@ BEFORE INSERT ON public.event_registrations
 FOR EACH ROW
 EXECUTE FUNCTION public.link_registration_to_member();
 
--- 2. Incrementar conteo de faena interna
 CREATE OR REPLACE FUNCTION public.increment_event_registration_count()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -191,7 +190,6 @@ AFTER INSERT ON public.event_registrations
 FOR EACH ROW
 EXECUTE FUNCTION public.increment_event_registration_count();
 
--- 3. Incrementar conteo de grupo en Rutas Externas
 CREATE OR REPLACE FUNCTION public.increment_route_interest_count()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -238,10 +236,9 @@ CREATE POLICY "Lectura pública de memoria colectiva" ON public.completed_works_
 -- DATOS INICIALES (SEED DATA)
 -- ==============================================================================
 
--- Evento Interno Destacado
 INSERT INTO public.events (
   slug, title, type_badge, guardian, guardian_tag, type_category,
-  date_display, start_at, time_display, location, speaker, speaker_social, image_url, dynamic_desc, access_info,
+  date_display, start_at, time_display, location, meeting_link, speaker, speaker_social, image_url, dynamic_desc, access_info,
   description, capacity_limit, registered_count, is_featured, status
 ) VALUES (
   'tequio-talks-01',
@@ -254,6 +251,7 @@ INSERT INTO public.events (
   NOW() + INTERVAL '4 days 12 hours',
   '07:00 PM — 08:30 PM (CDMX)',
   'Google Meet / YouTube Live',
+  'https://meet.google.com/abc-defg-hij',
   'Senior Dev & Tech Lead Mentor',
   'https://www.linkedin.com/in/tequio-mentor',
   '/jpg/moment2.jpg',
@@ -266,7 +264,6 @@ INSERT INTO public.events (
   'abierto'
 );
 
--- Ruta a Evento Externo de Muestra
 INSERT INTO public.external_routes (
   title, organizer_name, description, image_url, external_link, date_display, time_display, location, interested_count
 ) VALUES (

@@ -26,6 +26,7 @@ const DEFAULT_ACTIVE_TALK = {
   date: "Jueves 17 de Septiembre, 2026",
   time: "07:00 PM — 08:30 PM (CDMX)",
   location: "Google Meet / YouTube Live",
+  meeting_link: "https://meet.google.com/abc-defg-hij",
   speaker: "Senior Dev & Tech Lead Mentor",
   speaker_social: "https://linkedin.com",
   dynamic: "Q&A Abierto + Revisión de CV en Vivo",
@@ -116,6 +117,7 @@ export default function EventosPage() {
             date: featured.date_display,
             time: featured.time_display,
             location: featured.location,
+            meeting_link: featured.meeting_link || "https://meet.google.com",
             speaker: featured.speaker || "Senior Dev Mentor",
             speaker_social: featured.speaker_social,
             dynamic: featured.dynamic_desc || "Q&A + CV Review",
@@ -137,6 +139,7 @@ export default function EventosPage() {
               date: e.date_display,
               time: e.time_display,
               location: e.location,
+              meeting_link: e.meeting_link || "https://meet.google.com",
               speaker: e.speaker,
               speaker_social: e.speaker_social,
               statusTag: isRegisteredForEvent(e.id) ? "Ya Inscripto ✓" : e.is_featured ? "Faena Activa 🔥" : e.status === "abierto" ? "Cupos disponibles" : "Presencial",
@@ -237,7 +240,7 @@ export default function EventosPage() {
     }
   };
 
-  // Handle External Route Interest Submission (Me sumo a ir en grupo)
+  // Handle External Route Interest Submission
   const handleRouteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!routeForm.nombre || !routeForm.email || !selectedRoute) return;
@@ -257,7 +260,6 @@ export default function EventosPage() {
         },
       ]);
 
-      // Update interested count locally
       setExternalRoutes((prev) =>
         prev.map((r) => (r.id === selectedRoute.id ? { ...r, interested_count: (r.interested_count || 0) + 1 } : r))
       );
@@ -412,7 +414,7 @@ export default function EventosPage() {
                           background: "linear-gradient(135deg, #E5A93C 0%, #C85A32 100%)",
                         }}
                       >
-                        <span>{alreadyRegistered ? "✓ Ya estás inscripto (Ver detalles)" : "Reservar mi Lugar en el Talk"}</span>
+                        <span>{alreadyRegistered ? "✓ Ya estás inscripto (Ver enlace de transmisión)" : "Reservar mi Lugar en el Talk"}</span>
                         <span className="text-xl">→</span>
                       </button>
 
@@ -431,7 +433,7 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* SECCIÓN NUEVA: RUTAS DEL VUELO (EVENTOS DE COMUNIDADES EXTERNAS) */}
+      {/* SECCIÓN: RUTAS DEL VUELO (EVENTOS DE COMUNIDADES EXTERNAS) */}
       <section className="py-16 px-6 border-t border-white/10 bg-black/20">
         <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
           
@@ -625,7 +627,7 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO */}
+      {/* MODAL 1: RESERVAR LUGAR EN TEQUIO TALK INTERNO CON ENLACE DIRECTO A TRANSMISIÓN */}
       <AnimatePresence>
         {registrationModalOpen && (
           <div
@@ -709,19 +711,35 @@ export default function EventosPage() {
                   </form>
                 </>
               ) : (
-                <div className="text-center space-y-4 py-4">
+                /* CONFIRMACIÓN CON ENTREGA INMEDIATA DE LA LIGA DE GOOGLE MEET / ZOOM */
+                <div className="text-center space-y-5 py-4">
                   <span className="font-inter text-xs uppercase tracking-widest text-emerald-400 font-bold block">
-                    ✦ Lugar Asegurado ✦
+                    ✦ Lugar Confirmado ✦
                   </span>
                   <h3 className="font-cinzel text-blanco-lunar text-2xl font-bold">
-                    ¡Nos vemos en el Tequio Talk!
+                    ¡Tu acceso a la sesión está activo!
                   </h3>
-                  <p className="font-inter text-arena text-xs opacity-90">
-                    Tu correo <strong>{talkForm.email}</strong> está registrado para recibir la liga de transmisión.
+                  <p className="font-inter text-arena text-xs opacity-90 leading-relaxed">
+                    Tu correo <strong>{talkForm.email || getUserProfile()?.email}</strong> ha quedado registrado. Aquí tienes el enlace oficial de la transmisión:
                   </p>
+
+                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-inter space-y-2">
+                    <span className="text-emerald-300 font-bold block">
+                      📍 Enlace oficial de transmisión (Google Meet / Zoom):
+                    </span>
+                    <a
+                      href={activeTalk.meeting_link || "https://meet.google.com"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer font-bold text-amber-300 underline text-sm break-all hover:text-amber-200"
+                    >
+                      {activeTalk.meeting_link || "https://meet.google.com/abc-defg-hij"} ↗
+                    </a>
+                  </div>
+
                   <button
                     onClick={() => setRegistrationModalOpen(false)}
-                    className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl"
+                    className="font-inter font-bold text-xs bg-emerald-500 text-azul-noche px-6 py-2.5 rounded-xl hover:bg-emerald-400"
                   >
                     Entendido
                   </button>

@@ -23,6 +23,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"external" | "internal" | "attendees">("external");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
+
+  // Filter state for Attendee list
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all");
 
   // Form State: External Route
   const [externalForm, setExternalForm] = useState({
@@ -43,9 +47,10 @@ export default function AdminPage() {
     guardian: "tochtli",
     guardian_tag: "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)",
     type_category: "tequio_talks",
-    date_display: "",
+    date_picker: "", // datetime-local
     time_display: "07:00 PM — 08:30 PM (CDMX)",
     location: "Google Meet / YouTube Live",
+    meeting_link: "https://meet.google.com/abc-defg-hij", // LIGA DE GOOGLE MEET / ZOOM
     speaker: "",
     speaker_social: "",
     image_url: "/jpg/moment2.jpg",
@@ -117,10 +122,10 @@ export default function AdminPage() {
         .order("created_at", { ascending: false });
       if (events) setEventsList(events);
 
-      // Load Event Registrations
+      // Load Event Registrations with Event Details
       const { data: reg } = await supabase
         .from("event_registrations")
-        .select("*, events(title)")
+        .select("*, events(title, id)")
         .order("created_at", { ascending: false });
       if (reg) setRegistrationsList(reg);
 
@@ -181,6 +186,18 @@ export default function AdminPage() {
     }
   };
 
+  // Format date_picker into readable string
+  const formatPickerDate = (dtString: string) => {
+    if (!dtString) return "Fecha por confirmar";
+    const dt = new Date(dtString);
+    return dt.toLocaleDateString("es-MX", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   // Submit Internal Event
   const handleInternalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +214,10 @@ export default function AdminPage() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "") + "-" + Date.now();
 
+      const formattedDate = internalForm.date_picker
+        ? formatPickerDate(internalForm.date_picker)
+        : "Próximamente";
+
       const { error } = await supabase.from("events").insert([
         {
           slug,
@@ -205,10 +226,11 @@ export default function AdminPage() {
           guardian: internalForm.guardian,
           guardian_tag: internalForm.guardian_tag,
           type_category: internalForm.type_category,
-          date_display: internalForm.date_display || "Próximamente",
-          start_at: new Date().toISOString(),
+          date_display: formattedDate,
+          start_at: internalForm.date_picker ? new Date(internalForm.date_picker).toISOString() : new Date().toISOString(),
           time_display: internalForm.time_display,
           location: internalForm.location,
+          meeting_link: internalForm.meeting_link || "https://meet.google.com",
           speaker: internalForm.speaker || null,
           speaker_social: internalForm.speaker_social || null,
           image_url: internalForm.image_url || "/jpg/moment2.jpg",
@@ -231,9 +253,10 @@ export default function AdminPage() {
           guardian: "tochtli",
           guardian_tag: "✦ FAENA ACTIVA · 🐰 TOCHTLI (Mentoría)",
           type_category: "tequio_talks",
-          date_display: "",
+          date_picker: "",
           time_display: "07:00 PM — 08:30 PM (CDMX)",
           location: "Google Meet / YouTube Live",
+          meeting_link: "https://meet.google.com/abc-defg-hij",
           speaker: "",
           speaker_social: "",
           image_url: "/jpg/moment2.jpg",
@@ -249,6 +272,21 @@ export default function AdminPage() {
       setStatusMessage(`❌ Error de conexión: ${err.message}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Filter registrations by selected event
+  const filteredRegistrations = registrationsList.filter((reg) => {
+    return selectedEventFilter === "all" || reg.event_id === selectedEventFilter;
+  });
+
+  // Copy emails for sending reminders
+  const handleCopyEmails = () => {
+    const emails = filteredRegistrations.map((r) => r.email).filter(Boolean).join(", ");
+    if (emails) {
+      navigator.clipboard.writeText(emails);
+      setCopiedSuccess(true);
+      setTimeout(() => setCopiedSuccess(false), 3000);
     }
   };
 
@@ -320,10 +358,6 @@ export default function AdminPage() {
                 )}
               </button>
             </form>
-
-            <p className="font-inter text-[11px] text-arena/50 italic">
-              ✦ Verificación encriptada mediante SHA-256
-            </p>
           </motion.div>
         </section>
       ) : (
@@ -352,7 +386,7 @@ export default function AdminPage() {
                 Administrador de Faenas & Caravanas
               </h1>
               <p className="font-inter text-arena text-base max-w-2xl mx-auto opacity-85">
-                Publica rutas a eventos de comunidades externas, programa Tequio Talks y consulta la lista de la tribu en tiempo real.
+                Publica rutas a eventos externos, programa Tequio Talks con liga de Meet/Zoom y consulta las listas filtradas por evento para enviar recordatorios.
               </p>
 
               {/* Selector de Pestañas */}
@@ -431,7 +465,6 @@ export default function AdminPage() {
                       </div>
 
                       <form onSubmit={handleExternalSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        
                         <div className="md:col-span-2">
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
                             Título del Evento Externo *
@@ -535,7 +568,6 @@ export default function AdminPage() {
                             {isSubmitting ? "Publicando en Supabase..." : "🚀 Publicar Ruta Externa"}
                           </button>
                         </div>
-
                       </form>
                     </div>
 
@@ -586,7 +618,7 @@ export default function AdminPage() {
                   </motion.div>
                 )}
 
-                {/* PESTAÑA 2: TEQUIO TALKS & EVENTOS INTERNOS */}
+                {/* PESTAÑA 2: TEQUIO TALKS & EVENTOS INTERNOS CON CALENDARIO & LINK DE MEET */}
                 {activeTab === "internal" && (
                   <motion.div
                     key="tab-internal"
@@ -607,7 +639,6 @@ export default function AdminPage() {
                       </div>
 
                       <form onSubmit={handleInternalSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        
                         <div className="md:col-span-2">
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
                             Título del Talk / Sesión *
@@ -657,6 +688,35 @@ export default function AdminPage() {
                           />
                         </div>
 
+                        {/* SELECTOR DE FECHA CON CALENDARIO NATIVO */}
+                        <div>
+                          <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
+                            📅 Seleccionar Fecha y Hora (Calendario) *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            required
+                            value={internalForm.date_picker}
+                            onChange={(e) => setInternalForm({ ...internalForm, date_picker: e.target.value })}
+                            className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* SECCIÓN DEDICADA PARA EL LINK DE GOOGLE MEET / ZOOM */}
+                        <div>
+                          <label className="block font-inter text-xs text-amber-400 font-bold mb-1">
+                            🔗 Enlace de Transmisión (Google Meet / Zoom / YouTube) *
+                          </label>
+                          <input
+                            type="url"
+                            required
+                            value={internalForm.meeting_link}
+                            onChange={(e) => setInternalForm({ ...internalForm, meeting_link: e.target.value })}
+                            placeholder="https://meet.google.com/abc-defg-hij"
+                            className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+
                         <div>
                           <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
                             Nombre del Ponente Invitado
@@ -683,32 +743,6 @@ export default function AdminPage() {
                           />
                         </div>
 
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Fecha Programada
-                          </label>
-                          <input
-                            type="text"
-                            value={internalForm.date_display}
-                            onChange={(e) => setInternalForm({ ...internalForm, date_display: e.target.value })}
-                            placeholder="Ej. Jueves 15 de Octubre, 2026"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
-                            Transmisión / Sede
-                          </label>
-                          <input
-                            type="text"
-                            value={internalForm.location}
-                            onChange={(e) => setInternalForm({ ...internalForm, location: e.target.value })}
-                            placeholder="Ej. Google Meet / YouTube Live"
-                            className="w-full font-inter bg-white/5 border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
-                          />
-                        </div>
-
                         <div className="md:col-span-2 flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
                           <input
                             type="checkbox"
@@ -731,13 +765,12 @@ export default function AdminPage() {
                             {isSubmitting ? "Publicando..." : "🎙️ Publicar Tequio Talk"}
                           </button>
                         </div>
-
                       </form>
                     </div>
                   </motion.div>
                 )}
 
-                {/* PESTAÑA 3: ASISTENTES & INTEGRANTES DE LA TRIBU */}
+                {/* PESTAÑA 3: ASISTENTES & INTEGRANTES CON FILTRO POR EVENTO Y COPIAR CORREOS */}
                 {activeTab === "attendees" && (
                   <motion.div
                     key="tab-attendees"
@@ -746,10 +779,41 @@ export default function AdminPage() {
                     exit={{ opacity: 0, y: -15 }}
                     className="space-y-10"
                   >
-                    <div className="space-y-4">
-                      <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
-                        📋 Reservaciones a Faenas en Tiempo Real ({registrationsList.length})
-                      </h3>
+                    <div className="space-y-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
+                        <div>
+                          <h3 className="font-cinzel text-blanco-lunar text-xl font-bold">
+                            📋 Reservaciones a Faenas en Tiempo Real ({filteredRegistrations.length})
+                          </h3>
+                          <p className="font-inter text-arena text-xs opacity-75">
+                            Filtra los inscritos por evento para enviarles recordatorios o la liga del evento.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {/* SELECTOR DE FILTRO POR EVENTO */}
+                          <select
+                            value={selectedEventFilter}
+                            onChange={(e) => setSelectedEventFilter(e.target.value)}
+                            className="font-inter text-xs bg-azul-noche border border-amber-400 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none"
+                          >
+                            <option value="all">✦ Todos los eventos ({registrationsList.length})</option>
+                            {eventsList.map((evt) => (
+                              <option key={evt.id} value={evt.id}>
+                                {evt.title}
+                              </option>
+                            ))}
+                          </select>
+
+                          {/* BOTÓN COPIAR LISTA DE CORREOS */}
+                          <button
+                            onClick={handleCopyEmails}
+                            className="cursor-pointer font-inter font-bold text-xs bg-amber-500 text-azul-noche px-4 py-2.5 rounded-xl shadow-lg hover:bg-amber-400 transition-all flex items-center gap-2"
+                          >
+                            <span>{copiedSuccess ? "✓ ¡Correos Copiados!" : "📋 Copiar Lista de Correos"}</span>
+                          </button>
+                        </div>
+                      </div>
 
                       <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
                         <table className="w-full text-left font-inter text-xs border-collapse">
@@ -757,17 +821,17 @@ export default function AdminPage() {
                             <tr className="bg-white/5 text-amber-400 uppercase tracking-wider font-semibold border-b border-white/10">
                               <th className="p-4">Nombre</th>
                               <th className="p-4">Correo</th>
-                              <th className="p-4">Rol / Modalidad</th>
+                              <th className="p-4">Evento Reservado</th>
                               <th className="p-4">Pregunta para Ponente</th>
                               <th className="p-4">Fecha Registro</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 text-arena/90">
-                            {registrationsList.map((row) => (
+                            {filteredRegistrations.map((row) => (
                               <tr key={row.id} className="hover:bg-white/5">
                                 <td className="p-4 font-bold text-blanco-lunar">{row.full_name}</td>
-                                <td className="p-4 text-amber-300">{row.email}</td>
-                                <td className="p-4">{row.role_type || "Estudiante"}</td>
+                                <td className="p-4 text-amber-300 font-mono">{row.email}</td>
+                                <td className="p-4">{row.events?.title || "Tequio Talk"}</td>
                                 <td className="p-4 italic opacity-80">{row.speaker_question || "Sin pregunta"}</td>
                                 <td className="p-4 opacity-60">{new Date(row.created_at).toLocaleDateString()}</td>
                               </tr>
@@ -796,7 +860,7 @@ export default function AdminPage() {
                             {membersList.map((row) => (
                               <tr key={row.id} className="hover:bg-white/5">
                                 <td className="p-4 font-bold text-blanco-lunar">{row.full_name}</td>
-                                <td className="p-4 text-amber-300">{row.email}</td>
+                                <td className="p-4 text-amber-300 font-mono">{row.email}</td>
                                 <td className="p-4">{row.role_interest}</td>
                                 <td className="p-4 opacity-60">{new Date(row.created_at).toLocaleDateString()}</td>
                               </tr>
