@@ -170,23 +170,20 @@ function GuardianCard({
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
+      onHoverStart={onHoverStart}
+      onHoverEnd={onHoverEnd}
+      onClick={onClick}
+      animate={{
+        opacity: isDimmed ? 0.72 : 1,
+        scale: isDimmed ? 0.985 : 1,
+      }}
       transition={{
         duration: 0.6,
         delay: index * 0.12,
         ease: [0.22, 1, 0.36, 1],
+        opacity: { duration: 0.3 },
+        scale: { duration: 0.3 },
       }}
-      onHoverStart={onHoverStart}
-      onHoverEnd={onHoverEnd}
-      onClick={onClick}
-      // Use animate for hover so Framer Motion handles the interpolation
-      // (avoids CSS transition + inline style conflicts)
-      animate={{
-        opacity: isDimmed ? 0.72 : 1,
-        scale: isDimmed ? 0.985 : 1,
-        y: 0,
-      }}
-      whileHover={{ y: -6, scale: 1.0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="cursor-pointer relative mt-8 pt-12 pb-8 px-6 flex flex-col justify-between rounded-3xl"
       style={{
         background: "rgba(255, 255, 255, 0.035)",
@@ -206,21 +203,23 @@ function GuardianCard({
         style={{ background: guardian.auraBg }}
       />
 
-      {/* Floating Guardian PNG — separate animation so hover doesn't reset float */}
+      {/* Floating Guardian PNG — continuous idle float, lifts on hover */}
       <motion.div
         className="absolute -top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
-        // Continuous idle float
         animate={isHovered
           ? { y: -8, scale: 1.05 }
-          : { y: [0, -5, 0] }
+          : { y: [0, -5, 0], scale: 1 }
         }
         transition={isHovered
-          ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+          ? { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
           : {
-              duration: 4.5 + index * 0.8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              repeatType: "mirror",
+              y: {
+                duration: 4.5 + index * 0.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                repeatType: "mirror",
+              },
+              scale: { duration: 0.28 },
             }
         }
         style={{ willChange: "transform" }}
