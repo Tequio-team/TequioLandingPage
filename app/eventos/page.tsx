@@ -82,6 +82,7 @@ export default function EventosPage() {
     email: "",
     nombre: "",
     title: "",
+    area: "tlacu",
     linkedin_url: "",
     description: "",
   });
@@ -353,14 +354,21 @@ export default function EventosPage() {
         saveUserProfile({ nombre: existingMember.full_name, email: cleanEmail });
       }
 
+      const areaTag =
+        linkedInForm.area === "tochtli"
+          ? "🐰 Tochtli · Círculo de la Luna"
+          : linkedInForm.area === "kuku"
+          ? "🪶 Kuku · Caravana del Vuelo"
+          : "🦝 Tlacu · Forja Comunitaria";
+
       const { error } = await supabase.from("completed_works_gallery").insert([
         {
           author_email: cleanEmail,
           author_name: authorFullName,
           title: linkedInForm.title || `Publicación de ${authorFullName}`,
           event_date: "Reciente 2026",
-          guardian_tag: "🪶 Tribu Tequio",
-          seal_stamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
+          guardian_tag: areaTag,
+          sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
           linkedin_post_url: linkedInForm.linkedin_url.trim(),
           description: linkedInForm.description || `Experiencia compartida por ${authorFullName}.`,
           impact_metrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
@@ -376,7 +384,7 @@ export default function EventosPage() {
             id: Date.now().toString(),
             title: linkedInForm.title || `Publicación de ${authorFullName}`,
             date: "Reciente 2026",
-            guardianTag: "🪶 Tribu Tequio",
+            guardianTag: areaTag,
             sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
             linkedinPostUrl: linkedInForm.linkedin_url.trim(),
             description: linkedInForm.description || `Experiencia compartida por ${authorFullName}.`,
@@ -979,6 +987,21 @@ export default function EventosPage() {
                         placeholder="https://lnkd.in/p/g-Dc7yaS"
                         className="w-full font-inter bg-white/10 border border-amber-400/50 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-xs"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block font-inter text-xs text-arena/80 font-semibold mb-1">
+                        Área de la Faena a la que Corresponde *
+                      </label>
+                      <select
+                        value={linkedInForm.area}
+                        onChange={(e) => setLinkedInForm({ ...linkedInForm, area: e.target.value })}
+                        className="w-full font-inter bg-azul-noche border border-arena/30 text-blanco-lunar px-4 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                      >
+                        <option value="tlacu">🦝 Forja Comunitaria (Tlacu — Software & Voluntariado)</option>
+                        <option value="kuku">🪶 Caravana del Vuelo (Kuku — Eventos & Encuentros)</option>
+                        <option value="tochtli">🐰 Círculo de la Luna (Tochtli — Mentoría & Talks)</option>
+                      </select>
                     </div>
 
                     <div>
