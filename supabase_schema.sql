@@ -285,35 +285,35 @@ INSERT INTO public.external_routes (
 
 INSERT INTO public.completed_works_gallery (title, event_date, guardian_tag, seal_stamp, linkedin_post_url, image_url, description, author_name, impact_metrics) VALUES
 (
-  'Experiencia en Faena Tequio — Publicación de Integrante',
+  'Experiencia en Faena Tequio — Forja de Software con Causa',
   '29 de Agosto, 2026',
   '🦝 Tlacu · Forja Comunitaria',
   '✦ PUBLICACIÓN DE LA TRIBU ✦',
   'https://lnkd.in/p/g4_eGX8s',
-  '/jpg/moment1.jpg',
-  'Experiencia compartida por integrante de la comunidad Tequio en LinkedIn.',
+  '/png/tlacu.png',
+  'Más de 40 desarrolladores y estudiantes construyendo soluciones open source para albergues locales. 8 horas continuas de mentoría, código y aprendizaje en comunidad.',
   'Sofía Morales · Integrante Tequio',
   '["🌟 Publicación de Integrante", "👥 Comunidad Tequio"]'::jsonb
 ),
 (
-  'Impulso a la Comunidad — Faena Tequio en LinkedIn',
+  'Impulso a la Comunidad — Faena Colectiva en LinkedIn',
   '28 de Agosto, 2026',
   '🦝 Tlacu · Forja Comunitaria',
   '✦ FAENA OFICIAL CUMPLIDA ✦',
   'https://www.linkedin.com/feed/update/urn:li:activity:7493522800209661952/',
-  '/jpg/moment1.jpg',
-  'Publicación oficial en LinkedIn sobre la iniciativa y el impacto de la faena colectiva en la comunidad.',
-  NULL,
+  '/png/tlacu.png',
+  'Publicación oficial en LinkedIn sobre la iniciativa y el impacto de la faena colectiva en la comunidad tecnológica de México.',
+  'David Reyes · Tech Lead',
   '["📊 +1,200 Impresiones en LinkedIn", "🚀 42 Desarrolladores sumados"]'::jsonb
 ),
 (
-  'Caravana y Encuentro Tech — Registro de Miembro',
+  'Caravana y Encuentro Tech — Asistencia en Bloque a Talent Land',
   '20 de Agosto, 2026',
   '🪶 Kuku · Caravana del Vuelo',
   '✦ PUBLICACIÓN DE LA TRIBU ✦',
   'https://lnkd.in/p/g-Dc7yaS',
-  '/jpg/moment3.jpg',
-  'Testimonio publicado por integrante de la comunidad Tequio sobre la experiencia en la Caravana del Vuelo.',
-  NULL,
+  '/png/kuku.png',
+  'Nadie camina solo en Tequio. Viajamos en grupo, compartimos hospedaje, hicimos networking y pusimos el nombre de la comunidad en alto.',
+  'Carlos Mendoza · Estudiante',
   '["🌟 Testimonio de la Tribu", "👥 Asistencia en Grupo"]'::jsonb
 );
