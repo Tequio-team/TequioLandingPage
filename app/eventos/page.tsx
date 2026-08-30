@@ -433,6 +433,7 @@ export default function EventosPage() {
           <AnimatePresence mode="wait">
             {hasActiveEvent && (
               <motion.div
+                id="active-talk"
                 key="active-talk"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

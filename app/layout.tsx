@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel_Decorative, Inter } from "next/font/google";
 import "./globals.css";
+import FloatingUpcomingEvent from "@/components/ui/FloatingUpcomingEvent";
 
 const cinzel = Cinzel_Decorative({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="es" className={`${cinzel.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="bg-azul-noche text-blanco-lunar antialiased" suppressHydrationWarning>
         {children}
+        <FloatingUpcomingEvent />
       </body>
     </html>
   );
