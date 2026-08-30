@@ -153,14 +153,16 @@ export default function EventSection() {
 
           {/* Guest / Speaker Banner if present */}
           {activeEvent.speaker_name && (
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🎙️</span>
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 p-4 sm:p-5 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-full bg-amber-400/20 border border-amber-500/40 flex items-center justify-center text-xl flex-shrink-0">
+                  🎙️
+                </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-terracota block tracking-wider">
                     Invitado / Ponente Especial
                   </span>
-                  <p className="font-inter text-azul-noche text-sm font-bold">
+                  <p className="font-inter text-azul-noche text-base font-bold">
                     {activeEvent.speaker_name}
                   </p>
                 </div>
@@ -171,17 +173,17 @@ export default function EventSection() {
                   href={activeEvent.speaker_linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-inter font-bold text-xs bg-azul-noche text-blanco-lunar px-4 py-2 rounded-xl hover:bg-terracota transition-all shadow inline-flex items-center gap-1.5"
+                  className="font-inter font-bold text-xs bg-[#0077B5] hover:bg-[#005885] text-white px-4 py-2.5 rounded-xl transition-all shadow flex items-center gap-1.5"
                 >
-                  <span>Perfil en LinkedIn</span>
-                  <span>↗</span>
+                  <span className="font-black text-sm">in</span>
+                  <span>Ver perfil en LinkedIn ↗</span>
                 </a>
               )}
             </div>
           )}
 
           {/* Direct Luma Link */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-2">
+          <div className="pt-2">
             <a
               href={activeEvent.luma_url || LUMA_CALENDAR_URL}
               target="_blank"
@@ -190,16 +192,6 @@ export default function EventSection() {
             >
               <span>Ver evento en Luma</span>
               <span className="text-xl">↗</span>
-            </a>
-
-            <a
-              href={LUMA_CALENDAR_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-inter text-xs text-gris-pizarra/90 hover:text-terracota flex items-center gap-1.5 font-semibold transition-colors"
-            >
-              <span>📅 Ver todos los eventos en</span>
-              <strong className="text-azul-noche underline">Luma Calendar ↗</strong>
             </a>
           </div>
 
