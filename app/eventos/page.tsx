@@ -368,7 +368,7 @@ export default function EventosPage() {
           title: linkedInForm.title || `Publicación de ${authorFullName}`,
           event_date: "Reciente 2026",
           guardian_tag: areaTag,
-          sealStamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
+          seal_stamp: "✦ SELLO DE INTEGRANTE CUMPLIDO ✦",
           linkedin_post_url: linkedInForm.linkedin_url.trim(),
           description: linkedInForm.description || `Experiencia compartida por ${authorFullName}.`,
           impact_metrics: ["🌟 Publicación de Integrante", "👥 Comunidad Tequio"],
