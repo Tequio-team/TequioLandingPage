@@ -392,13 +392,13 @@ export default function EventosPage() {
                         </div>
                       )}
 
-                      {/* Botón directo para abrir el evento en Luma */}
-                      <div className={`pt-2 ${!ev.speaker_name ? "mt-auto" : ""}`}>
+                      {/* Botón directo para abrir el evento en Luma y Guardián */}
+                      <div className={`pt-2 flex flex-col sm:flex-row items-center gap-4 ${!ev.speaker_name ? "mt-auto" : ""}`}>
                         <a
                           href={ev.luma_url || LUMA_CALENDAR_DIRECT_URL}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="cursor-pointer inline-flex items-center justify-center gap-2 font-inter font-bold text-white px-6 py-3.5 rounded-2xl hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 w-full sm:w-auto"
+                          className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 font-inter font-bold text-white px-6 py-3.5 rounded-2xl hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 w-full sm:w-auto"
                           style={{
                             background: `linear-gradient(135deg, ${et.color} 0%, ${et.color}dd 100%)`,
                             boxShadow: `0 10px 25px ${et.glow}`,
@@ -407,6 +407,32 @@ export default function EventosPage() {
                           <span>Ver evento en Luma</span>
                           <span className="text-lg">↗</span>
                         </a>
+
+                        {/* Guardián Icon */}
+                        {(() => {
+                          const guardianImg =
+                            ev.guardian === "tochtli" || ev.guardian === "tochtli_tlacu"
+                              ? "/png/tochtli.png"
+                              : ev.guardian === "kuku"
+                              ? "/png/kuku.png"
+                              : "/png/tlacu.png";
+
+                          return (
+                            <motion.div
+                              whileHover={{ rotate: [-5, 5, -5], y: -3 }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                              className="hidden sm:block flex-shrink-0"
+                            >
+                              <Image
+                                src={guardianImg}
+                                alt="Guardián Tequio"
+                                width={56}
+                                height={56}
+                                className="object-contain drop-shadow-md"
+                              />
+                            </motion.div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </motion.div>
