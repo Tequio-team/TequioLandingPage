@@ -21,8 +21,8 @@ const DEFAULT_ACTIVE_EVENT = {
   is_online: true,
   location: "Google Meet",
   luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
-  description:
-    "Mentoría directa sobre cómo navegar la transición académica a liderazgo técnico, romper el síndrome del impostor y destacar en la industria tech.",
+  speaker_name: "David Reyes",
+  speaker_linkedin: "https://www.linkedin.com/in/david-reyes-tech",
   guardian: "tochtli",
   is_featured: true,
   status: "abierto",
@@ -38,7 +38,8 @@ const DEFAULT_EVENTS_LIST = [
     is_online: false,
     location: "Centro Comunitario La Esperanza, CDMX",
     luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
-    description: "8 horas de desarrollo colaborativo construyendo soluciones reales a retos comunitarios.",
+    speaker_name: "Sofía Morales & Mentores Tequio",
+    speaker_linkedin: "https://www.linkedin.com/in/sofia-morales-dev",
     guardian: "tlacu",
     is_featured: false,
     status: "abierto",
@@ -51,7 +52,8 @@ const DEFAULT_EVENTS_LIST = [
     is_online: false,
     location: "Telmex Hub / WTC CDMX",
     luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
-    description: "Asistiremos en bloque como tribu Tequio al gran encuentro anual de desarrolladores.",
+    speaker_name: "Líderes de Comunidad GDG & Tequio",
+    speaker_linkedin: "https://www.linkedin.com/company/tequio",
     guardian: "kuku",
     is_featured: false,
     status: "abierto",
@@ -310,7 +312,7 @@ export default function EventosPage() {
               </h2>
 
               {/* Grid: Fecha y Modalidad con Iconos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-white/5 p-5 rounded-2xl border border-white/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-white/5 p-5 rounded-2xl border border-white/10">
                 <div className="flex items-center gap-3.5">
                   <span className="text-2xl">📅</span>
                   <div>
@@ -344,11 +346,33 @@ export default function EventosPage() {
                 </div>
               </div>
 
-              {/* Description */}
-              {activeEvent.description && (
-                <p className="font-inter text-arena/90 text-sm sm:text-base leading-relaxed mb-8 max-w-3xl">
-                  {activeEvent.description}
-                </p>
+              {/* Guest / Speaker Banner */}
+              {activeEvent.speaker_name && (
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-amber-500/15 via-terracota/15 to-transparent border border-amber-400/30 p-4 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🎙️</span>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-amber-400 block tracking-wider">
+                        Invitado / Ponente Especial
+                      </span>
+                      <p className="font-inter text-blanco-lunar text-sm sm:text-base font-bold">
+                        {activeEvent.speaker_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {activeEvent.speaker_linkedin && (
+                    <a
+                      href={activeEvent.speaker_linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-inter font-bold text-xs bg-amber-500 hover:bg-amber-400 text-azul-noche px-4 py-2 rounded-xl transition-all shadow inline-flex items-center gap-1.5"
+                    >
+                      <span>Ver LinkedIn del Invitado</span>
+                      <span>↗</span>
+                    </a>
+                  )}
+                </div>
               )}
 
               {/* Luma Button CTA */}
@@ -457,11 +481,24 @@ export default function EventosPage() {
                     </p>
                   </div>
 
-                  {/* Description */}
-                  {evt.description && (
-                    <p className="font-inter text-arena/75 text-xs leading-relaxed line-clamp-3">
-                      {evt.description}
-                    </p>
+                  {/* Speaker Info if present */}
+                  {evt.speaker_name && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-xs font-inter flex items-center justify-between gap-2">
+                      <div className="truncate">
+                        <span className="text-[10px] text-arena/60 block uppercase font-bold">Invitado:</span>
+                        <span className="text-blanco-lunar font-bold truncate block">{evt.speaker_name}</span>
+                      </div>
+                      {evt.speaker_linkedin && (
+                        <a
+                          href={evt.speaker_linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-amber-400 hover:underline text-[11px] font-bold flex-shrink-0"
+                        >
+                          LinkedIn ↗
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
 

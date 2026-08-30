@@ -24,7 +24,7 @@ export default function AdminPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State: Event with Luma
+  // Form State: Event with Luma and Speaker
   const [eventForm, setEventForm] = useState({
     title: "",
     event_date: "",
@@ -32,7 +32,8 @@ export default function AdminPage() {
     is_online: true,
     location: "Google Meet",
     luma_url: "",
-    description: "",
+    speaker_name: "",
+    speaker_linkedin: "",
     guardian: "tochtli",
     is_featured: false,
     status: "abierto",
@@ -115,7 +116,7 @@ export default function AdminPage() {
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      // If marked as featured, optionally unset other featured
+      // If marked as featured, unset other featured
       if (eventForm.is_featured) {
         await supabase.from("events").update({ is_featured: false }).neq("id", "00000000-0000-0000-0000-000000000000");
       }
@@ -130,7 +131,8 @@ export default function AdminPage() {
             is_online: eventForm.is_online,
             location: eventForm.is_online && !eventForm.location ? "Google Meet" : eventForm.location.trim(),
             luma_url: eventForm.luma_url.trim(),
-            description: eventForm.description.trim() || null,
+            speaker_name: eventForm.speaker_name.trim() || null,
+            speaker_linkedin: eventForm.speaker_linkedin.trim() || null,
             guardian: eventForm.guardian,
             is_featured: eventForm.is_featured,
             status: eventForm.status,
@@ -141,7 +143,7 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      setStatusMessage("✅ ¡Evento con enlace de Luma publicado con éxito!");
+      setStatusMessage("✅ ¡Evento con enlace de Luma e invitado publicado con éxito!");
       setEventsList((prev) => [data, ...prev]);
 
       // Reset Form
@@ -152,7 +154,8 @@ export default function AdminPage() {
         is_online: true,
         location: "Google Meet",
         luma_url: "",
-        description: "",
+        speaker_name: "",
+        speaker_linkedin: "",
         guardian: "tochtli",
         is_featured: false,
         status: "abierto",
@@ -328,7 +331,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tabs Navigation (Only 2 Clean Tabs: Eventos & Memoria Viva) */}
+              {/* Tabs Navigation (2 Tabs: Eventos & Memoria Viva) */}
               <div className="flex gap-3 border-b border-white/10 pb-4">
                 <button
                   onClick={() => setActiveTab("events")}
@@ -362,7 +365,7 @@ export default function AdminPage() {
                         Publicar Nuevo Evento
                       </h3>
                       <p className="font-inter text-xs text-arena/70 mt-1">
-                        Ingresa los detalles del evento y pega el link de registro de Luma.
+                        Ingresa los detalles del evento, invitado/ponente y el enlace de registro de Luma.
                       </p>
                     </div>
 
@@ -469,9 +472,34 @@ export default function AdminPage() {
                           placeholder="https://luma.com/event/evt-C1nAPcQ4ME9mTeL o https://lu.ma/..."
                           className="w-full font-inter bg-white/5 border border-amber-400/50 text-blanco-lunar px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-300 text-xs sm:text-sm font-mono"
                         />
-                        <span className="font-inter text-[11px] text-arena/60 block mt-1">
-                          Este link se utilizará para el botón y el checkout interactivo de Luma.
-                        </span>
+                      </div>
+
+                      {/* Datos del Invitado / Ponente (Nombre y LinkedIn) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                        <div>
+                          <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
+                            Nombre del Invitado / Speaker
+                          </label>
+                          <input
+                            type="text"
+                            value={eventForm.speaker_name}
+                            onChange={(e) => setEventForm({ ...eventForm, speaker_name: e.target.value })}
+                            placeholder="Ej: David Reyes"
+                            className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
+                            LinkedIn del Invitado
+                          </label>
+                          <input
+                            type="url"
+                            value={eventForm.speaker_linkedin}
+                            onChange={(e) => setEventForm({ ...eventForm, speaker_linkedin: e.target.value })}
+                            placeholder="https://www.linkedin.com/in/..."
+                            className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm"
+                          />
+                        </div>
                       </div>
 
                       {/* Guardián y Destacado */}
@@ -502,20 +530,6 @@ export default function AdminPage() {
                             <span>Marcar como Faena Destacada 🔥</span>
                           </label>
                         </div>
-                      </div>
-
-                      {/* Descripción */}
-                      <div>
-                        <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
-                          Descripción breve
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={eventForm.description}
-                          onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
-                          placeholder="Resumen del contenido y propósito de la faena..."
-                          className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-3.5 py-2 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm resize-none"
-                        />
                       </div>
 
                       {/* Submit */}
@@ -570,6 +584,22 @@ export default function AdminPage() {
                           <div className="text-xs text-arena/80 font-inter space-y-1 bg-black/20 p-2.5 rounded-xl">
                             <p>📅 {evt.event_date} · {evt.time_display}</p>
                             <p>{evt.is_online ? "🖥️ En línea:" : "📍 Presencial:"} {evt.location}</p>
+                            {evt.speaker_name && (
+                              <p className="flex items-center gap-1.5 text-blanco-lunar">
+                                <span>🎙️ Invitado:</span>
+                                <strong>{evt.speaker_name}</strong>
+                                {evt.speaker_linkedin && (
+                                  <a
+                                    href={evt.speaker_linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-amber-400 hover:underline text-[11px] ml-1"
+                                  >
+                                    (LinkedIn ↗)
+                                  </a>
+                                )}
+                              </p>
+                            )}
                             <p className="truncate text-amber-400 font-mono text-[11px]">
                               🔗 Luma: {evt.luma_url}
                             </p>

@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS public.events CASCADE;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ==============================================================================
--- TABLA 1: EVENTS (Agenda de Faenas y Encuentros con Registro Luma)
+-- TABLA 1: EVENTS (Agenda de Faenas con Registro Luma e Invitado)
 -- ==============================================================================
 CREATE TABLE public.events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -34,7 +34,8 @@ CREATE TABLE public.events (
   is_online BOOLEAN NOT NULL DEFAULT true, -- true = 🖥️ En línea / Google Meet | false = 📍 En persona / Presencial
   location TEXT NOT NULL DEFAULT 'Google Meet',
   luma_url TEXT NOT NULL, -- Enlace de registro Luma (ej: https://luma.com/event/evt-C1nAPcQ4ME9mTeL o https://lu.ma/...)
-  description TEXT,
+  speaker_name TEXT, -- Nombre completo del invitado / ponente
+  speaker_linkedin TEXT, -- Enlace al LinkedIn del invitado
   guardian TEXT NOT NULL DEFAULT 'tochtli' CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
   is_featured BOOLEAN NOT NULL DEFAULT false,
   status TEXT NOT NULL DEFAULT 'abierto' CHECK (status IN ('abierto', 'finalizado')),
@@ -80,7 +81,7 @@ CREATE POLICY "Gestión total de memoria viva"
   ON public.completed_works_gallery FOR ALL TO public USING (true);
 
 -- ==============================================================================
--- DATOS INICIALES (SEED DATA CON ENLACES DE LUMA Y MEMORIA VIVA)
+-- DATOS INICIALES (SEED DATA CON ENLACES DE LUMA, INVITADOS Y MEMORIA VIVA)
 -- ==============================================================================
 
 INSERT INTO public.events (
@@ -90,7 +91,8 @@ INSERT INTO public.events (
   is_online,
   location,
   luma_url,
-  description,
+  speaker_name,
+  speaker_linkedin,
   guardian,
   is_featured,
   status
@@ -102,7 +104,8 @@ INSERT INTO public.events (
   true,
   'Google Meet',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
-  'Mentoría directa sobre navegación de carrera tech, transición a liderazgo y revisión de perfiles en vivo.',
+  'David Reyes',
+  'https://www.linkedin.com/in/david-reyes-tech',
   'tochtli',
   true,
   'abierto'
@@ -114,7 +117,8 @@ INSERT INTO public.events (
   false,
   'Centro Comunitario La Esperanza, CDMX',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
-  '8 horas de forja colaborativa para desarrollar herramientas abiertas que resuelven retos sociales.',
+  'Sofía Morales & Mentores Tequio',
+  'https://www.linkedin.com/in/sofia-morales-dev',
   'tlacu',
   false,
   'abierto'
@@ -126,7 +130,8 @@ INSERT INTO public.events (
   false,
   'Telmex Hub / WTC CDMX',
   'https://luma.com/event/evt-C1nAPcQ4ME9mTeL',
-  'Asistiremos en bloque como tribu Tequio al gran encuentro anual de desarrolladores para aprender y hacer networking juntos.',
+  'Líderes de Comunidad GDG & Tequio',
+  'https://www.linkedin.com/company/tequio',
   'kuku',
   false,
   'abierto'

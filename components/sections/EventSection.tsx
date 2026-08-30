@@ -12,8 +12,8 @@ const DEFAULT_EVENT = {
   is_online: false,
   location: "Centro Comunitario La Esperanza, CDMX",
   luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
-  description:
-    "Un encuentro colaborativo de 8 horas para construir soluciones reales a problemas de la comunidad. Equipos multidisciplinarios, mentores tech y una tribu que te impulsa en cada paso.",
+  speaker_name: "Sofía Morales & Mentores Tequio",
+  speaker_linkedin: "https://www.linkedin.com/in/sofia-morales-dev",
   guardian: "tlacu",
 };
 
@@ -116,7 +116,7 @@ export default function EventSection() {
           </h2>
 
           {/* Date, Time & Modality with Icons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50/80 p-5 rounded-2xl border border-gray-200/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-gray-50/80 p-5 rounded-2xl border border-gray-200/80">
             <div className="flex items-center gap-3">
               <span className="text-2xl flex-shrink-0">📅</span>
               <div>
@@ -150,11 +150,33 @@ export default function EventSection() {
             </div>
           </div>
 
-          {/* Description */}
-          {activeEvent.description && (
-            <p className="font-inter text-gris-pizarra leading-[1.8] mb-8 text-sm sm:text-base max-w-2xl opacity-90">
-              {activeEvent.description}
-            </p>
+          {/* Guest / Speaker Banner if present */}
+          {activeEvent.speaker_name && (
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎙️</span>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-terracota block tracking-wider">
+                    Invitado / Ponente Especial
+                  </span>
+                  <p className="font-inter text-azul-noche text-sm font-bold">
+                    {activeEvent.speaker_name}
+                  </p>
+                </div>
+              </div>
+
+              {activeEvent.speaker_linkedin && (
+                <a
+                  href={activeEvent.speaker_linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-inter font-bold text-xs bg-azul-noche text-blanco-lunar px-4 py-2 rounded-xl hover:bg-terracota transition-all shadow inline-flex items-center gap-1.5"
+                >
+                  <span>Perfil en LinkedIn</span>
+                  <span>↗</span>
+                </a>
+              )}
+            </div>
           )}
 
           {/* Registration with Luma */}
