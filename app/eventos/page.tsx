@@ -104,12 +104,25 @@ export default function EventosPage() {
 
         if (eventsData && eventsData.length > 0) {
           setEventsList(eventsData);
-          const active = eventsData.find((e) => e.status === "activa") || eventsData[0];
-          setActiveEvent(active);
+          // Support old schema status "abierto" as equivalent to "activa"
+          const active =
+            eventsData.find((e) => e.status === "activa") ||
+            eventsData.find((e) => e.status === "abierto") ||
+            eventsData[0];
+
+          // If Supabase event is missing speaker data (old schema), merge with default
+          const mergedActive = {
+            ...DEFAULT_ACTIVE_EVENT,
+            ...active,
+            // Only keep speaker fields from DB if they exist, else use default
+            speaker_name: active.speaker_name || DEFAULT_ACTIVE_EVENT.speaker_name,
+            speaker_linkedin: active.speaker_linkedin || DEFAULT_ACTIVE_EVENT.speaker_linkedin,
+          };
+          setActiveEvent(mergedActive);
 
           setMemoriaForm((prev) => ({
             ...prev,
-            event_title: prev.event_title || active.title,
+            event_title: prev.event_title || mergedActive.title,
           }));
         }
 
@@ -216,21 +229,21 @@ export default function EventosPage() {
       <Navbar />
 
       {/* 1. HERO & PRÓXIMA FAENA DESTACADA */}
-      <section className="relative pt-36 pb-12 px-6">
-        <StarField count={35} isMitlaShape={true} />
-        <BrasaParticles count={40} className="opacity-70" />
+      <section className="relative pt-28 pb-8 px-5 md:pt-36 md:pb-12 md:px-6">
+        <StarField count={24} isMitlaShape={true} />
+        <BrasaParticles count={28} className="opacity-60" />
 
         <div className="container mx-auto max-w-5xl relative z-10">
           
           {/* Header Title */}
-          <div className="text-center space-y-4 mb-14">
+          <div className="text-center space-y-3 mb-10 md:mb-14">
             <span className="font-inter text-terracota text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
               ✦ Agenda Tequio & Encuentros ✦
             </span>
-            <h1 className="font-cinzel text-blanco-lunar text-4xl sm:text-5xl md:text-6xl font-bold tracking-wide">
+            <h1 className="font-cinzel text-blanco-lunar text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wide">
               Eventos de la Tribu
             </h1>
-            <p className="font-inter text-arena text-base sm:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
+            <p className="font-inter text-arena text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
               Talleres prácticos, mentorías con líderes tech y hackathons comunitarios sincronizados con Luma.
             </p>
           </div>
@@ -242,7 +255,7 @@ export default function EventosPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
-              className="relative rounded-3xl p-8 sm:p-10 md:p-14 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl mb-14"
+              className="relative rounded-3xl p-6 sm:p-8 md:p-12 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl mb-10 md:mb-14"
               style={{
                 background: "linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
               }}
@@ -260,12 +273,12 @@ export default function EventosPage() {
               </div>
 
               {/* Title */}
-              <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+              <h2 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 md:mb-6 leading-tight">
                 {activeEvent.title}
               </h2>
 
               {/* Grid: Fecha y Modalidad */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-white/5 p-5 rounded-2xl border border-white/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 md:mb-6 bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10">
                 <div className="flex items-center gap-3.5">
                   <span className="text-2xl">📅</span>
                   <div>

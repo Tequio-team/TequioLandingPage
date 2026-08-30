@@ -22,37 +22,37 @@ export default function FooterSection() {
   return (
     <footer
       id="footer"
-      className="relative py-24 overflow-hidden bg-azul-noche"
+      className="relative py-14 md:py-20 overflow-hidden"
       style={{
         background: "radial-gradient(ellipse at center, #151D32 0%, #080C18 100%)",
       }}
     >
-      <StarField count={34} isMitlaShape={true} className="opacity-60" />
+      <StarField count={24} isMitlaShape={true} className="opacity-50" />
 
-      <div className="container mx-auto px-6 max-w-6xl relative z-10">
+      <div className="container mx-auto px-5 max-w-6xl relative z-10">
         
         {/* Top Footer Content */}
-        <div className="flex flex-col items-center text-center pb-16 border-b border-white/10">
+        <div className="flex flex-col items-center text-center pb-10 md:pb-14 border-b border-white/10">
           
           {/* Logo & Marca */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-2.5 mb-5">
             <Image
               src="/png/logo.png"
               alt="Tequio Logo"
-              width={56}
-              height={56}
+              width={44}
+              height={44}
               className="object-contain"
             />
-            <span className="font-cinzel text-blanco-lunar text-2xl tracking-widest font-bold">TEQUIO</span>
+            <span className="font-cinzel text-blanco-lunar text-xl tracking-widest font-bold">TEQUIO</span>
           </div>
 
           {/* Mensaje de Cierre */}
-          <h3 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl mb-4 tracking-wide font-bold">
+          <h3 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl md:text-3xl mb-4 tracking-wide font-bold max-w-lg">
             &quot;Tequio no es un destino — es el caminar juntos.&quot;
           </h3>
 
-          {/* Enlaces Esenciales */}
-          <div className="flex flex-wrap justify-center gap-8 mt-6">
+          {/* Links */}
+          <div className="flex flex-wrap justify-center gap-5 sm:gap-8 mt-4">
             {FOOTER_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -68,32 +68,30 @@ export default function FooterSection() {
           </div>
         </div>
 
-        {/* Bottom Bar: Los Tres Guardianes */}
-        <div className="pt-12 flex flex-col md:flex-row items-center justify-between gap-8">
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-5">
           
-          {/* Firma Comunitaria */}
-          <p className="font-inter text-arena/60 text-xs tracking-wider text-center md:text-left">
+          <p className="font-inter text-arena/60 text-xs tracking-wider text-center sm:text-left">
             © 2026 Comunidad Tequio · Construido en colectivo.
           </p>
 
           {/* Los 3 Guardianes */}
-          <div className="flex items-center gap-5 relative">
+          <div className="flex items-center gap-5">
             {GUARDIANS_FOOTER.map((g) => (
               <div
                 key={g.id}
                 onMouseEnter={() => setActiveGuardianHover(g.name)}
                 onMouseLeave={() => setActiveGuardianHover(null)}
-                className="relative cursor-pointer hover:-translate-y-1 hover:scale-105 transition-all duration-200"
+                className="relative cursor-pointer hover:-translate-y-1 hover:scale-105 transition-transform duration-200"
               >
                 <Image
                   src={g.src}
                   alt={g.name}
-                  width={48}
-                  height={58}
+                  width={42}
+                  height={50}
                   className={`object-contain ${g.id === "kuku" ? "scale-125" : ""}`}
                 />
 
-                {/* Tooltip */}
                 {activeGuardianHover === g.name && (
                   <div
                     className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 rounded-md text-[10px] font-inter text-blanco-lunar whitespace-nowrap pointer-events-none z-30"
@@ -109,7 +107,6 @@ export default function FooterSection() {
               </div>
             ))}
           </div>
-
         </div>
 
       </div>

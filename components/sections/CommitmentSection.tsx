@@ -116,7 +116,7 @@ export default function CommitmentSection() {
   return (
     <section
       id="compromiso"
-      className="relative py-28 overflow-hidden bg-azul-noche"
+      className="relative py-14 md:py-24 overflow-hidden bg-azul-noche"
       style={{
         background: `
           radial-gradient(ellipse at 20% 100%, rgba(193, 91, 58, 0.28) 0%, transparent 65%),
@@ -141,7 +141,7 @@ export default function CommitmentSection() {
               ✦ Nuestro Compromiso ✦
             </span>
 
-            <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-5xl leading-tight font-bold">
+            <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-bold">
               &quot;Poner nuestra piedra en la obra colectiva.&quot;
             </h2>
 
@@ -203,8 +203,8 @@ export default function CommitmentSection() {
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl p-6 sm:p-8 space-y-6 flex flex-col justify-between"
-                  style={{ willChange: "transform, opacity" }}
+                  className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl p-5 sm:p-8 space-y-4 sm:space-y-6 flex flex-col justify-between"
+                  style={{ minHeight: 260, willChange: "transform, opacity" }}
                 >
                   {/* HEADER CON AVATAR, AUTOR Y BADGE */}
                   <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">

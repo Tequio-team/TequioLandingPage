@@ -51,7 +51,7 @@ export default function GuardiansSection() {
   return (
     <section
       id="guardianes"
-      className="relative py-28 md:py-36 overflow-hidden bg-azul-noche"
+      className="relative py-16 md:py-28 overflow-hidden bg-azul-noche"
       style={{
         background: "linear-gradient(to bottom, #0F172A 0%, #181524 50%, #0F172A 100%)",
       }}
@@ -68,7 +68,7 @@ export default function GuardiansSection() {
         
         {/* Section Header */}
         <motion.div
-          className="text-center mb-20 md:mb-24 max-w-3xl mx-auto"
+          className="text-center mb-14 md:mb-20 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
@@ -77,16 +77,16 @@ export default function GuardiansSection() {
           <span className="font-inter text-ambar text-xs md:text-sm uppercase tracking-[0.25em] font-semibold mb-2 block">
             Nuestros Alebrijes
           </span>
-          <h2 className="font-cinzel text-blanco-lunar text-4xl md:text-5xl mb-6 tracking-wide font-bold">
+          <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-4 tracking-wide font-bold">
             Los Tres Guardianes de Tequio
           </h2>
-          <p className="font-inter text-arena text-base md:text-lg leading-relaxed opacity-85">
+          <p className="font-inter text-arena text-sm md:text-base lg:text-lg leading-relaxed opacity-85">
             La identidad y el espíritu de Tequio se representan a través de tres criaturas míticas, inspiradas en nuestras raíces prehispánicas y adaptadas como alebrijes contemporáneos. Cada uno encarna un pilar fundamental de la comunidad.
           </p>
         </motion.div>
 
         {/* 3 Columnas con espaciado superior adecuado */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 pt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 pt-6">
           {GUARDIANS.map((g, i) => (
             <GuardianCard
               key={g.id}
@@ -184,7 +184,7 @@ function GuardianCard({
         opacity: { duration: 0.3 },
         scale: { duration: 0.3 },
       }}
-      className="cursor-pointer relative mt-8 pt-12 pb-8 px-6 flex flex-col justify-between rounded-3xl"
+      className="cursor-pointer relative mt-10 pt-14 pb-6 px-5 sm:pb-7 sm:px-6 flex flex-col justify-between rounded-3xl"
       style={{
         background: "rgba(255, 255, 255, 0.035)",
         border: `1px solid ${isHovered ? guardian.color : "rgba(217, 203, 184, 0.12)"}`,

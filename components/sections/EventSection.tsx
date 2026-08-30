@@ -29,17 +29,23 @@ export default function EventSection() {
     async function loadActiveEvent() {
       try {
         const { supabase } = await import("@/lib/supabase");
-        // Traer la faena con status activa más reciente
-        const { data } = await supabase
+        // Support both new "activa" and old "abierto" status
+        const { data: activa } = await supabase
           .from("events")
           .select("*")
-          .eq("status", "activa")
+          .in("status", ["activa", "abierto"])
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (data) {
-          setActiveEvent(data);
+        if (activa) {
+          // Merge speaker fallback from DEFAULT_EVENT if DB fields are empty
+          setActiveEvent({
+            ...DEFAULT_EVENT,
+            ...activa,
+            speaker_name: activa.speaker_name || DEFAULT_EVENT.speaker_name,
+            speaker_linkedin: activa.speaker_linkedin || DEFAULT_EVENT.speaker_linkedin,
+          });
         }
       } catch (err) {
         console.warn("Usando evento local por defecto:", err);
@@ -53,7 +59,7 @@ export default function EventSection() {
     <section
       id="evento"
       ref={ref}
-      className="relative py-28 md:py-36 overflow-hidden bg-blanco-lunar"
+      className="relative py-14 md:py-28 overflow-hidden bg-blanco-lunar"
       style={{
         background: "linear-gradient(to bottom, #1a2332 0%, #F9F7F2 15%, #F9F7F2 85%, #1a2332 100%)",
       }}
@@ -85,7 +91,7 @@ export default function EventSection() {
           whileHover={{ y: -8 }}
           onHoverStart={() => setCardHovered(true)}
           onHoverEnd={() => setCardHovered(false)}
-          className="relative rounded-3xl p-8 sm:p-10 md:p-14 overflow-hidden"
+          className="relative rounded-3xl p-6 sm:p-8 md:p-12 overflow-hidden"
           style={{
             background: "#ffffff",
             borderLeft: "10px solid #C15B3A",
@@ -113,12 +119,12 @@ export default function EventSection() {
           </div>
 
           {/* Title */}
-          <h2 className="font-cinzel text-azul-noche text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-6 tracking-wide font-bold leading-tight">
+          <h2 className="font-cinzel text-azul-noche text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl mb-4 md:mb-6 tracking-wide font-bold leading-tight">
             {activeEvent.title}
           </h2>
 
           {/* Date, Time & Modality with Icons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-gray-50/80 p-5 rounded-2xl border border-gray-200/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 md:mb-6 bg-gray-50/80 p-4 sm:p-5 rounded-2xl border border-gray-200/80">
             <div className="flex items-center gap-3">
               <span className="text-2xl flex-shrink-0">📅</span>
               <div>

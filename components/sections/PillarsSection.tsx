@@ -15,7 +15,7 @@ const PILLARS = [
     glowColor: "rgba(245, 166, 35, 0.35)",
     shadowColor: "rgba(245, 166, 35, 0.18)",
     icon: (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -35,7 +35,7 @@ const PILLARS = [
     glowColor: "rgba(193, 91, 58, 0.35)",
     shadowColor: "rgba(193, 91, 58, 0.18)",
     icon: (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         <path d="M12 8v4" />
         <path d="M12 16h.01" />
@@ -54,7 +54,7 @@ const PILLARS = [
     glowColor: "rgba(20, 184, 166, 0.35)",
     shadowColor: "rgba(20, 184, 166, 0.18)",
     icon: (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="23 4 23 10 17 10" />
         <polyline points="1 20 1 14 7 14" />
         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -73,7 +73,7 @@ const PILLARS = [
     glowColor: "rgba(16, 185, 129, 0.35)",
     shadowColor: "rgba(16, 185, 129, 0.18)",
     icon: (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
         <path d="M2 17l10 5 10-5" />
         <path d="M2 12l10 5 10-5" />
@@ -86,27 +86,27 @@ export default function PillarsSection() {
   return (
     <section
       id="pilares"
-      className="relative py-32 overflow-hidden bg-azul-noche"
+      className="relative py-16 md:py-28 overflow-hidden"
       style={{
         background: "linear-gradient(to bottom, #0F172A 0%, #151D32 50%, #0F172A 100%)",
       }}
     >
-      <BrasaParticles count={40} className="z-0 opacity-70" />
+      <BrasaParticles count={30} className="z-0 opacity-55" />
 
-      <div className="container mx-auto px-6 max-w-6xl relative z-10">
+      <div className="container mx-auto px-5 max-w-6xl relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-20">
-          <h2 className="font-cinzel text-blanco-lunar text-4xl md:text-5xl mb-4 tracking-wide font-bold">
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="font-cinzel text-blanco-lunar text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 tracking-wide font-bold">
             Los Pilares y Actividades de Nuestra Faena
           </h2>
-          <p className="font-inter text-arena text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
+          <p className="font-inter text-arena text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
             Las losas de saber y las acciones colectivas que sostienen la filosofía y el trabajo diario en Tequio.
           </p>
         </div>
 
-        {/* Cuadrícula Ordenada 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* 2x2 Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {PILLARS.map((pillar) => (
             <PillarCard key={pillar.id} pillar={pillar} />
           ))}
@@ -123,52 +123,54 @@ function PillarCard({ pillar }: { pillar: typeof PILLARS[0] }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="cursor-pointer relative p-8 rounded-2xl flex flex-col justify-between transition-all duration-300 overflow-hidden hover:-translate-y-1"
+      className="cursor-pointer relative p-5 sm:p-7 rounded-2xl flex flex-col justify-between overflow-hidden hover:-translate-y-1 transition-transform duration-300"
       style={{
         background: "rgba(255, 255, 255, 0.035)",
         border: `1px solid ${hovered ? pillar.color : "rgba(217, 203, 184, 0.12)"}`,
         boxShadow: hovered
           ? `0 12px 35px ${pillar.shadowColor}, inset 0 0 15px ${pillar.glowColor}`
           : "0 6px 25px rgba(11, 16, 32, 0.5)",
+        transition: "border-color 0.25s ease, box-shadow 0.25s ease",
       }}
     >
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div
-            className="p-3.5 rounded-xl transition-all duration-300"
+            className="p-2.5 sm:p-3 rounded-xl"
             style={{
               background: `${pillar.color}18`,
               color: pillar.color,
               border: `1px solid ${pillar.color}40`,
-              boxShadow: hovered ? `0 0 20px ${pillar.color}77` : "none",
+              boxShadow: hovered ? `0 0 16px ${pillar.color}66` : "none",
+              transition: "box-shadow 0.25s ease",
             }}
           >
             {pillar.icon}
           </div>
-          <span className="font-inter text-xs font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10" style={{ color: pillar.color }}>
+          <span className="font-inter text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10" style={{ color: pillar.color }}>
             {pillar.guardianBadge}
           </span>
         </div>
 
-        <h3 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl font-bold mb-2 tracking-wide">
+        <h3 className="font-cinzel text-blanco-lunar text-xl sm:text-2xl font-bold mb-1 tracking-wide">
           {pillar.title}
         </h3>
         <p
-          className="font-inter text-xs uppercase tracking-widest font-semibold mb-4"
+          className="font-inter text-[10px] sm:text-xs uppercase tracking-widest font-semibold mb-3"
           style={{ color: pillar.color }}
         >
           {pillar.subtitle}
         </p>
 
-        <p className="font-inter text-arena text-base leading-[1.8] opacity-85 mb-6">
+        <p className="font-inter text-arena text-xs sm:text-sm leading-[1.75] opacity-85 mb-4">
           {pillar.description}
         </p>
 
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-1.5">
           {pillar.activitiesTag.map((act) => (
             <span
               key={act}
-              className="font-inter text-xs px-3 py-1 rounded-lg bg-white/5 text-arena/80 border border-white/10"
+              className="font-inter text-[10px] px-2.5 py-1 rounded-lg bg-white/5 text-arena/80 border border-white/10"
             >
               {act}
             </span>
