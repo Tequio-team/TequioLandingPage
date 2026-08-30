@@ -684,8 +684,8 @@ export default function EventosPage() {
             </div>
           </div>
 
-          {/* GALERÍA VIVA MASONRY DE LINKEDIN EMBEDS CON ANIMACIÓN ESCALONADA */}
-          <div className="columns-1 md:columns-2 gap-8 space-y-8">
+          {/* GALERÍA VIVA MASONRY DE LINKEDIN EMBEDS CON TARJETAS COMPACTAS (3 COLUMNAS) */}
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {galleryWorks.map((item, idx) => (
               <LinkedInEmbedCard
                 key={item.id}
