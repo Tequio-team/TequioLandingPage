@@ -18,7 +18,7 @@ export default function FloatingUpcomingEvent() {
         const { data } = await supabase
           .from("events")
           .select("title")
-          .eq("status", "abierto")
+          .eq("status", "activa")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -84,7 +84,7 @@ export default function FloatingUpcomingEvent() {
           {/* ETIQUETA DINÁMICA: "EVENTO EN PUERTA" CON LUZ O SALUDO DE TOCHTLI */}
           <div className="flex items-center gap-1.5">
             <span>
-              {hasActiveEvent ? "Evento en puerta · Ver detalles" : "¡Hola de Tequio!"}
+              {hasActiveEvent ? "Faena en puerta · Ver detalles" : "¡Hola de Tequio!"}
             </span>
             <span className="font-bold text-sm">→</span>
           </div>

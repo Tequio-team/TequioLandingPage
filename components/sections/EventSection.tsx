@@ -7,15 +7,16 @@ const LUMA_CALENDAR_URL = "https://luma.com/cal-U0kFC53t9Lv1LCY";
 
 const DEFAULT_EVENT = {
   id: "default-event-1",
-  title: "Hackathon por la Comunidad: Código Abierto con Causa",
-  event_date: "Sábado 20 de Septiembre, 2026",
-  time_display: "10:00 AM — 06:00 PM (CDMX)",
-  is_online: false,
-  location: "Centro Comunitario La Esperanza, CDMX",
+  title: "De Estudiante a Tech Lead: El Camino Sin Secretos",
+  event_date: "Jueves 17 de Septiembre, 2026",
+  time_display: "07:00 PM — 08:30 PM (CDMX)",
+  is_online: true,
+  location: "Google Meet",
   luma_url: "https://luma.com/event/evt-C1nAPcQ4ME9mTeL",
-  speaker_name: "Sofía Morales & Mentores Tequio",
-  speaker_linkedin: "https://www.linkedin.com/in/sofia-morales-dev",
-  guardian: "tlacu",
+  speaker_name: "David Reyes",
+  speaker_linkedin: "https://www.linkedin.com/in/david-reyes-tech",
+  guardian: "tochtli",
+  status: "activa",
 };
 
 export default function EventSection() {
@@ -28,11 +29,11 @@ export default function EventSection() {
     async function loadActiveEvent() {
       try {
         const { supabase } = await import("@/lib/supabase");
+        // Traer la faena con status activa más reciente
         const { data } = await supabase
           .from("events")
           .select("*")
-          .eq("status", "abierto")
-          .order("is_featured", { ascending: false })
+          .eq("status", "activa")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -107,7 +108,7 @@ export default function EventSection() {
               className="font-inter font-bold text-xs text-blanco-lunar px-4 py-1.5 rounded-full border border-amber-300 shadow-md flex items-center gap-1.5"
               style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
             >
-              <span>🔥 Próxima Faena</span>
+              <span>🔥 Faena Activa</span>
             </motion.div>
           </div>
 
@@ -151,7 +152,7 @@ export default function EventSection() {
             </div>
           </div>
 
-          {/* Guest / Speaker Banner if present */}
+          {/* Guest / Speaker Banner */}
           {activeEvent.speaker_name && (
             <div className="mb-8 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 p-4 sm:p-5 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3.5">
@@ -160,7 +161,7 @@ export default function EventSection() {
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-terracota block tracking-wider">
-                    Invitado / Ponente Especial
+                    Ponente / Invitado Especial
                   </span>
                   <p className="font-inter text-azul-noche text-base font-bold">
                     {activeEvent.speaker_name}

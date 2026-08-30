@@ -25,8 +25,7 @@ const DEFAULT_ACTIVE_EVENT = {
   speaker_name: "David Reyes",
   speaker_linkedin: "https://www.linkedin.com/in/david-reyes-tech",
   guardian: "tochtli",
-  is_featured: true,
-  status: "abierto",
+  status: "activa",
 };
 
 const DEFAULT_MEMORIA_LIST = [
@@ -101,17 +100,16 @@ export default function EventosPage() {
         const { data: eventsData } = await supabase
           .from("events")
           .select("*")
-          .order("is_featured", { ascending: false })
           .order("created_at", { ascending: false });
 
         if (eventsData && eventsData.length > 0) {
           setEventsList(eventsData);
-          const featured = eventsData.find((e) => e.is_featured) || eventsData[0];
-          setActiveEvent(featured);
+          const active = eventsData.find((e) => e.status === "activa") || eventsData[0];
+          setActiveEvent(active);
 
           setMemoriaForm((prev) => ({
             ...prev,
-            event_title: prev.event_title || featured.title,
+            event_title: prev.event_title || active.title,
           }));
         }
 
@@ -178,7 +176,6 @@ export default function EventosPage() {
       const newEntry = {
         author_name: memoriaForm.author_name.trim(),
         event_title: memoriaForm.event_title.trim(),
-        event_id: matchingEvt?.id || null,
         linkedin_post_url: memoriaForm.linkedin_post_url.trim(),
         quote: memoriaForm.quote.trim(),
         guardian: matchingEvt?.guardian || memoriaForm.guardian || "tlacu",
@@ -253,12 +250,12 @@ export default function EventosPage() {
               {/* Header Badges */}
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <span className="font-inter text-xs uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
-                  <span>✦ FAENA ACTIVA DESTACADA</span>
+                  <span>✦ FAENA ACTIVA EN PUERTA</span>
                 </span>
 
                 <span className="font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
                   <span className="animate-pulse">🔥</span>
-                  <span>Evento en Puerta</span>
+                  <span>Próximo Encuentro</span>
                 </span>
               </div>
 
@@ -311,7 +308,7 @@ export default function EventosPage() {
                     </div>
                     <div>
                       <span className="text-[11px] uppercase font-bold text-amber-400 block tracking-wider">
-                        Invitado / Ponente Especial
+                        Ponente / Invitado Especial
                       </span>
                       <h4 className="font-inter text-blanco-lunar text-base font-bold">
                         {activeEvent.speaker_name}
@@ -351,7 +348,7 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* 2. CALENDARIO OFICIAL DE LUMA (REEMPLAZA LA SECCIÓN MANUAL ANTERIOR) */}
+      {/* 2. CALENDARIO OFICIAL DE LUMA */}
       <section className="relative py-14 px-6 border-t border-white/10 bg-slate-900/40">
         <div className="container mx-auto max-w-5xl relative z-10">
           
@@ -394,7 +391,7 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* 3. MEMORIA VIVA (CON EFECTO ITERATIVO LATERAL Y CASCADA) */}
+      {/* 3. MEMORIA VIVA */}
       <section className="relative py-24 px-6 bg-slate-950/60 border-t border-white/10">
         <div className="container mx-auto max-w-6xl relative z-10">
           
@@ -421,7 +418,7 @@ export default function EventosPage() {
             </button>
           </div>
 
-          {/* Grid de Memoria Viva con Animaciones en Cascada e Iteración Lateral */}
+          {/* Grid de Memoria Viva con Animaciones */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {memoriaList.map((item, idx) => (
               <LinkedInEmbedCard
@@ -479,10 +476,10 @@ export default function EventosPage() {
             />
           </div>
 
-          {/* 2. Selector de Evento al que asistió */}
+          {/* 2. Selector de Evento al que asistió (Faenas Activas y Pasadas) */}
           <div className="space-y-1.5">
             <label className="font-inter text-xs font-bold text-blanco-lunar uppercase tracking-wider block">
-              Evento al que asististe *
+              Faena o Evento al que asististe *
             </label>
             <select
               required
@@ -490,10 +487,10 @@ export default function EventosPage() {
               onChange={(e) => setMemoriaForm({ ...memoriaForm, event_title: e.target.value })}
               className="w-full font-inter bg-azul-noche border border-white/15 text-blanco-lunar px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-sm"
             >
-              <option value="">Selecciona el evento...</option>
+              <option value="">Selecciona la faena a la que asististe...</option>
               {eventsList.map((evt) => (
                 <option key={evt.id} value={evt.title}>
-                  {evt.title} ({evt.event_date})
+                  {evt.title} ({evt.event_date}) {evt.status === "activa" ? "🔥" : "📜"}
                 </option>
               ))}
               <option value="Faena Comunitaria Tequio">Otra Faena o Taller Tequio</option>

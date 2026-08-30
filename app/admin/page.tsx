@@ -24,7 +24,7 @@ export default function AdminPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State: Event with Luma and Speaker
+  // Form State: Event with Luma, Speaker, and Status (activa / pasada)
   const [eventForm, setEventForm] = useState({
     title: "",
     event_date: "",
@@ -35,8 +35,7 @@ export default function AdminPage() {
     speaker_name: "",
     speaker_linkedin: "",
     guardian: "tochtli",
-    is_featured: false,
-    status: "abierto",
+    status: "activa" as "activa" | "pasada",
   });
 
   // Real-time Lists loaded from Supabase
@@ -116,9 +115,9 @@ export default function AdminPage() {
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      // If marked as featured, unset other featured
-      if (eventForm.is_featured) {
-        await supabase.from("events").update({ is_featured: false }).neq("id", "00000000-0000-0000-0000-000000000000");
+      // Si se crea como activa, actualizar las anteriores a pasadas para que la nueva sea la activa principal
+      if (eventForm.status === "activa") {
+        await supabase.from("events").update({ status: "pasada" }).eq("status", "activa");
       }
 
       const { data, error } = await supabase
@@ -134,7 +133,6 @@ export default function AdminPage() {
             speaker_name: eventForm.speaker_name.trim() || null,
             speaker_linkedin: eventForm.speaker_linkedin.trim() || null,
             guardian: eventForm.guardian,
-            is_featured: eventForm.is_featured,
             status: eventForm.status,
           },
         ])
@@ -143,8 +141,18 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      setStatusMessage("✅ ¡Evento con enlace de Luma e invitado publicado con éxito!");
-      setEventsList((prev) => [data, ...prev]);
+      setStatusMessage(
+        eventForm.status === "activa"
+          ? "✅ ¡Faena Activa publicada con éxito y fijada como la principal!"
+          : "✅ ¡Faena Pasada registrada con éxito en el catálogo para Memoria Viva!"
+      );
+
+      // Actualizar lista local
+      if (eventForm.status === "activa") {
+        setEventsList((prev) => [data, ...prev.map((e) => ({ ...e, status: "pasada" }))]);
+      } else {
+        setEventsList((prev) => [data, ...prev]);
+      }
 
       // Reset Form
       setEventForm({
@@ -157,8 +165,7 @@ export default function AdminPage() {
         speaker_name: "",
         speaker_linkedin: "",
         guardian: "tochtli",
-        is_featured: false,
-        status: "abierto",
+        status: "activa",
       });
     } catch (err: any) {
       setStatusMessage(`❌ Error al crear evento: ${err?.message || err}`);
@@ -180,15 +187,27 @@ export default function AdminPage() {
     }
   };
 
-  // Toggle Event Status
+  // Toggle Event Status (Activa vs Pasada)
   const handleToggleEventStatus = async (id: string, currentStatus: string) => {
-    const nextStatus = currentStatus === "abierto" ? "finalizado" : "abierto";
+    const nextStatus = currentStatus === "activa" ? "pasada" : "activa";
     try {
       const { supabase } = await import("@/lib/supabase");
+
+      // Si pasa a activa, poner las otras en pasada
+      if (nextStatus === "activa") {
+        await supabase.from("events").update({ status: "pasada" }).eq("status", "activa");
+      }
+
       await supabase.from("events").update({ status: nextStatus }).eq("id", id);
+
       setEventsList((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, status: nextStatus } : e))
+        prev.map((e) => {
+          if (e.id === id) return { ...e, status: nextStatus };
+          if (nextStatus === "activa" && e.status === "activa") return { ...e, status: "pasada" };
+          return e;
+        })
       );
+      setStatusMessage(`🔄 Estado cambiado a Faena ${nextStatus === "activa" ? "Activa 🔥" : "Pasada 📜"}.`);
     } catch (err: any) {
       setStatusMessage(`❌ Error al actualizar estado: ${err.message}`);
     }
@@ -331,7 +350,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tabs Navigation (2 Tabs: Eventos & Memoria Viva) */}
+              {/* Tabs Navigation */}
               <div className="flex gap-3 border-b border-white/10 pb-4">
                 <button
                   onClick={() => setActiveTab("events")}
@@ -341,7 +360,7 @@ export default function AdminPage() {
                       : "bg-white/5 hover:bg-white/10 text-arena"
                   }`}
                 >
-                  📅 Gestión de Eventos ({eventsList.length})
+                  📅 Gestión de Faenas ({eventsList.length})
                 </button>
                 <button
                   onClick={() => setActiveTab("gallery")}
@@ -362,25 +381,55 @@ export default function AdminPage() {
                   <div className="lg:col-span-6 rounded-3xl bg-white/5 border border-white/10 p-6 sm:p-8 space-y-6">
                     <div>
                       <h3 className="font-cinzel text-xl font-bold text-blanco-lunar">
-                        Publicar Nuevo Evento
+                        Publicar o Registrar Faena
                       </h3>
                       <p className="font-inter text-xs text-arena/70 mt-1">
-                        Ingresa los detalles del evento, invitado/ponente y el enlace de registro de Luma.
+                        Publica la faena activa en puerta o registra faenas pasadas para que los miembros puedan seleccionarlas en Memoria Viva.
                       </p>
                     </div>
 
                     <form onSubmit={handleEventSubmit} className="space-y-4">
+                      {/* Estado: Faena Activa vs Faena Pasada */}
+                      <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2">
+                        <label className="font-inter text-xs font-bold text-amber-400 block uppercase tracking-wider">
+                          Tipo de Registro
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-inter font-bold">
+                            <input
+                              type="radio"
+                              name="eventStatus"
+                              checked={eventForm.status === "activa"}
+                              onChange={() => setEventForm({ ...eventForm, status: "activa" })}
+                              className="accent-amber-400"
+                            />
+                            <span>🔥 Faena Activa (En Puerta)</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-inter font-bold">
+                            <input
+                              type="radio"
+                              name="eventStatus"
+                              checked={eventForm.status === "pasada"}
+                              onChange={() => setEventForm({ ...eventForm, status: "pasada" })}
+                              className="accent-terracota"
+                            />
+                            <span>📜 Faena Pasada (Para Memoria)</span>
+                          </label>
+                        </div>
+                      </div>
+
                       {/* Título */}
                       <div>
                         <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
-                          Título del Evento *
+                          Título de la Faena / Evento *
                         </label>
                         <input
                           type="text"
                           required
                           value={eventForm.title}
                           onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                          placeholder="Ej: Taller Práctico de Next.js & IA"
+                          placeholder="Ej: De Estudiante a Tech Lead"
                           className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm"
                         />
                       </div>
@@ -414,7 +463,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Modalidad: Checkbox / Selector interactivo */}
+                      {/* Modalidad */}
                       <div className="space-y-1.5 bg-azul-noche/60 p-4 rounded-xl border border-white/10">
                         <label className="font-inter text-xs font-bold text-blanco-lunar block">
                           Modalidad del Evento
@@ -454,7 +503,7 @@ export default function AdminPage() {
                           required
                           value={eventForm.location}
                           onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
-                          placeholder={eventForm.is_online ? "Google Meet / YouTube Live" : "Ej: Telmex Hub, CDMX"}
+                          placeholder={eventForm.is_online ? "Google Meet / YouTube Live" : "Ej: Centro Comunitario La Esperanza, CDMX"}
                           className="w-full font-inter bg-white/5 border border-white/15 text-blanco-lunar px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 text-xs sm:text-sm"
                         />
                       </div>
@@ -462,7 +511,7 @@ export default function AdminPage() {
                       {/* Link de Luma */}
                       <div>
                         <label className="font-inter text-xs font-bold text-amber-400 block mb-1">
-                          Enlace de Registro en Luma (href) *
+                          Enlace del Evento en Luma *
                         </label>
                         <input
                           type="url"
@@ -474,11 +523,11 @@ export default function AdminPage() {
                         />
                       </div>
 
-                      {/* Datos del Invitado / Ponente (Nombre y LinkedIn) */}
+                      {/* Ponente / Invitado: Nombre y LinkedIn */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                         <div>
                           <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
-                            Nombre del Invitado / Speaker
+                            Nombre del Ponente / Invitado
                           </label>
                           <input
                             type="text"
@@ -490,7 +539,7 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
-                            LinkedIn del Invitado
+                            LinkedIn del Ponente
                           </label>
                           <input
                             type="url"
@@ -502,34 +551,20 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Guardián y Destacado */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        <div>
-                          <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
-                            Guardián Tequio
-                          </label>
-                          <select
-                            value={eventForm.guardian}
-                            onChange={(e) => setEventForm({ ...eventForm, guardian: e.target.value })}
-                            className="w-full font-inter bg-azul-noche border border-white/15 text-blanco-lunar px-3 py-2.5 rounded-xl focus:outline-none text-xs sm:text-sm"
-                          >
-                            <option value="tochtli">🐰 Tochtli (Mentoría)</option>
-                            <option value="tlacu">🦝 Tlacu (Forja)</option>
-                            <option value="kuku">🪶 Kuku (Caravanas)</option>
-                          </select>
-                        </div>
-
-                        <div className="flex items-center pt-6">
-                          <label className="flex items-center gap-2 cursor-pointer text-xs font-inter">
-                            <input
-                              type="checkbox"
-                              checked={eventForm.is_featured}
-                              onChange={(e) => setEventForm({ ...eventForm, is_featured: e.target.checked })}
-                              className="accent-amber-400 w-4 h-4 rounded"
-                            />
-                            <span>Marcar como Faena Destacada 🔥</span>
-                          </label>
-                        </div>
+                      {/* Guardián */}
+                      <div>
+                        <label className="font-inter text-xs font-bold text-blanco-lunar block mb-1">
+                          Guardián Tequio
+                        </label>
+                        <select
+                          value={eventForm.guardian}
+                          onChange={(e) => setEventForm({ ...eventForm, guardian: e.target.value })}
+                          className="w-full font-inter bg-azul-noche border border-white/15 text-blanco-lunar px-3 py-2.5 rounded-xl focus:outline-none text-xs sm:text-sm"
+                        >
+                          <option value="tochtli">🐰 Tochtli (Mentoría)</option>
+                          <option value="tlacu">🦝 Tlacu (Forja)</option>
+                          <option value="kuku">🪶 Kuku (Caravanas)</option>
+                        </select>
                       </div>
 
                       {/* Submit */}
@@ -538,22 +573,26 @@ export default function AdminPage() {
                         disabled={isSubmitting}
                         className="cursor-pointer w-full font-inter font-bold text-blanco-lunar py-3.5 rounded-xl bg-terracota hover:bg-orange-600 transition-all shadow-lg text-sm disabled:opacity-50"
                       >
-                        {isSubmitting ? "Publicando en Supabase..." : "Publicar Evento →"}
+                        {isSubmitting ? "Guardando en Supabase..." : "Guardar Faena →"}
                       </button>
                     </form>
                   </div>
 
-                  {/* Lista de Eventos Actuales */}
+                  {/* Lista de Eventos / Faenas en Supabase */}
                   <div className="lg:col-span-6 space-y-4">
                     <h3 className="font-cinzel text-xl font-bold text-blanco-lunar">
-                      Eventos Activos ({eventsList.length})
+                      Catálogo de Faenas ({eventsList.length})
                     </h3>
 
                     <div className="space-y-4 max-h-[750px] overflow-y-auto pr-1">
                       {eventsList.map((evt) => (
                         <div
                           key={evt.id}
-                          className="rounded-2xl bg-white/5 border border-white/10 p-5 space-y-3 relative group"
+                          className={`rounded-2xl border p-5 space-y-3 relative group transition-all ${
+                            evt.status === "activa"
+                              ? "bg-amber-500/10 border-amber-400/50 shadow-[0_0_20px_rgba(245,166,35,0.15)]"
+                              : "bg-white/5 border-white/10"
+                          }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="space-y-1">
@@ -561,11 +600,15 @@ export default function AdminPage() {
                                 <span className="text-xs font-bold text-amber-400 font-inter">
                                   {evt.guardian === "tochtli" ? "🐰 Tochtli" : evt.guardian === "kuku" ? "🪶 Kuku" : "🦝 Tlacu"}
                                 </span>
-                                {evt.is_featured && (
-                                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/40">
-                                    Destacado 🔥
-                                  </span>
-                                )}
+                                <span
+                                  className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                    evt.status === "activa"
+                                      ? "bg-amber-400 text-azul-noche"
+                                      : "bg-white/10 text-arena/70"
+                                  }`}
+                                >
+                                  {evt.status === "activa" ? "🔥 Faena Activa" : "📜 Faena Pasada"}
+                                </span>
                               </div>
                               <h4 className="font-cinzel font-bold text-blanco-lunar text-base">
                                 {evt.title}
@@ -586,7 +629,7 @@ export default function AdminPage() {
                             <p>{evt.is_online ? "🖥️ En línea:" : "📍 Presencial:"} {evt.location}</p>
                             {evt.speaker_name && (
                               <p className="flex items-center gap-1.5 text-blanco-lunar">
-                                <span>🎙️ Invitado:</span>
+                                <span>🎙️ Ponente:</span>
                                 <strong>{evt.speaker_name}</strong>
                                 {evt.speaker_linkedin && (
                                   <a
@@ -609,12 +652,12 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleToggleEventStatus(evt.id, evt.status)}
                               className={`cursor-pointer font-bold px-3 py-1 rounded-lg transition-all ${
-                                evt.status === "abierto"
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                                  : "bg-gray-500/20 text-gray-400 border border-gray-500/40"
+                                evt.status === "activa"
+                                  ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 hover:bg-amber-400/30"
+                                  : "bg-white/10 text-arena hover:text-white"
                               }`}
                             >
-                              {evt.status === "abierto" ? "● Abierto para Luma" : "○ Finalizado"}
+                              {evt.status === "activa" ? "Cambiar a Faena Pasada 📜" : "Fijar como Faena Activa 🔥"}
                             </button>
 
                             <a
@@ -623,7 +666,7 @@ export default function AdminPage() {
                               rel="noopener noreferrer"
                               className="text-amber-400 hover:underline text-[11px]"
                             >
-                              Probar link Luma ↗
+                              Abrir Luma ↗
                             </a>
                           </div>
                         </div>
@@ -633,7 +676,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* TAB 2: MEMORIA VIVA (PUBLICACIONES DE LINKEDIN) */}
+              {/* TAB 2: MEMORIA VIVA */}
               {activeTab === "gallery" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">

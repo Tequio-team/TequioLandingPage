@@ -13,11 +13,9 @@ export function extractLumaEventId(url: string): string {
   if (!url) return "";
   try {
     const clean = url.trim();
-    // Match evt-XXXXX in URL
     const evtMatch = clean.match(/evt-[a-zA-Z0-9_-]+/i);
     if (evtMatch) return evtMatch[0];
     
-    // Otherwise extract the last pathname slug
     const parsed = new URL(clean.startsWith("http") ? clean : `https://${clean}`);
     const segments = parsed.pathname.split("/").filter(Boolean);
     if (segments.length > 0) {
@@ -37,7 +35,6 @@ export default function LumaCheckoutButton({
   disabled = false,
 }: LumaCheckoutButtonProps) {
   useEffect(() => {
-    // Dynamically inject Luma Checkout script if not present
     if (typeof window !== "undefined" && !document.getElementById("luma-checkout")) {
       const script = document.createElement("script");
       script.id = "luma-checkout";
@@ -84,7 +81,7 @@ export default function LumaCheckoutButton({
     >
       {children || (
         <>
-          <span>Registrarme en Luma</span>
+          <span>Ver evento en Luma</span>
           <span className="text-xl">→</span>
         </>
       )}

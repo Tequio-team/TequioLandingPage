@@ -71,9 +71,6 @@ export default function Navbar() {
     if (pathname === "/manifiesto") {
       return link.href === "/manifiesto";
     }
-    if (pathname === "/unirse") {
-      return false; // "Inscribirme" button is active
-    }
     // Home Page "/"
     if (pathname === "/") {
       if (link.href === "/" && activeSection === "hero") return true;
@@ -145,16 +142,16 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* CTA Button & Mobile Hamburger */}
+        {/* CTA Button to Luma Events & Mobile Hamburger */}
         <div className="flex items-center gap-4">
           <Link
-            href="/unirse"
-            className={`cursor-pointer font-inter text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${pathname === "/unirse"
+            href="/eventos"
+            className={`cursor-pointer font-inter text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${pathname === "/eventos"
                 ? "bg-ambar text-azul-noche shadow-[0_0_25px_rgba(245,166,35,0.7)] scale-105"
                 : "bg-terracota text-blanco-lunar hover:bg-terracota/90 hover:shadow-[0_0_20px_rgba(193,91,58,0.5)]"
               }`}
           >
-            Inscribirme
+            Ver Eventos
           </Link>
 
           {/* Mobile Hamburger Toggle Button */}
@@ -182,7 +179,7 @@ export default function Navbar() {
           >
             <div className="flex flex-col gap-5">
               <span className="font-inter text-xs uppercase tracking-[0.2em] text-ambar font-semibold">
-                Navegación Ceremonial
+                Navegación
               </span>
 
               {NAV_LINKS.map((link) => {

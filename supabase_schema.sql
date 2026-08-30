@@ -1,9 +1,9 @@
 -- ==============================================================================
--- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (EVENTOS LUMA & MEMORIA VIVA) ✦
+-- ✦ ESQUEMA DE BASE DE DATOS SUPABASE — COMUNIDAD TEQUIO (EVENTOS & MEMORIA VIVA) ✦
 -- Copia y ejecuta este script en el SQL Editor de tu consola de Supabase.
 -- ==============================================================================
 
--- 1. LIMPIEZA INICIAL DE TABLAS Y TRIGGERS OBSOLETOS
+-- 1. LIMPIEZA INICIAL TOTAL (RESET LIMPIO)
 DROP VIEW IF EXISTS public.member_event_history CASCADE;
 DROP TRIGGER IF EXISTS trigger_increment_route_interest ON public.route_interests CASCADE;
 DROP TRIGGER IF EXISTS trigger_link_member_registration ON public.event_registrations CASCADE;
@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS public.events CASCADE;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ==============================================================================
--- TABLA 1: EVENTS (Agenda de Faenas con Registro Luma e Invitado)
+-- TABLA 1: EVENTS (Agenda de Faenas Tequio: Activas y Pasadas)
 -- ==============================================================================
 CREATE TABLE public.events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -33,12 +33,11 @@ CREATE TABLE public.events (
   time_display TEXT NOT NULL DEFAULT '07:00 PM — 08:30 PM (CDMX)',
   is_online BOOLEAN NOT NULL DEFAULT true, -- true = 🖥️ En línea / Google Meet | false = 📍 En persona / Presencial
   location TEXT NOT NULL DEFAULT 'Google Meet',
-  luma_url TEXT NOT NULL, -- Enlace de registro Luma (ej: https://luma.com/event/evt-C1nAPcQ4ME9mTeL o https://lu.ma/...)
-  speaker_name TEXT, -- Nombre completo del invitado / ponente
-  speaker_linkedin TEXT, -- Enlace al LinkedIn del invitado
+  luma_url TEXT NOT NULL, -- Enlace de Luma (ej: https://luma.com/event/evt-C1nAPcQ4ME9mTeL o https://lu.ma/...)
+  speaker_name TEXT, -- Nombre completo del ponente / invitado
+  speaker_linkedin TEXT, -- Enlace al LinkedIn del ponente
   guardian TEXT NOT NULL DEFAULT 'tochtli' CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
-  is_featured BOOLEAN NOT NULL DEFAULT false,
-  status TEXT NOT NULL DEFAULT 'abierto' CHECK (status IN ('abierto', 'finalizado')),
+  status TEXT NOT NULL DEFAULT 'activa' CHECK (status IN ('activa', 'pasada')), -- 'activa' = Faena en puerta | 'pasada' = Faena ya realizada
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -50,9 +49,8 @@ CREATE TABLE public.completed_works_gallery (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   author_name TEXT NOT NULL,
   linkedin_post_url TEXT NOT NULL, -- Enlace 100% verificado de LinkedIn
-  quote TEXT NOT NULL, -- Frase/reflexión obtenida del evento (máximo 50 palabras)
-  event_title TEXT NOT NULL, -- Nombre del evento al que asistió
-  event_id UUID REFERENCES public.events(id) ON DELETE SET NULL,
+  quote TEXT NOT NULL, -- Frase / lección obtenida del evento (máximo 50 palabras)
+  event_title TEXT NOT NULL, -- Título de la faena a la que asistió
   guardian TEXT NOT NULL DEFAULT 'tlacu' CHECK (guardian IN ('tochtli', 'tlacu', 'kuku')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -81,7 +79,7 @@ CREATE POLICY "Gestión total de memoria viva"
   ON public.completed_works_gallery FOR ALL TO public USING (true);
 
 -- ==============================================================================
--- DATOS INICIALES (SEED DATA CON ENLACES DE LUMA, INVITADOS Y MEMORIA VIVA)
+-- DATOS INICIALES (SEED DATA: FAENAS ACTIVAS / PASADAS & MEMORIA VIVA)
 -- ==============================================================================
 
 INSERT INTO public.events (
@@ -94,7 +92,6 @@ INSERT INTO public.events (
   speaker_name,
   speaker_linkedin,
   guardian,
-  is_featured,
   status
 ) VALUES 
 (
@@ -107,8 +104,7 @@ INSERT INTO public.events (
   'David Reyes',
   'https://www.linkedin.com/in/david-reyes-tech',
   'tochtli',
-  true,
-  'abierto'
+  'activa'
 ),
 (
   'Hackathon por la Comunidad: Código Abierto con Causa',
@@ -120,8 +116,7 @@ INSERT INTO public.events (
   'Sofía Morales & Mentores Tequio',
   'https://www.linkedin.com/in/sofia-morales-dev',
   'tlacu',
-  false,
-  'abierto'
+  'pasada'
 ),
 (
   'Caravana al DevFest CDMX 2026',
@@ -133,8 +128,7 @@ INSERT INTO public.events (
   'Líderes de Comunidad GDG & Tequio',
   'https://www.linkedin.com/company/tequio',
   'kuku',
-  false,
-  'abierto'
+  'pasada'
 );
 
 INSERT INTO public.completed_works_gallery (
