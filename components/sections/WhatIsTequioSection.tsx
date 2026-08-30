@@ -1,6 +1,4 @@
 "use client";
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import StarField from "@/components/ui/StarField";
 
@@ -21,9 +19,6 @@ const PARAGRAPHS = [
 ];
 
 export default function WhatIsTequioSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
   const renderHighlightedText = (text: string) => {
     let parts: React.ReactNode[] = [text];
     HIGHLIGHTED_KEYWORDS.forEach((kw) => {
@@ -51,7 +46,6 @@ export default function WhatIsTequioSection() {
   return (
     <section
       id="que-es-tequio"
-      ref={ref}
       className="relative py-32 overflow-hidden bg-azul-noche"
       style={{
         background: "linear-gradient(to bottom, #0B1020 0%, #151D32 50%, #0B1020 100%)",
@@ -81,70 +75,35 @@ export default function WhatIsTequioSection() {
           {/* Main Text Content */}
           <div className="flex-1 relative pl-8">
             
-            {/* Chisel Vertical Entrance Line */}
-            <svg
-              className="absolute left-0 top-0 h-full"
-              width="6"
-              viewBox="0 0 6 100"
-              preserveAspectRatio="none"
-            >
-              <motion.line
-                x1="3" y1="0" x2="3" y2="100"
-                stroke="#C15B3A"
-                strokeWidth="4"
-                strokeDasharray="6 3 2 3"
-                strokeLinecap="round"
-                initial={{ strokeDashoffset: 200 }}
-                animate={inView ? { strokeDashoffset: 0 } : {}}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
+            {/* Chisel Vertical Line */}
+            <div className="absolute left-0 top-0 h-full w-[4px] bg-terracota rounded-full opacity-80" />
 
             {/* Título de Sección */}
-            <motion.h2
-              className="font-cinzel text-blanco-lunar text-4xl md:text-6xl mb-8 tracking-wide font-bold"
-              initial={{ opacity: 0, y: 25 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7 }}
-            >
+            <h2 className="font-cinzel text-blanco-lunar text-4xl md:text-6xl mb-8 tracking-wide font-bold">
               Qué es Tequio
-            </motion.h2>
+            </h2>
 
             {/* Paragraphs */}
             {PARAGRAPHS.map((para, i) => (
-              <motion.p
+              <p
                 key={i}
                 className="font-inter text-arena text-lg leading-[1.85] mb-6 opacity-90"
-                initial={{ opacity: 0, y: 12 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.25 + i * 0.12, duration: 0.6 }}
               >
                 {renderHighlightedText(para)}
-              </motion.p>
+              </p>
             ))}
 
             {/* Cita Destacada */}
-            <motion.blockquote
-              initial={{ opacity: 0, scale: 0.98, x: -10 }}
-              animate={inView ? { opacity: 1, scale: 1, x: 0 } : {}}
-              transition={{ delay: 0.7, duration: 0.7 }}
-              className="my-10 pl-6 border-l-[4px] border-terracota bg-white/[0.04] py-6 pr-6 rounded-r-2xl shadow-xl"
-            >
+            <blockquote className="my-10 pl-6 border-l-[4px] border-terracota bg-white/[0.04] py-6 pr-6 rounded-r-2xl shadow-xl">
               <p className="font-cinzel text-amber-300 text-xl md:text-2xl leading-relaxed italic font-bold">
                 &quot;El conocimiento que no se comparte se apaga. Quien hoy recibe guía, mañana lidera y acompaña a otros.&quot;
               </p>
-            </motion.blockquote>
+            </blockquote>
 
           </div>
 
           {/* Right Visual Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={inView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="w-full lg:w-[420px] h-[480px] relative rounded-3xl overflow-hidden border-2 border-terracota/30 shadow-2xl flex-shrink-0"
-          >
+          <div className="w-full lg:w-[420px] h-[480px] relative rounded-3xl overflow-hidden border-2 border-terracota/30 shadow-2xl flex-shrink-0">
             <Image
               src="/jpg/moment1.jpg"
               alt="Comunidad Tequio en faena"
@@ -161,7 +120,7 @@ export default function WhatIsTequioSection() {
                 Aprender en tribu, construir en comunidad.
               </p>
             </div>
-          </motion.div>
+          </div>
 
         </div>
       </div>

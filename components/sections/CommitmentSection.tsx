@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import BrasaParticles from "@/components/ui/BrasaParticles";
@@ -28,8 +28,6 @@ const DEFAULT_POSTS: Array<{
 ];
 
 export default function CommitmentSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
   const [currentSlide, setCurrentSlide] = useState(0);
   const [posts, setPosts] = useState(DEFAULT_POSTS);
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -80,7 +78,6 @@ export default function CommitmentSection() {
   return (
     <section
       id="compromiso"
-      ref={ref}
       className="relative py-28 overflow-hidden bg-azul-noche"
       style={{
         background: `
@@ -97,13 +94,7 @@ export default function CommitmentSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* COLUMNA IZQUIERDA (50% / ESLOGAN & MANIFIESTO) */}
-          <motion.div
-            className="lg:col-span-6 space-y-6 text-left"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
+          <div className="lg:col-span-6 space-y-6 text-left">
             <span className="font-inter text-terracota text-xs md:text-sm uppercase tracking-[0.25em] font-semibold block">
               ✦ Nuestro Compromiso ✦
             </span>
@@ -125,16 +116,11 @@ export default function CommitmentSection() {
                 <span className="text-xl">→</span>
               </Link>
             </div>
-          </motion.div>
+          </div>
 
           {/* COLUMNA DERECHA (50% / POST EN VIVO DE LINKEDIN + OVERLAY CON TLACU, TÍTULO Y BOTÓN LINKEDIN) */}
-          <motion.div
-            className="lg:col-span-6 relative"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-          >
+          <div className="lg:col-span-6 relative">
+            
             {/* Header Nav del Carrusel */}
             <div className="flex items-center justify-between font-inter text-xs text-amber-400 font-bold mb-3 px-1">
               <span>
@@ -167,14 +153,14 @@ export default function CommitmentSection() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.3 }}
                 className="relative rounded-3xl overflow-hidden border-2 border-terracota/40 bg-azul-noche/95 shadow-2xl min-h-[440px] flex flex-col justify-between"
               >
                 {/* IFRAME EN VIVO DE LINKEDIN */}
                 <div className="relative w-full h-[400px] bg-black/60 overflow-hidden flex items-center justify-center">
                   {!iframeLoaded && !isShortLink && (
                     <div className="absolute inset-0 bg-gradient-to-r from-azul-noche via-white/10 to-azul-noche animate-pulse flex items-center justify-center z-10">
-                      <span className="font-inter text-xs text-amber-400 font-bold animate-bounce">
+                      <span className="font-inter text-xs text-amber-400 font-bold">
                         ⚡ Cargando post en vivo...
                       </span>
                     </div>
@@ -189,7 +175,7 @@ export default function CommitmentSection() {
                       allowFullScreen={false}
                       title={currentPost.title}
                       onLoad={() => setIframeLoaded(true)}
-                      className={`w-full h-[400px] transition-opacity duration-500 ${
+                      className={`w-full h-[400px] transition-opacity duration-300 ${
                         iframeLoaded ? "opacity-100" : "opacity-0"
                       }`}
                     />
@@ -205,10 +191,9 @@ export default function CommitmentSection() {
                   )}
                 </div>
 
-                {/* OVERLAY EXCLUSIVO: TLACU CON OPACIDAD + TÍTULO Y BOTÓN VER LINKEDIN */}
+                {/* OVERLAY EXCLUSIVO: TLACU CON OPACIDAD + TÍTULO Y BOTÓN LINKEDIN */}
                 <div className="p-5 bg-gradient-to-t from-azul-noche via-azul-noche/95 to-azul-noche/70 z-30 flex items-center justify-between gap-4 border-t border-white/10 relative overflow-hidden">
                   
-                  {/* ILUSTRACIÓN TLACU FLOTANTE EN OPACIDAD EN EL FONDO DEL OVERLAY */}
                   <div className="absolute right-28 -bottom-4 w-28 h-28 opacity-25 pointer-events-none z-0">
                     <Image
                       src="/png/tlacu.png"
@@ -218,7 +203,6 @@ export default function CommitmentSection() {
                     />
                   </div>
 
-                  {/* TÍTULO Y AUTOR */}
                   <div className="space-y-0.5 relative z-10 max-w-[65%]">
                     <h4 className="font-cinzel text-blanco-lunar text-sm font-bold line-clamp-1">
                       {currentPost.title}
@@ -230,7 +214,6 @@ export default function CommitmentSection() {
                     )}
                   </div>
 
-                  {/* BOTÓN VER EN LINKEDIN */}
                   <a
                     href={currentPost.linkedinPostUrl}
                     target="_blank"
@@ -263,7 +246,7 @@ export default function CommitmentSection() {
                 />
               ))}
             </div>
-          </motion.div>
+          </div>
 
         </div>
 

@@ -1,6 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { useState } from "react";
 import Image from "next/image";
 import StarField from "@/components/ui/StarField";
 
@@ -18,20 +17,16 @@ const FOOTER_LINKS = [
 ];
 
 export default function FooterSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
   const [activeGuardianHover, setActiveGuardianHover] = useState<string | null>(null);
 
   return (
     <footer
       id="footer"
-      ref={ref}
       className="relative py-24 overflow-hidden bg-azul-noche"
       style={{
         background: "radial-gradient(ellipse at center, #151D32 0%, #080C18 100%)",
       }}
     >
-      {/* Noche Serena con Horizonte Estrellado (Cierra el ciclo visual) */}
       <StarField count={34} isMitlaShape={true} className="opacity-60" />
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
@@ -56,7 +51,7 @@ export default function FooterSection() {
             &quot;Tequio no es un destino — es el caminar juntos.&quot;
           </h3>
 
-          {/* Enlaces Esenciales con Subrayado Ámbar Easing Suave (0 -> 100% en 300ms) */}
+          {/* Enlaces Esenciales */}
           <div className="flex flex-wrap justify-center gap-8 mt-6">
             {FOOTER_LINKS.map((link) => (
               <a
@@ -73,7 +68,7 @@ export default function FooterSection() {
           </div>
         </div>
 
-        {/* Bottom Bar: Los Tres Guardianes Custodiando Juntos la Despedida */}
+        {/* Bottom Bar: Los Tres Guardianes */}
         <div className="pt-12 flex flex-col md:flex-row items-center justify-between gap-8">
           
           {/* Firma Comunitaria */}
@@ -81,22 +76,14 @@ export default function FooterSection() {
             © 2026 Comunidad Tequio · Construido en colectivo.
           </p>
 
-          {/* Los 3 Guardianes Custodiando Juntos (48px) con Tooltip Flotante */}
-          <motion.div
-            className="flex items-center gap-5 relative"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+          {/* Los 3 Guardianes */}
+          <div className="flex items-center gap-5 relative">
             {GUARDIANS_FOOTER.map((g) => (
-              <motion.div
+              <div
                 key={g.id}
                 onMouseEnter={() => setActiveGuardianHover(g.name)}
                 onMouseLeave={() => setActiveGuardianHover(null)}
-                whileHover={{ scale: 1.08, y: -4 }}
-                transition={{ duration: 0.25 }}
-                className="relative cursor-pointer"
+                className="relative cursor-pointer hover:-translate-y-1 hover:scale-105 transition-all duration-200"
               >
                 <Image
                   src={g.src}
@@ -106,11 +93,9 @@ export default function FooterSection() {
                   className={`object-contain ${g.id === "kuku" ? "scale-125" : ""}`}
                 />
 
-                {/* Tooltip con nombre del guardián al hacer hover */}
+                {/* Tooltip */}
                 {activeGuardianHover === g.name && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
+                  <div
                     className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 rounded-md text-[10px] font-inter text-blanco-lunar whitespace-nowrap pointer-events-none z-30"
                     style={{
                       background: "rgba(11, 16, 32, 0.95)",
@@ -119,13 +104,14 @@ export default function FooterSection() {
                     }}
                   >
                     {g.name}
-                  </motion.div>
+                  </div>
                 )}
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
 
         </div>
+
       </div>
     </footer>
   );
