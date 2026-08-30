@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { href: "/#que-es-tequio", sectionId: "que-es-tequio", label: "Propósito", guardianBadge: "📜" },
   { href: "/#pilares", sectionId: "pilares", label: "Pilares", guardianBadge: "🧱" },
   { href: "/#guardianes", sectionId: "guardianes", label: "Guardianes", guardianBadge: "🐰" },
-  { href: "/eventos", sectionId: "eventos", label: "Faena Viva", guardianBadge: "🦝" },
+  { href: "/eventos", sectionId: "eventos", label: "Eventos", guardianBadge: "🦝" },
   { href: "/manifiesto", sectionId: "manifiesto", label: "Manifiesto", guardianBadge: "🪶" },
 ];
 
@@ -21,7 +21,7 @@ export default function Navbar() {
   const [visible, setVisible] = useState(true);
   const [activeSection, setActiveSection] = useState("hero");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // Easter Egg Click Count on Medallion "O"
   const [logoClicks, setLogoClicks] = useState(0);
   const [easterEggOpen, setEasterEggOpen] = useState(false);
@@ -125,9 +125,8 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`cursor-pointer font-inter text-sm relative transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ambar rounded px-1.5 py-1 group ${
-                  active ? "text-ambar font-bold drop-shadow-[0_0_8px_rgba(245,166,35,0.6)]" : "text-arena/80 hover:text-ambar"
-                }`}
+                className={`cursor-pointer font-inter text-sm relative transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ambar rounded px-1.5 py-1 group ${active ? "text-ambar font-bold drop-shadow-[0_0_8px_rgba(245,166,35,0.6)]" : "text-arena/80 hover:text-ambar"
+                  }`}
               >
                 {link.label}
 
@@ -150,11 +149,10 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <Link
             href="/unirse"
-            className={`cursor-pointer font-inter text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
-              pathname === "/unirse"
+            className={`cursor-pointer font-inter text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${pathname === "/unirse"
                 ? "bg-ambar text-azul-noche shadow-[0_0_25px_rgba(245,166,35,0.7)] scale-105"
                 : "bg-terracota text-blanco-lunar hover:bg-terracota/90 hover:shadow-[0_0_20px_rgba(193,91,58,0.5)]"
-            }`}
+              }`}
           >
             Inscribirme
           </Link>
@@ -194,9 +192,8 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`font-cinzel text-2xl font-bold tracking-wide border-b border-white/10 pb-3 flex items-center justify-between transition-colors ${
-                      active ? "text-ambar border-ambar" : "text-blanco-lunar hover:text-ambar"
-                    }`}
+                    className={`font-cinzel text-2xl font-bold tracking-wide border-b border-white/10 pb-3 flex items-center justify-between transition-colors ${active ? "text-ambar border-ambar" : "text-blanco-lunar hover:text-ambar"
+                      }`}
                   >
                     <span>{link.label}</span>
                     <span className="text-xl">{link.guardianBadge}</span>
