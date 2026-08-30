@@ -35,9 +35,11 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
       const seed = (i + 1) * 137.508;
       const top = ((seed * 7.3) % 90) + 5;
       const left = ((seed * 3.7) % 90) + 5;
-      const delay = (seed * 0.017) % 6;
-      const duration = 5 + (seed * 0.013) % 5;
-      const size = 8 + (seed * 0.011) % 8;
+      // Spread delays widely so not all stars pulse simultaneously
+      const delay = (seed * 0.031) % 8;
+      // Longer, more varied durations: 7–13s for very gentle drift
+      const duration = 7 + (seed * 0.019) % 6;
+      const size = 6 + (seed * 0.009) % 8;
       const layer = ((i % 3) + 1) as 1 | 2 | 3;
       return {
         id: i,
@@ -56,7 +58,7 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
     <div className={`absolute inset-0 pointer-events-none overflow-hidden ${className}`}>
       
       {/* Códice Celestial Map Lines connecting Rabbit Constellation */}
-      <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none">
+      <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none">
         <polyline
           points="
             180,90
@@ -71,7 +73,7 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
           fill="none"
           stroke="#F5A623"
           strokeWidth="1.5"
-          strokeDasharray="4 4"
+          strokeDasharray="4 6"
         />
         {/* Subtle connecting line to manifesto */}
         <path
@@ -79,11 +81,11 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
           fill="none"
           stroke="#FFD56B"
           strokeWidth="1"
-          strokeDasharray="2 4"
+          strokeDasharray="2 5"
         />
       </svg>
 
-      {/* Rabbit Constellation Fixed Star Nodes */}
+      {/* Rabbit Constellation Fixed Star Nodes — staggered twinkle */}
       {RABBIT_CONSTELLATION.map((pt, i) => (
         <div
           key={`rabbit-${i}`}
@@ -91,12 +93,14 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
           style={{
             top: pt.top,
             left: pt.left,
-            animationDelay: `${i * 0.4}s`,
-            animationDuration: "4s",
+            // Each star starts at a different phase so they never all dim at once
+            animationDelay: `${(i * 0.85).toFixed(2)}s`,
+            animationDuration: `${(5 + i * 0.6).toFixed(2)}s`,
+            willChange: "opacity, transform",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_10px_#F5A623]">
-            <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#FFD56B" opacity="0.9" />
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_8px_#F5A623]">
+            <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#FFD56B" opacity="0.88" />
             <circle cx="12" cy="12" r="3" fill="#F5A623" />
           </svg>
         </div>
@@ -112,7 +116,9 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
             left: star.left,
             animationDelay: star.delay,
             animationDuration: star.duration,
-            opacity: star.layer === 1 ? 0.3 : star.layer === 2 ? 0.6 : 0.85,
+            // Base opacity by layer — compositor handles the twinkle delta
+            opacity: star.layer === 1 ? 0.28 : star.layer === 2 ? 0.55 : 0.80,
+            willChange: "opacity, transform",
           }}
         >
           {isMitlaShape ? (
@@ -125,7 +131,7 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
               <path
                 d="M12 2 L22 12 L12 22 L2 12 Z M12 6 L18 12 L12 18 L6 12 Z"
                 fill={star.isMainNode ? "#F5A623" : "#FFD56B"}
-                opacity="0.85"
+                opacity="0.82"
               />
             </svg>
           ) : (
@@ -135,7 +141,7 @@ export default function StarField({ count = 28, className = "", isMitlaShape = t
                 width: `${star.size / 4}px`,
                 height: `${star.size / 4}px`,
                 background: "radial-gradient(circle, #FFD56B, #F5A623)",
-                boxShadow: "0 0 6px 2px rgba(245,166,35,0.5)",
+                boxShadow: "0 0 5px 1px rgba(245,166,35,0.45)",
               }}
             />
           )}

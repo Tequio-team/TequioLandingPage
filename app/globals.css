@@ -63,6 +63,8 @@
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 section[id] {
@@ -77,9 +79,16 @@ body {
 }
 
 /* ===================================================
-   Custom Cursor Ambient Accent (Non-blocking)
+   GPU Compositing Layer Promotion
+   Forces elements that animate to their own GPU layer,
+   preventing repaints from bleeding into other layers.
    =================================================== */
-/* Native cursors restored for seamless clickability */
+[data-motion],
+.motion-safe {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
 
 /* ===================================================
    Scrollbar
@@ -97,42 +106,47 @@ body {
 
 /* ===================================================
    Keyframe Animations
+   Only animating opacity & transform (compositor-only)
+   to guarantee 60fps without triggering layout/paint.
    =================================================== */
-@keyframes orbit {
-  from { transform: rotate(0deg) translateX(160px) rotate(0deg); }
-  to   { transform: rotate(360deg) translateX(160px) rotate(-360deg); }
+
+/* Twinkle: slow, smooth, never drops below 0.35 to avoid flash */
+@keyframes twinkle {
+  0%   { opacity: 0.45; transform: scale(0.97); }
+  40%  { opacity: 0.85; transform: scale(1.03); }
+  70%  { opacity: 0.60; transform: scale(1.00); }
+  100% { opacity: 0.45; transform: scale(0.97); }
 }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 0.7; }
-  50%       { opacity: 0.95; }
+/* Float: gentle vertical breathing, no abrupt jumps */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) translateZ(0); }
+  50%       { transform: translateY(-6px) translateZ(0); }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.05); }
-}
-
-@keyframes floatUp {
-  0%   { transform: translateY(100vh); opacity: 0; }
-  5%   { opacity: 0.7; }
-  95%  { opacity: 0.4; }
-  100% { transform: translateY(-10vh); opacity: 0; }
+  0%, 100% { transform: scale(1) translateZ(0); }
+  50%       { transform: scale(1.04) translateZ(0); }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from { transform: translateY(24px) translateZ(0); opacity: 0; }
+  to   { transform: translateY(0) translateZ(0);    opacity: 1; }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { filter: drop-shadow(0 0 10px rgba(245,166,35,0.4)); }
-  50%       { filter: drop-shadow(0 0 30px rgba(245,166,35,0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(245,166,35,0.35)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(245,166,35,0.75)); }
 }
 
 @keyframes badgePulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.05); }
+  0%, 100% { transform: scale(1) translateZ(0); }
+  50%       { transform: scale(1.04) translateZ(0); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(160px) rotate(0deg) translateZ(0); }
+  to   { transform: rotate(360deg) translateX(160px) rotate(-360deg) translateZ(0); }
 }
 
 @keyframes diagonalMove {
@@ -140,26 +154,41 @@ body {
   100% { background-position: 200% 200%; }
 }
 
-@keyframes drawLine {
-  from { stroke-dashoffset: 500; }
-  to   { stroke-dashoffset: 0; }
+@keyframes walk {
+  0%, 100% { transform: translateY(0px) translateZ(0); }
+  50%       { transform: translateY(-4px) translateZ(0); }
 }
 
-@keyframes walk {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-4px); }
+@keyframes shimmer {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 /* ===================================================
    Utility animation classes
    =================================================== */
-.animate-orbit-slow  { animation: orbit 20s linear infinite; }
-.animate-orbit-med   { animation: orbit 15s linear infinite; }
-.animate-orbit-fast  { animation: orbit 10s linear infinite; }
-.animate-pulse-glow  { animation: pulseGlow 3s ease-in-out infinite; }
-.animate-badge-pulse { animation: badgePulse 2s ease-in-out infinite; }
-.animate-walk        { animation: walk 0.8s ease-in-out infinite; }
-.animate-diagonal    { animation: diagonalMove 3s linear infinite; background-size: 200% 200%; }
+.animate-twinkle       { animation: twinkle 6s ease-in-out infinite; }
+.animate-float         { animation: float 5s ease-in-out infinite; }
+.animate-orbit-slow    { animation: orbit 20s linear infinite; }
+.animate-orbit-med     { animation: orbit 15s linear infinite; }
+.animate-orbit-fast    { animation: orbit 10s linear infinite; }
+.animate-pulse-glow    { animation: pulseGlow 3.5s ease-in-out infinite; }
+.animate-badge-pulse   { animation: badgePulse 2.5s ease-in-out infinite; }
+.animate-walk          { animation: walk 0.85s ease-in-out infinite; }
+.animate-diagonal      { animation: diagonalMove 3s linear infinite; background-size: 200% 200%; }
+.animate-shimmer       { animation: shimmer 2.5s ease-in-out infinite; }
+
+/* ===================================================
+   Reduced Motion — respect user preference
+   =================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* ===================================================
    Font utility classes
@@ -195,9 +224,28 @@ body {
 }
 
 /* ===================================================
-   Image rendering
+   Image rendering — smooth for photographs, sharp for icons
    =================================================== */
-img, svg {
-  image-rendering: crisp-edges;
+img {
+  image-rendering: auto;
+}
+svg {
   shape-rendering: geometricPrecision;
+}
+
+/* ===================================================
+   Smooth card transitions — use opacity+transform only
+   to keep transitions on the GPU compositor thread.
+   =================================================== */
+.card-hover {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity   0.28s ease,
+              box-shadow 0.28s ease;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.card-hover:hover {
+  transform: translateY(-6px) translateZ(0);
 }

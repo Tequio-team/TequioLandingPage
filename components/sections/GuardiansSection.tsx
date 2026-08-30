@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Modal from "@/components/ui/Modal";
 
 const GUARDIANS = [
   {
@@ -43,6 +42,8 @@ const GUARDIANS = [
   },
 ];
 
+import Modal from "@/components/ui/Modal";
+
 export default function GuardiansSection() {
   const [openGuardian, setOpenGuardian] = useState<typeof GUARDIANS[0] | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
@@ -66,7 +67,13 @@ export default function GuardiansSection() {
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-20 md:mb-24 max-w-3xl mx-auto">
+        <motion.div
+          className="text-center mb-20 md:mb-24 max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        >
           <span className="font-inter text-ambar text-xs md:text-sm uppercase tracking-[0.25em] font-semibold mb-2 block">
             Nuestros Alebrijes
           </span>
@@ -76,7 +83,7 @@ export default function GuardiansSection() {
           <p className="font-inter text-arena text-base md:text-lg leading-relaxed opacity-85">
             La identidad y el espíritu de Tequio se representan a través de tres criaturas míticas, inspiradas en nuestras raíces prehispánicas y adaptadas como alebrijes contemporáneos. Cada uno encarna un pilar fundamental de la comunidad.
           </p>
-        </div>
+        </motion.div>
 
         {/* 3 Columnas con espaciado superior adecuado */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 pt-8">
@@ -159,43 +166,64 @@ function GuardianCard({
   const isDimmed = activeHoverId !== null && !isHovered;
 
   return (
-    <div
-      onMouseEnter={onHoverStart}
-      onMouseLeave={onHoverEnd}
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{
+        duration: 0.6,
+        delay: index * 0.12,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onHoverStart={onHoverStart}
+      onHoverEnd={onHoverEnd}
       onClick={onClick}
-      className={`cursor-pointer relative mt-8 pt-12 pb-8 px-6 flex flex-col justify-between transition-all duration-300 rounded-3xl ${
-        isDimmed ? "opacity-75 scale-98" : "opacity-100 scale-100"
-      }`}
+      // Use animate for hover so Framer Motion handles the interpolation
+      // (avoids CSS transition + inline style conflicts)
+      animate={{
+        opacity: isDimmed ? 0.72 : 1,
+        scale: isDimmed ? 0.985 : 1,
+        y: 0,
+      }}
+      whileHover={{ y: -6, scale: 1.0 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="cursor-pointer relative mt-8 pt-12 pb-8 px-6 flex flex-col justify-between rounded-3xl"
       style={{
         background: "rgba(255, 255, 255, 0.035)",
         border: `1px solid ${isHovered ? guardian.color : "rgba(217, 203, 184, 0.12)"}`,
         boxShadow: isHovered
           ? `0 15px 35px ${guardian.color}30, inset 0 0 15px ${guardian.color}15`
           : "0 6px 25px rgba(11, 16, 32, 0.5)",
+        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+        willChange: "transform, opacity",
       }}
     >
-      {/* Aura Ceremonial Contenida */}
-      <div
-        className="absolute -top-10 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full pointer-events-none transition-opacity duration-300"
-        style={{
-          background: guardian.auraBg,
-          opacity: isHovered ? 0.9 : 0.5,
-        }}
+      {/* Aura Ceremonial */}
+      <motion.div
+        className="absolute -top-10 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full pointer-events-none"
+        animate={{ opacity: isHovered ? 0.9 : 0.45 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        style={{ background: guardian.auraBg }}
       />
 
-      {/* PNG 3D Ilustración con Altura y Posición Contenida (Sin Salirse Excesivamente) */}
+      {/* Floating Guardian PNG — separate animation so hover doesn't reset float */}
       <motion.div
         className="absolute -top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center"
-        animate={
-          isHovered
-            ? { y: -4, scale: 1.04 }
-            : { y: [0, -3, 0], rotate: index === 0 ? [0, 0.3, 0] : index === 1 ? [0, -0.3, 0] : [0, 0.3, 0] }
+        // Continuous idle float
+        animate={isHovered
+          ? { y: -8, scale: 1.05 }
+          : { y: [0, -5, 0] }
         }
-        transition={
-          isHovered
-            ? { duration: 0.25, ease: "easeOut" }
-            : { duration: 5 + index, repeat: Infinity, ease: "easeInOut" }
+        transition={isHovered
+          ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+          : {
+              duration: 4.5 + index * 0.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatType: "mirror",
+            }
         }
+        style={{ willChange: "transform" }}
       >
         <div className="relative w-28 h-28 flex items-center justify-center">
           <Image
@@ -206,9 +234,10 @@ function GuardianCard({
             priority
           />
         </div>
-        <div
-          className="w-16 h-2.5 rounded-full blur-sm opacity-30 bg-black -mt-1 transition-opacity duration-300"
-          style={{ opacity: isHovered ? 0.4 : 0.2 }}
+        <motion.div
+          className="w-16 h-2 rounded-full blur-sm bg-black -mt-1"
+          animate={{ opacity: isHovered ? 0.45 : 0.2, scaleX: isHovered ? 1.1 : 1 }}
+          transition={{ duration: 0.35 }}
         />
       </motion.div>
 
@@ -250,14 +279,13 @@ function GuardianCard({
       {/* Action Footer */}
       <div className="pt-4 border-t border-white/10 text-center">
         <span
-          className="font-inter text-xs font-bold inline-flex items-center gap-1 transition-transform group-hover:translate-x-1"
+          className="font-inter text-xs font-bold inline-flex items-center gap-1"
           style={{ color: guardian.color }}
         >
           <span>Conocer mito de origen</span>
           <span>→</span>
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }
-
