@@ -633,34 +633,84 @@ export default function EventosPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredEvents.map((evt) => (
+          {/* AGENDA PINTEREST MASONRY DE EVENTOS */}
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            {filteredEvents.map((evt, idx) => (
               <motion.div
                 key={evt.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-6 rounded-2xl bg-white/[0.035] border border-white/10 flex flex-col justify-between hover:border-ambar/50 transition-all duration-300 group"
+                initial={{ opacity: 0, y: 30, filter: "blur(3px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{
+                  duration: 0.5,
+                  delay: (idx % 3) * 0.12,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                whileHover={{ y: -5 }}
+                className="break-inside-avoid mb-6 rounded-3xl overflow-hidden bg-white/[0.035] border border-amber-500/30 flex flex-col justify-between hover:border-amber-400 hover:shadow-[0_15px_35px_rgba(245,166,35,0.2)] transition-all duration-300 backdrop-blur-xl group"
               >
-                <div>
-                  <h3 className="font-cinzel text-blanco-lunar text-lg font-bold mb-3 group-hover:text-ambar transition-colors">
-                    {evt.title}
-                  </h3>
-                  <div className="space-y-1 font-inter text-xs text-arena/80 mb-4">
-                    <p>📅 {evt.date}</p>
-                    <p>📍 {evt.location}</p>
+                {/* Event Poster / Image Header if present */}
+                {evt.image_url && (
+                  <div className="relative h-44 w-full overflow-hidden border-b border-white/10">
+                    <Image
+                      src={evt.image_url}
+                      alt={evt.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-azul-noche via-transparent to-transparent" />
+                    <span className="absolute top-3 left-3 font-inter text-[10px] uppercase font-bold px-3 py-1 rounded-full bg-azul-noche/90 text-amber-400 border border-amber-400/40">
+                      {evt.typeLabel || " Faena Tequio"}
+                    </span>
+                  </div>
+                )}
+
+                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-inter text-xs font-bold text-amber-400">
+                        {evt.guardianBadge}
+                      </span>
+                      <span className="font-inter text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        {evt.statusTag}
+                      </span>
+                    </div>
+
+                    <h3 className="font-cinzel text-blanco-lunar text-xl font-bold group-hover:text-amber-300 transition-colors">
+                      {evt.title}
+                    </h3>
+
+                    <div className="space-y-1.5 font-inter text-xs text-arena/80 p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <p>📅 <strong>Fecha:</strong> {evt.date}</p>
+                      <p>⏰ <strong>Horario:</strong> {evt.time}</p>
+                      <p>📍 <strong>Transmisión:</strong> {evt.location}</p>
+                      {evt.speaker && <p className="text-amber-300 pt-1">👤 <strong>Ponente:</strong> {evt.speaker}</p>}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/10 flex justify-between items-center">
+                    <button
+                      onClick={() => {
+                        setFormSubmitted(isRegisteredForEvent(evt.id));
+                        setRegistrationModalOpen(true);
+                      }}
+                      className="cursor-pointer font-inter text-xs font-bold text-amber-400 hover:underline inline-flex items-center gap-1.5"
+                    >
+                      <span>{isRegisteredForEvent(evt.id) ? "Ver liga de acceso ✓" : "Reservar lugar →"}</span>
+                    </button>
+
+                    {evt.speaker_social && (
+                      <a
+                        href={evt.speaker_social}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-inter text-[10px] text-arena/60 hover:text-amber-300 underline"
+                      >
+                        Ponente ↗
+                      </a>
+                    )}
                   </div>
                 </div>
-
-                <button
-                  onClick={() => {
-                    setFormSubmitted(isRegisteredForEvent(evt.id));
-                    setRegistrationModalOpen(true);
-                  }}
-                  className="cursor-pointer font-inter text-xs font-bold text-ambar hover:underline inline-flex items-center gap-1 pt-3 border-t border-white/10"
-                >
-                  <span>{isRegisteredForEvent(evt.id) ? "Ver detalles" : "Inscribirme"}</span>
-                  <span>→</span>
-                </button>
               </motion.div>
             ))}
           </div>
