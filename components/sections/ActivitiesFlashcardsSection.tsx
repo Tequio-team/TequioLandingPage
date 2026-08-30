@@ -4,7 +4,6 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import BrasaParticles from "@/components/ui/BrasaParticles";
 
-// Selection of the 3 MOST IMPORTANT flagship activities (1 per guardian)
 const CORE_ACTIVITIES = [
   {
     id: "circulo-de-la-luna",
@@ -72,17 +71,16 @@ export default function ActivitiesFlashcardsSection() {
         background: "linear-gradient(to bottom, #0F172A 0%, #151D32 50%, #0F172A 100%)",
       }}
     >
-      {/* Micro-partículas de brasa de fueguito en Canvas */}
-      <BrasaParticles count={35} className="z-0 opacity-70" />
+      <BrasaParticles count={30} className="z-0 opacity-60" />
 
       <div className="container mx-auto px-6 max-w-5xl relative z-10">
         
-        {/* Header Compacto */}
+        {/* Header */}
         <motion.div
           className="text-center mb-12 max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           <span className="font-inter text-ambar text-xs uppercase tracking-[0.2em] font-semibold mb-2 block">
             ✦ Nuestras Actividades ✦
@@ -92,15 +90,20 @@ export default function ActivitiesFlashcardsSection() {
           </h2>
         </motion.div>
 
-        {/* 3 Flashcards Compactas & Cortas (1 Fila en Desktop, 1 Col en Móvil) */}
+        {/* 3 Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {CORE_ACTIVITIES.map((card, index) => (
             <CompactFlashCard key={card.id} card={card} index={index} inView={inView} />
           ))}
         </div>
 
-        {/* Link Sutil a Eventos */}
-        <div className="mt-10 text-center">
+        {/* Link to Events */}
+        <motion.div
+          className="mt-10 text-center"
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
           <Link
             href="/eventos"
             className="cursor-pointer font-inter text-xs font-semibold text-arena/80 hover:text-ambar transition-colors inline-flex items-center gap-1 border-b border-arena/30 pb-0.5"
@@ -108,7 +111,7 @@ export default function ActivitiesFlashcardsSection() {
             <span>Ver convocatorias y faenas activas</span>
             <span>→</span>
           </Link>
-        </div>
+        </motion.div>
 
       </div>
     </section>
@@ -128,13 +131,18 @@ function CompactFlashCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      whileHover={{ y: -4 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{
+        delay: index * 0.11,
+        duration: 0.55,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      // whileHover via Framer Motion so it's compositor-only
+      whileHover={{ y: -5 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="cursor-pointer relative p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 overflow-hidden"
+      className="cursor-pointer relative p-6 rounded-2xl flex flex-col justify-between overflow-hidden"
       style={{
         background: "rgba(255, 255, 255, 0.035)",
         backdropFilter: "blur(10px)",
@@ -142,10 +150,13 @@ function CompactFlashCard({
         boxShadow: hovered
           ? `0 10px 25px ${card.shadowColor}, inset 0 0 12px ${card.glowColor}`
           : "0 4px 15px rgba(11, 16, 32, 0.4)",
+        // Only animate non-layout properties in CSS
+        transition: "border-color 0.25s ease, box-shadow 0.25s ease",
+        willChange: "transform",
       }}
     >
       <div>
-        {/* Header con Badge de Guardián e Icono */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div
             className="p-2.5 rounded-xl flex items-center justify-center"
@@ -162,7 +173,7 @@ function CompactFlashCard({
           </span>
         </div>
 
-        {/* Título & Subtítulo */}
+        {/* Title & Subtitle */}
         <h3 className="font-cinzel text-blanco-lunar text-xl font-bold mb-1 tracking-wide">
           {card.title}
         </h3>
@@ -170,13 +181,13 @@ function CompactFlashCard({
           {card.subtitle}
         </p>
 
-        {/* Breve Descripción (Corta & Directa) */}
+        {/* Description */}
         <p className="font-inter text-arena text-xs leading-relaxed opacity-85 mb-4">
           {card.shortDesc}
         </p>
       </div>
 
-      {/* Footer Corto: Píldoras + Línea de Fueguito */}
+      {/* Footer */}
       <div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           {card.traits.map((t) => (
@@ -194,14 +205,15 @@ function CompactFlashCard({
           ))}
         </div>
 
-        {/* Línea de fueguito 3px */}
+        {/* Accent line */}
         <div
-          className="h-[3px] rounded-full w-full transition-all duration-300"
+          className="h-[3px] rounded-full w-full"
           style={{
             background: hovered
               ? `linear-gradient(90deg, ${card.color} 0%, transparent 100%)`
               : "rgba(255, 255, 255, 0.08)",
-            boxShadow: hovered ? `0 0 10px ${card.color}` : "none",
+            boxShadow: hovered ? `0 0 8px ${card.color}` : "none",
+            transition: "background 0.25s ease, box-shadow 0.25s ease",
           }}
         />
       </div>
