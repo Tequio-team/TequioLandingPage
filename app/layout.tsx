@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${cinzel.variable} ${inter.variable}`}>
-      <body className="bg-azul-noche text-blanco-lunar antialiased">
+    <html lang="es" className={`${cinzel.variable} ${inter.variable}`} suppressHydrationWarning>
+      <body className="bg-azul-noche text-blanco-lunar antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>
