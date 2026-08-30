@@ -483,7 +483,7 @@ export default function EventosPage() {
                   <div className="lg:col-span-7 space-y-5">
                     <div>
                       <span className="font-inter text-xs uppercase tracking-wider text-amber-400 font-bold block mb-1">
-                        {activeTalk.typeBadge} · {activeTalk.tagHeader}
+                        🎙️ TEQUIO TALKS #01
                       </span>
                       <h2 className="font-cinzel text-blanco-lunar text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
                         {activeTalk.title}
@@ -566,7 +566,7 @@ export default function EventosPage() {
                           className="object-contain opacity-70"
                         />
                       </div>
-                      <span>Faena custodiada por Tequio</span>
+                      <span>🎙️ TEQUIO TALKS #01</span>
                     </div>
 
                   </div>
