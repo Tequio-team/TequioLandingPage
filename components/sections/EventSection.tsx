@@ -2,7 +2,8 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import LumaCheckoutButton from "@/components/ui/LumaCheckoutButton";
+
+const LUMA_CALENDAR_URL = "https://luma.com/cal-U0kFC53t9Lv1LCY";
 
 const DEFAULT_EVENT = {
   id: "default-event-1",
@@ -179,20 +180,27 @@ export default function EventSection() {
             </div>
           )}
 
-          {/* Registration with Luma */}
+          {/* Direct Luma Link */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-2">
-            <LumaCheckoutButton
-              lumaUrl={activeEvent.luma_url}
-              variant="primary"
+            <a
+              href={activeEvent.luma_url || LUMA_CALENDAR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer inline-flex items-center justify-center gap-2.5 font-inter font-bold bg-gradient-to-r from-terracota via-orange-600 to-amber-500 text-blanco-lunar px-8 py-4 rounded-2xl shadow-[0_10px_28px_rgba(193,91,58,0.45)] hover:shadow-[0_14px_35px_rgba(245,166,35,0.6)] hover:scale-105 active:scale-95 text-base md:text-lg border border-amber-400/40 transition-all duration-300"
             >
-              <span>Registrarme con Luma</span>
-              <span className="text-xl">→</span>
-            </LumaCheckoutButton>
+              <span>Ver evento en Luma</span>
+              <span className="text-xl">↗</span>
+            </a>
 
-            <span className="font-inter text-xs text-gris-pizarra/80 flex items-center gap-1.5">
-              <span>🎟️ Registro gestionado a través de</span>
-              <strong className="text-azul-noche">Luma</strong>
-            </span>
+            <a
+              href={LUMA_CALENDAR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-inter text-xs text-gris-pizarra/90 hover:text-terracota flex items-center gap-1.5 font-semibold transition-colors"
+            >
+              <span>📅 Ver todos los eventos en</span>
+              <strong className="text-azul-noche underline">Luma Calendar ↗</strong>
+            </a>
           </div>
 
           {/* Tlacu PNG Peeking from Bottom Right */}

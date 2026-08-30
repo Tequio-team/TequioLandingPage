@@ -76,23 +76,30 @@ export default function LinkedInEmbedCard({
     }
   };
 
+  // Alternating entry: even from left & bottom, odd from right & bottom
+  const isEven = index % 2 === 0;
+  const initialX = isEven ? -35 : 35;
+
   return (
     <motion.div
-      initial={false}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
+      initial={{ opacity: 0, x: initialX, y: 40, scale: 0.95 }}
+      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-40px" }}
       transition={{
-        duration: 0.5,
-        delay: (index % 3) * 0.1,
-        ease: [0.22, 1, 0.36, 1],
+        type: "spring",
+        stiffness: 90,
+        damping: 15,
+        mass: 0.8,
+        delay: Math.min((index % 6) * 0.08, 0.4),
       }}
       whileHover={{
         y: -6,
+        scale: 1.02,
         transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
       }}
       className={`w-full break-inside-avoid sm:mb-6 rounded-3xl overflow-hidden bg-gradient-to-b ${guardianInfo.gradient} border ${guardianInfo.borderColor} flex flex-col justify-between shadow-xl relative group hover:border-amber-400 hover:shadow-[0_20px_45px_rgba(245,166,35,0.2)] transition-all duration-300 backdrop-blur-xl select-none p-5 sm:p-6 space-y-4`}
       style={{
-        background: "rgba(15, 23, 42, 0.85)",
+        background: "rgba(15, 23, 42, 0.88)",
       }}
     >
       {/* 1. HEADER: GUARDIÁN + NOMBRE + FECHA */}
@@ -161,7 +168,7 @@ export default function LinkedInEmbedCard({
             rel="noopener noreferrer"
             className="font-inter font-bold text-xs bg-gradient-to-r from-amber-500 to-terracota hover:from-amber-400 hover:to-orange-500 text-blanco-lunar px-4 py-2 rounded-xl shadow-md transition-all hover:scale-105 inline-flex items-center gap-1.5"
           >
-            <span>Ver publicación en LinkedIn</span>
+            <span>Ver en LinkedIn</span>
             <span className="text-sm">↗</span>
           </a>
         )}

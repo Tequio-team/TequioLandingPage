@@ -9,8 +9,10 @@ import BrasaCursor from "@/components/ui/BrasaCursor";
 import StarField from "@/components/ui/StarField";
 import BrasaParticles from "@/components/ui/BrasaParticles";
 import LinkedInEmbedCard from "@/components/ui/LinkedInEmbedCard";
-import LumaCheckoutButton from "@/components/ui/LumaCheckoutButton";
 import Modal from "@/components/ui/Modal";
+
+const LUMA_CALENDAR_EMBED_URL = "https://luma.com/embed/calendar/cal-U0kFC53t9Lv1LCY/events";
+const LUMA_CALENDAR_DIRECT_URL = "https://luma.com/cal-U0kFC53t9Lv1LCY";
 
 // Fallback active event template in case Supabase table is empty
 const DEFAULT_ACTIVE_EVENT = {
@@ -262,7 +264,7 @@ export default function EventosPage() {
       <BrasaCursor />
       <Navbar />
 
-      {/* 1. HERO & PRÓXIMA FAENA DESTACADA (CON REGISTRO LUMA) */}
+      {/* 1. HERO & PRÓXIMA FAENA DESTACADA (CON ENLACE A LUMA) */}
       <section className="relative pt-36 pb-20 px-6">
         <StarField count={35} isMitlaShape={true} />
         <BrasaParticles count={40} className="opacity-70" />
@@ -278,18 +280,18 @@ export default function EventosPage() {
               Eventos de la Tribu
             </h1>
             <p className="font-inter text-arena text-base sm:text-lg leading-relaxed max-w-2xl mx-auto opacity-85">
-              Talleres prácticos, mentorías con líderes tech y hackathons comunitarios. Elige tu faena y regístrate directamente con Luma.
+              Talleres prácticos, mentorías con líderes tech y hackathons comunitarios. Explora y acompáñanos a través de Luma.
             </p>
           </div>
 
-          {/* ACTIVE TALK CARD CON CHECKOUT LUMA */}
+          {/* ACTIVE TALK CARD */}
           {activeEvent && (
             <motion.div
               id="active-talk"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
-              className="relative rounded-3xl p-8 sm:p-10 md:p-14 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl"
+              className="relative rounded-3xl p-8 sm:p-10 md:p-14 overflow-hidden border-2 border-amber-400/40 shadow-[0_20px_60px_rgba(245,166,35,0.15)] backdrop-blur-xl mb-12"
               style={{
                 background: "linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
               }}
@@ -302,7 +304,7 @@ export default function EventosPage() {
 
                 <span className="font-inter font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
                   <span className="animate-pulse">🔥</span>
-                  <span>Inscripciones Abiertas con Luma</span>
+                  <span>Gestionado en Luma</span>
                 </span>
               </div>
 
@@ -375,23 +377,64 @@ export default function EventosPage() {
                 </div>
               )}
 
-              {/* Luma Button CTA */}
+              {/* Luma Direct Action */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-2">
-                <LumaCheckoutButton
-                  lumaUrl={activeEvent.luma_url}
-                  variant="primary"
+                <a
+                  href={activeEvent.luma_url || LUMA_CALENDAR_DIRECT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer inline-flex items-center justify-center gap-2.5 font-inter font-bold bg-gradient-to-r from-terracota via-orange-600 to-amber-500 text-blanco-lunar px-8 py-4 rounded-2xl shadow-[0_10px_28px_rgba(193,91,58,0.45)] hover:shadow-[0_14px_35px_rgba(245,166,35,0.6)] hover:scale-105 active:scale-95 text-base md:text-lg border border-amber-400/40 transition-all duration-300"
                 >
-                  <span>Registrarme con Luma</span>
-                  <span className="text-xl">→</span>
-                </LumaCheckoutButton>
+                  <span>Ver evento en Luma</span>
+                  <span className="text-xl">↗</span>
+                </a>
 
-                <div className="font-inter text-xs text-arena/60 flex items-center gap-1.5">
-                  <span>🎟️ Check-in instantáneo vía</span>
-                  <strong className="text-amber-400">Luma Checkout</strong>
-                </div>
+                <a
+                  href={LUMA_CALENDAR_DIRECT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-inter text-xs text-amber-400 hover:underline flex items-center gap-1.5 font-semibold"
+                >
+                  <span>📅 Ver calendario completo en Luma</span>
+                  <span>↗</span>
+                </a>
               </div>
             </motion.div>
           )}
+
+          {/* LUMA CALENDAR EMBED WIDGET */}
+          <div className="rounded-3xl overflow-hidden border-2 border-white/10 bg-slate-900/90 shadow-2xl p-4 sm:p-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3 mb-4 px-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📅</span>
+                <h3 className="font-cinzel text-lg sm:text-xl font-bold text-blanco-lunar">
+                  Calendario Oficial Tequio en Luma
+                </h3>
+              </div>
+              <a
+                href={LUMA_CALENDAR_DIRECT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-inter text-xs font-bold bg-white/10 hover:bg-white/20 text-amber-400 px-3.5 py-1.5 rounded-xl transition-all"
+              >
+                Abrir en Luma ↗
+              </a>
+            </div>
+
+            <div className="w-full rounded-2xl overflow-hidden bg-azul-noche/60 border border-white/10">
+              <iframe
+                src={LUMA_CALENDAR_EMBED_URL}
+                width="100%"
+                height="480"
+                frameBorder="0"
+                style={{ border: "none" }}
+                allowFullScreen
+                aria-hidden="false"
+                tabIndex={0}
+                className="w-full rounded-2xl min-h-[420px]"
+              />
+            </div>
+          </div>
 
         </div>
       </section>
@@ -403,7 +446,7 @@ export default function EventosPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <span className="font-inter text-terracota text-xs uppercase tracking-widest font-semibold block mb-2">
-                ✦ Calendario Tequio
+                ✦ Agenda Tequio
               </span>
               <h2 className="font-cinzel text-blanco-lunar text-3xl md:text-4xl font-bold">
                 Próximas Faenas y Encuentros
@@ -505,7 +548,7 @@ export default function EventosPage() {
                 {/* Bottom CTA Luma */}
                 <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
                   <span className="font-inter text-[11px] text-arena/50">
-                    {evt.status === "finalizado" ? "Evento concluido" : "Cupo con Luma"}
+                    {evt.status === "finalizado" ? "Evento concluido" : "Luma Events"}
                   </span>
 
                   {evt.status === "finalizado" ? (
@@ -513,12 +556,15 @@ export default function EventosPage() {
                       Finalizado
                     </span>
                   ) : (
-                    <LumaCheckoutButton
-                      lumaUrl={evt.luma_url}
-                      variant="compact"
+                    <a
+                      href={evt.luma_url || LUMA_CALENDAR_DIRECT_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer font-inter font-bold text-xs bg-gradient-to-r from-amber-500 to-terracota hover:from-amber-400 hover:to-orange-500 text-blanco-lunar px-4 py-2 rounded-xl shadow-md transition-all hover:scale-105 inline-flex items-center gap-1.5"
                     >
-                      <span>Inscribirme en Luma →</span>
-                    </LumaCheckoutButton>
+                      <span>Ir a Luma</span>
+                      <span>↗</span>
+                    </a>
                   )}
                 </div>
               </motion.div>
@@ -528,7 +574,7 @@ export default function EventosPage() {
         </div>
       </section>
 
-      {/* 3. MEMORIA VIVA (PUBLICACIONES DE INTEGRANTES CON VALIDACIÓN LINKEDIN) */}
+      {/* 3. MEMORIA VIVA (CON EFECTO ITERATIVO CASCADA / IZQ-DER EN MOBILE Y DESKTOP) */}
       <section className="relative py-24 px-6 bg-slate-900/60 border-t border-white/10">
         <div className="container mx-auto max-w-6xl relative z-10">
           
@@ -555,7 +601,7 @@ export default function EventosPage() {
             </button>
           </div>
 
-          {/* Grid de Memoria Viva */}
+          {/* Grid de Memoria Viva con Animaciones en Cascada e Iteración Lateral */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {memoriaList.map((item, idx) => (
               <LinkedInEmbedCard
